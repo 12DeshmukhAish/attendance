@@ -11,7 +11,7 @@ const AttendanceRecordSchema = new mongoose.Schema({
 const AttendanceSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   subject: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true },
-  records: [AttendanceRecordSchema], // Array of attendance records
+  records: [AttendanceRecordSchema],
 }, {
   timestamps: true,
 });
