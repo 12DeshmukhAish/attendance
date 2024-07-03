@@ -6,7 +6,7 @@ const SubjectSchema = new mongoose.Schema({
   class: { type: mongoose.Schema.Types.ObjectId, ref: 'Class', required: true },
   teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Faculty', required: true },
 }, {
-  timestamps: true, // Adds createdAt and updatedAt timestamps
+  timestamps: true, 
 });
 
 export default mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);
