@@ -1,10 +1,10 @@
-import FacultyTable from '@/app/components/facultyTable'
+import StudentTable from '@/app/components/studentTable'
 import React from 'react'
 
 const page = () => {
   return (
     <div className='mx-10 my-10'>
-      <FacultyTable/>
+      <StudentTable/>
     </div>
   )
 }

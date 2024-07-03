@@ -3,16 +3,14 @@ import React, { useState,useEffect } from 'react';
 import Link from 'next/link';
 import { Input, Button } from '@nextui-org/react';
 import { signIn,useSession } from 'next-auth/react';
-import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import {toast} from 'sonner'
+import { toast } from 'sonner'
 export default function LoginComponent() {
 
   const [isVisible, setIsVisible] = useState(false);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const toggleVisibility = () => setIsVisible(!isVisible);
-  const dispatch = useDispatch();
   const router = useRouter();
   const { data: session } = useSession();
   useEffect(() => {
@@ -28,7 +26,7 @@ export default function LoginComponent() {
     if (session?.user?.role === "admin") {
       router.replace("/admin");      
     }
-  }, [session, dispatch]);
+  }, [session]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,7 +47,6 @@ export default function LoginComponent() {
     }
   };
 
-  // Define handleCancel function to clear all fields in the form
   const handleCancel = () => {
     setUserId('');
     setPassword('');
@@ -87,7 +84,6 @@ export default function LoginComponent() {
                     stroke="currentColor"
                     className="w-6 h-6"
                   >
-                    {/* Eye icon */}
                   </svg>
                 ) : (
                   <svg

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Student from "@/models/student";
 
-// POST route to create a new student
 export async function POST(req) {
     try {
         await connectMongoDB();
@@ -14,7 +13,6 @@ export async function POST(req) {
             name,
             passOutYear
         });
-
         await newStudent.save();
         console.log("Student Registered Successfully", newStudent);
         return NextResponse.json({ message: "Student Registered Successfully", student: newStudent }, { status: 201 });
@@ -24,7 +22,6 @@ export async function POST(req) {
     }
 }
 
-// PUT route to update an existing student
 export async function PUT(req) {
     try {
         await connectMongoDB();

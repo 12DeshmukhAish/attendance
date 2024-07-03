@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image";
 import { RxDashboard, RxExit } from "react-icons/rx";
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdPortrait } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 import { MdOutlineManageAccounts } from "react-icons/md";
 import Link from "next/link";
@@ -17,7 +17,7 @@ const sidebarItems = [
   },
   {
     name: "Manage Faculty",
-    href: "/admin/f",
+    href: "/admin/faculty",
     icon: MdOutlineManageAccounts,
   },{
     name: "Manage Students",
@@ -26,13 +26,13 @@ const sidebarItems = [
   },
   {
     name: "Manage Class",
-    href: "/admin/class",
+    href: "/admin/className",
     icon: TbReportAnalytics,
   },
   {
     name: "Profile",
     href: "/admin/profile",
-    icon: TbReportAnalytics,
+    icon: MdPortrait,
   },
 ];
 
@@ -48,10 +48,11 @@ const Sidebar = () => {
     router.replace("/");
   };
 
+
   return (
     <div className={`h-screen sidebar__wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       <button className="btn shadow-xl " onClick={toggleSidebarcollapse}>
-        {isCollapsed ? <MdKeyboardArrowRight  /> : <MdKeyboardArrowLeft />}
+        {isCollapsed ? <MdKeyboardArrowRight  className=" "/> : <MdKeyboardArrowLeft />}
       </button>
       <aside className="sidebar rounded-r-lg shadow-2xl bg-primary-500  text-gray-100" data-collapse={isCollapsed}>
         <div className="sidebar__top  text-primary ">
@@ -62,18 +63,18 @@ const Sidebar = () => {
             src="/logo.png"
             alt="logo"
           />
-          <p className="sidebar__logo-name">Admission Pro</p>
+          <p className="sidebar__logo-name">Student Assure</p>
         </div>
         <ul className="sidebar__list text-slate-900 dark:text-slate-50">
           {sidebarItems.map(({ name, href, icon: Icon }) => {
             return (
-              <li className="sidebar__item items-center "  key={name}>
+              <li className="sidebar__item items-center" key={name}>
                 <Link
-                  className={`sidebar__link  ${pathname === href ? "sidebar__link--active " : ""}`}
+                  className={`sidebar__link ${pathname === href ? "sidebar__link--active" : ""}`}
                   href={href}
                 >
                   <span className="sidebar__icon">
-                    <Icon className="inline-block mr-2" />
+                    <Icon className="inline-block mx-auto" />
                   </span>
                   <span className="sidebar__name">{name}</span>
                 </Link>
@@ -88,5 +89,4 @@ const Sidebar = () => {
     </div>
   );
 };
-
 export default Sidebar;
