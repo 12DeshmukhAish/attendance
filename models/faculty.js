@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const FacultySchema = new mongoose.Schema({
 
-  facultyId: 
+  _id: 
   { 
     type: String, 
     required: true, 

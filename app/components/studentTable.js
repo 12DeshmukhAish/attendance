@@ -129,7 +129,7 @@ export default function StudentTable() {
     switch (columnKey) {
       case "actions":
         return (
-          <div className="relative flex items-center gap-2">
+          <div className="relative flex items-center justify-items-center  justify-center gap-2">
             <Tooltip content="Edit">
               <span
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"

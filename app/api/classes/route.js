@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
-import ClassName from "@/models/className";
+import Classes from "@/models/className";
 
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { name, students, teacher } = data;
+        const { className, students, classCoordinator } = data;
 
-        const newClass = new ClassName({
-            name,
+        const newClass = new Classes({
+            name:className,
             students,
-            teacher
+            teacher:classCoordinator
         });
 
         await newClass.save();
@@ -29,11 +29,11 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, name, students, teacher } = data;
-        const existingClass = await ClassName.findByIdAndUpdate(_id, {
-            name,
+        const { _id, className, students, classCoordinator } = data;
+        const existingClass = await Classes.findByIdAndUpdate(_id, {
+            name:className,
             students,
-            teacher
+            teacher:classCoordinator
         }, { new: true });
 
         if (!existingClass) {
@@ -55,14 +55,14 @@ export async function GET(req) {
         const _id = searchParams.get("_id");
 
         if (_id) {
-            const classData = await ClassName.findById(_id);
+            const classData = await Classes.findById(_id);
             if (!classData) {
                 return NextResponse.json({ error: "Class not found" }, { status: 404 });
             }
             console.log("Fetched Class Successfully", classData);
             return NextResponse.json(classData, { status: 200 });
         } else {
-            const classes = await ClassName.find();
+            const classes = await Classes.find();
             console.log("Fetched Classes Successfully", classes);
             return NextResponse.json(classes, { status: 200 });
         }
@@ -78,7 +78,7 @@ export async function DELETE(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
-        const deletedClass = await ClassName.findByIdAndDelete(_id);
+        const deletedClass = await Classes.findByIdAndDelete(_id);
 
         if (!deletedClass) {
             return NextResponse.json({ error: "Class not found" }, { status: 404 });

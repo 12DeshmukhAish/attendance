@@ -131,8 +131,8 @@ export default function FacultyTable() {
     switch (columnKey) {
       case "actions":
         return (
-          <div className="relative flex items-center gap-2">
-            <Tooltip content="Edit">
+          <div className="relative flex items-center justify-items-center  justify-center gap-2">
+            <Tooltip content="Edit" >
               <span
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
                 onClick={() => {
@@ -345,7 +345,7 @@ export default function FacultyTable() {
         <TableBody emptyContent={"No faculty members found"} items={sortedItems}>
           { (facultyMember) => (
             <TableRow key={facultyMember?._id}>
-              {(columnKey) => <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>}
+              {(columnKey) => <TableCell >{renderCell(facultyMember, columnKey)}</TableCell>}
             </TableRow>
           )}
         </TableBody>

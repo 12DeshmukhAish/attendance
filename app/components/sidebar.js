@@ -26,7 +26,7 @@ const sidebarItems = [
   },
   {
     name: "Manage Class",
-    href: "/admin/className",
+    href: "/admin/classes",
     icon: TbReportAnalytics,
   },
   {

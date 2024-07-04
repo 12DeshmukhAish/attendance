@@ -9,7 +9,7 @@ export async function POST(req) {
         const {facultyId, name, department, email } = data;
 
         const newFaculty = new Faculty({
-            facultyId,
+            _id:facultyId,
             name,
             department,
             email

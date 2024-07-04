@@ -17,6 +17,6 @@ const classSchema = new Schema({
   }
 }, { timestamps: true });
 
-const ClassName = mongoose.models.ClassName || mongoose.model('ClassName', classSchema);
+const Classes = mongoose.models.Classes || mongoose.model('Classes', classSchema);
 
-export default ClassName;
+export default Classes;
