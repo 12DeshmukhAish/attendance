@@ -8,7 +8,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     _id:"",
     className: "",
     classCoordinator: "",
-    passOutYear: ""
+    passOutYear: "",
+    department:""
   });
   const [passOutYears, setPassOutYears] = useState([]);
 
@@ -31,14 +32,16 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
         _id:classData._id,
         className: classData.name,
         classCoordinator: classData.teacher,
-        passOutYear: classData.passOutYear
+        passOutYear: classData.passOutYear,
+        department:classData.department
       });
     } else {
       setFormData({
         _id:"",
         className: "",
         classCoordinator: "",
-        passOutYear: ""
+        passOutYear: "",
+        department:""
       });
     }
   }, [mode, classData]);
@@ -47,6 +50,15 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+
+  const departmentOptions = [
+    { key: "Department", label: "Department" },
+    { key: "CSE", label: "CSE" },
+    { key: "ENTC", label: "ENTC" },
+    { key: "Civil", label: "Civil" },
+    { key: "Electrical", label: "Electrical" },
+    { key: "Mechanical", label: "Mechanical" },
+  ];
   const handleSubmit = async () => {
     try {
       let response;
@@ -101,6 +113,19 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             {passOutYears.map((year) => (
               <SelectItem key={year} textValue={year}>
                 {year}
+              </SelectItem>
+            ))}
+          </Select>
+          <Select
+            label="Department"
+            placeholder="Select department"
+            name="department"
+            selectedKeys={[formData.department]}
+            onChange={handleChange}
+          >
+            {departmentOptions.map((department) => (
+              <SelectItem key={department.key} textValue={department.label}>
+                {department.label}
               </SelectItem>
             ))}
           </Select>

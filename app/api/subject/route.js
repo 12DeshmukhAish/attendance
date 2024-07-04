@@ -49,7 +49,6 @@ export async function PUT(req) {
     }
 }
 
-// GET route to fetch all subjects or a single subject by _id
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -74,7 +73,6 @@ export async function GET(req) {
     }
 }
 
-// DELETE route to delete a subject by _id
 export async function DELETE(req) {
     try {
         await connectMongoDB();
@@ -85,7 +83,6 @@ export async function DELETE(req) {
         if (!deletedSubject) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
         }
-
         console.log("Subject Deleted Successfully", deletedSubject);
         return NextResponse.json({ message: "Subject Deleted Successfully" }, { status: 200 });
     } catch (error) {

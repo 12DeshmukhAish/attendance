@@ -28,10 +28,11 @@ const columns = [
   { uid: "teacher", name: "Class Coordinator" },
   { uid: "students", name: "Students" },
   { uid: "passOutYear", name: "Pass Out Year" },
+  { uid: "department", name: "Department" },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "teacher","students", "passOutYear", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["name", "teacher","students", "passOutYear", "department","actions"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -100,7 +101,7 @@ export default function ClassTable() {
     }
   };
 
-  const pages = Math.ceil(classes.length / rowsPerPage);
+  const pages = classes? Math.ceil(classes?.length / rowsPerPage):0;
 
   const hasSearchFilter = Boolean(filterValue);
 
@@ -177,7 +178,7 @@ export default function ClassTable() {
       case "students":
         return (
           <span>
-            {cellValue.length + 1}
+            {cellValue? cellValue.length+1 :0}
           </span>
         );
       default:

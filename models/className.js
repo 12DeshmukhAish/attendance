@@ -9,12 +9,15 @@ const classSchema = new Schema({
   passOutYear: {
     type: String
   },
+  department: {
+    type: String
+  },
   students: [{
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Student',
   }],
   teacher: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Teacher',
     required: true,
   }

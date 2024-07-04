@@ -7,7 +7,7 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { className, passOutYear, classCoordinator } = data;
+        const { className, passOutYear, classCoordinator, department } = data;
 
         const studentIds = await Student.find({ passOutYear }, "_id").lean();
 
@@ -15,7 +15,8 @@ export async function POST(req) {
             name: className,
             students: studentIds.map(student => student._id),
             teacher: classCoordinator,
-            passOutYear
+            passOutYear,
+            department
         });
 
         await newClass.save();
@@ -40,7 +41,7 @@ export async function PUT(req) {
         const _id = searchParams.get("_id");
 
         const data = await req.json();
-        const { className, students, classCoordinator, passOutYear } = data;
+        const { className, students, classCoordinator, passOutYear, department } = data;
         const existingClass = await Classes.findById(_id);
 
         if (!existingClass) {
@@ -53,6 +54,7 @@ export async function PUT(req) {
         existingClass.students = students;
         existingClass.teacher = classCoordinator;
         existingClass.passOutYear = passOutYear;
+        existingClass.department = department;
 
         await existingClass.save();
 
@@ -80,36 +82,47 @@ export async function GET(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
+        const department = searchParams.get("department");
+        const passOutYear = searchParams.get("passOutYear");
 
-        if (_id) {
-            const classData = await Classes.findById(_id);
-            if (!classData) {
-                return NextResponse.json({ error: "Class not found" }, { status: 404 });
-            }
-            console.log("Fetched Class Successfully", classData);
-            return NextResponse.json(classData, { status: 200 });
-        } else {
-            const classes = await Classes.find();
-            console.log("Fetched Classes Successfully", classes);
-            return NextResponse.json(classes, { status: 200 });
+        let filter = {};
+        if (_id) filter._id = _id;
+        if (department) filter.department = department;
+        if (passOutYear) filter.passOutYear = passOutYear;
+
+        console.log("Filter criteria:", filter);
+
+        const classes = await Classes.find(filter);
+
+        if (classes.length === 0) {
+            console.log("No classes found for criteria:", filter);
+            return NextResponse.json({ error: "No classes found" }, { status: 404 });
         }
+
+        console.log("Fetched Classes Successfully", classes);
+        return NextResponse.json(classes, { status: 200 });
     } catch (error) {
         console.error("Error fetching classes:", error);
         return NextResponse.json({ error: "Failed to Fetch Classes" }, { status: 500 });
     }
 }
 
-// DELETE route to delete a class by _id
 export async function DELETE(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
+
         const deletedClass = await Classes.findByIdAndDelete(_id);
 
         if (!deletedClass) {
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
+
+        await Student.updateMany(
+            { _id: { $in: deletedClass.students } },
+            { $unset: { class: "" } }
+        );
 
         console.log("Class Deleted Successfully", deletedClass);
         return NextResponse.json({ message: "Class Deleted Successfully" }, { status: 200 });

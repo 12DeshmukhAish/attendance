@@ -6,9 +6,10 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { rollNumber, name, passOutYear } = data;
+        const {_id, rollNumber, name, passOutYear } = data;
 
         const newStudent = new Student({
+            _id,
             rollNumber,
             name,
             passOutYear
@@ -44,25 +45,39 @@ export async function PUT(req) {
     }
 }
 
-// GET route to fetch all students
+// GET route to fetch students based on query parameters
 export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
+        const rollNumber = searchParams.get("rollNumber");
+        const name = searchParams.get("name");
+        const passOutYear = searchParams.get("passOutYear");
+
+        let filter = {};
 
         if (_id) {
-            const student = await Student.findById(_id);
-            if (!student) {
-                return NextResponse.json({ error: "Student not found" }, { status: 404 });
-            }
-            console.log("Fetched Student Successfully", student);
-            return NextResponse.json(student, { status: 200 });
-        } else {
-            const students = await Student.find();
-            console.log("Fetched Students Successfully", students);
-            return NextResponse.json(students, { status: 200 });
+            filter._id = _id;
         }
+        if (rollNumber) {
+            filter.rollNumber = rollNumber;
+        }
+        if (name) {
+            filter.name = { $regex: name, $options: "i" }; // case-insensitive regex search
+        }
+        if (passOutYear) {
+            filter.passOutYear = passOutYear;
+        }
+
+        const students = await Student.find(filter);
+
+        if (students.length === 0) {
+            return NextResponse.json({ error: "No students found" }, { status: 404 });
+        }
+        
+        console.log("Fetched Students Successfully", students);
+        return NextResponse.json(students, { status: 200 });
     } catch (error) {
         console.error("Error fetching students:", error);
         return NextResponse.json({ error: "Failed to Fetch Students" }, { status: 500 });
