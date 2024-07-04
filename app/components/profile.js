@@ -18,10 +18,10 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchFacultyData = async () => {
-      if (session?.user) {
+      if (session?.user && !faculty) {
         const { id } = session.user;
         try {
-          const res = await axios.get(`/api/faculty?id=${id}`);
+          const res = await axios.get(`/api/faculty?_id=${id}`);
           setFaculty(res.data);
           setUpdatedFaculty(res.data);
         } catch (error) {
@@ -30,7 +30,7 @@ const Profile = () => {
       }
     };
     fetchFacultyData();
-  }, [session]);
+  }, [session, faculty]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -44,7 +44,7 @@ const Profile = () => {
     if (session?.user) {
       const { id } = session.user;
       try {
-        await axios.put(`/api/faculty?id=${id}`, updatedFaculty);
+        await axios.put(`/api/faculty?_id=${id}`, updatedFaculty);
         setFaculty(updatedFaculty);
         setIsEditing(false);
       } catch (error) {
@@ -93,6 +93,7 @@ const Profile = () => {
                 name="_id" 
                 value={updatedFaculty._id} 
                 onChange={handleInputChange} 
+                disabled // Make the ID field read-only
               />
               <Input 
                 fullWidth 

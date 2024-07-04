@@ -6,6 +6,9 @@ const classSchema = new Schema({
     type: String,
     required: true,
   },
+  passOutYear: {
+    type: String
+  },
   students: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Student',

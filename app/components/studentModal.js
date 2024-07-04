@@ -5,6 +5,7 @@ import axios from "axios";
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   const [formData, setFormData] = useState({
+    _id: "",
     rollNumber: "",
     name: "",
     passOutYear: "",
@@ -13,13 +14,15 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   useEffect(() => {
     if (mode === "edit" && student) {
       setFormData({
+        _id: student._id,
         rollNumber: student.rollNumber,
         name: student.name,
         passOutYear: student.passOutYear,
-        _id: student._id,
+      
       });
     } else {
       setFormData({
+        _id:"",
         rollNumber: "",
         name: "",
         passOutYear: "",
@@ -57,6 +60,13 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Student" : "Edit Student"}</ModalHeader>
         <ModalBody>
+        <Input
+            label="ID"
+            name="_id"
+            value={formData._id}
+            onChange={handleChange}
+            required
+          />
           <Input
             label="Roll Number"
             name="rollNumber"
