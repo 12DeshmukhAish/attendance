@@ -1,200 +1,221 @@
 "use client"
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { toast } from 'sonner';
 import axios from 'axios';
+import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
   Button,
-  useDisclosure,
   Input,
+  Pagination,
 } from '@nextui-org/react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
+import { capitalize } from "@/app/utils/utils";
+import { PlusIcon } from "@/public/PlusIcon";
+import { EditIcon } from "@/public/EditIcon";
+import { DeleteIcon } from "@/public/DeleteIcon";
+import { SearchIcon } from "@/public/SearchIcon";
+import SubjectModal from './subjectModal';
+import * as XLSX from 'xlsx';
 
-export default function SubjectRegister() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const router = useRouter();
+const columns = [
+  { uid: "name", name: "Subject Name", sortable: true },
+  { uid: "class", name: "Class" },
+  { uid: "teacher", name: "Teacher" },
+  { uid: "actions", name: "Actions" },
+];
 
-  const [subjectId, setSubjectId] = useState('');
-  const [name, setName] = useState('');
-  const [classId, setClassId] = useState('');
-  const [teacherId, setTeacherId] = useState('');
-  const [content, setContent] = useState(['']);
+const INITIAL_VISIBLE_COLUMNS = ["name", "class", "teacher", "actions"];
 
-  const [registeredSubjects, setRegisteredSubjects] = useState([]);
+export default function SubjectTable() {
+  const [filterValue, setFilterValue] = useState("");
+  const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
+  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [sortDescriptor, setSortDescriptor] = useState({ column: "name", direction: "ascending" });
+  const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [subjects, setSubjects] = useState([]);
+  const [teachers, setTeachers] = useState([]);
 
-  const handleCancel = () => {
-    onClose();
-  };
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const handleContentChange = (index, event) => {
-    const newContent = [...content];
-    newContent[index] = event.target.value;
-    setContent(newContent);
-  };
-
-  const handleAddContent = () => {
-    setContent([...content, '']);
-  };
-
-  const handleRemoveContent = (index) => {
-    const newContent = [...content];
-    newContent.splice(index, 1);
-    setContent(newContent);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formData = {
-      _id: subjectId,
-      name,
-      class: classId,
-      teacher: teacherId,
-      content,
-    };
-
+  const fetchData = async () => {
     try {
-      const result = await axios.post('/api/subject', formData);
-      console.log(result);
-
-      if (result.status === 200) {
-        // Add the registered subject to the list
-        const newSubject = {
-          _id: subjectId,
-          name,
-          class: classId,
-          teacher: teacherId,
-          content,
-        };
-
-        setRegisteredSubjects((prevSubjects) => [...prevSubjects, newSubject]);
-        onClose();
-        // Clear form fields after successful registration
-        setSubjectId('');
-        setName('');
-        setClassId('');
-        setTeacherId('');
-        setContent(['']);
-      }
+      const response = await axios.get('/api/subjectData');
+      setSubjects(response.data.subjects || []);
+      setTeachers(response.data.teachers || []);
     } catch (error) {
-      console.error('Error registering subject:', error);
+      console.error('Error fetching data:', error);
     }
+  };
+
+  const deleteSubject = async (_id) => {
+    try {
+      await axios.delete(`/api/subject?_id=${_id}`);
+      fetchData();
+      toast.success('Subject deleted successfully');
+    } catch (error) {
+      console.error("Error deleting subject:", error);
+      toast.error('Error deleting subject');
+    }
+  };
+
+  const pages = Math.ceil(subjects.length / rowsPerPage);
+
+  const hasSearchFilter = Boolean(filterValue);
+
+  const headerColumns = useMemo(() => {
+    if (visibleColumns === "all") return columns;
+    return columns.filter((column) => visibleColumns.has(column.uid));
+  }, [visibleColumns]);
+
+  const filteredItems = useMemo(() => {
+    if (!Array.isArray(subjects)) {
+      return [];
+    }
+    let filteredSubjects = [...subjects];
+
+    if (hasSearchFilter) {
+      filteredSubjects = filteredSubjects.filter((subject) => {
+        return (
+          (subject.name && subject.name.toLowerCase().includes(filterValue.toLowerCase())) ||
+          (subject.teacher && teachers.find(teacher => teacher._id === subject.teacher)?.name.toLowerCase().includes(filterValue.toLowerCase()))
+        );
+      });
+    }
+
+    return filteredSubjects;
+  }, [subjects, filterValue, teachers]);
+
+  const items = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredItems.slice(start, end);
+  }, [page, filteredItems, rowsPerPage]);
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const first = a[sortDescriptor.column];
+      const second = b[sortDescriptor.column];
+      const cmp = first < second ? -1 : first > second ? 1 : 0;
+      return sortDescriptor.direction === "descending" ? -cmp : cmp;
+    });
+  }, [sortDescriptor, items]);
+
+  const renderCell = useCallback((subject, columnKey) => {
+    const cellValue = subject[columnKey];
+    switch (columnKey) {
+      case "actions":
+        return (
+          <div className="relative flex items-center gap-2">
+            <span
+              className="text-lg text-default-500 cursor-pointer active:opacity-50"
+              onClick={() => {
+                setModalMode("edit");
+                setSelectedSubject(subject);
+                setModalOpen(true);
+              }}
+            >
+              <EditIcon />
+            </span>
+            <span
+              className="text-lg text-danger cursor-pointer active:opacity-50"
+              onClick={() => deleteSubject(subject._id)}
+            >
+              <DeleteIcon />
+            </span>
+          </div>
+        );
+      case "teacher":
+        return (
+          <span>{teachers.find(teacher => teacher._id === cellValue)?.name}</span>
+        );
+      default:
+        return <span>{cellValue}</span>;
+    }
+  }, [teachers]);
+
+  const renderHeader = (column) => {
+    const columnName = capitalize(column.name);
+    return (
+      <div className="flex justify-between items-center">
+        {columnName}
+        {column.sortable && (
+          <ChevronDownIcon
+            onClick={() => {
+              setSortDescriptor((prev) => ({
+                column: column.uid,
+                direction:
+                  prev.column === column.uid && prev.direction === "ascending"
+                    ? "descending"
+                    : "ascending",
+              }));
+            }}
+          />
+        )}
+      </div>
+    );
   };
 
   return (
     <>
-      <Button onPress={onOpen} color="primary">
-        Add Subject
-      </Button>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        placement="top-center"
-        className="max-w-[40vw] max-h-[80vh] overflow-y-auto"
-      >
-        <ModalContent>
-          <ModalHeader>Subject Registration</ModalHeader>
-          <ModalBody>
-            <form
-              onSubmit={handleSubmit}
-              className="w-full bg-white p-2 grid grid-cols-2 gap-4"
-            >
-              <Input
-                type="text"
-                variant="bordered"
-                label="Subject ID"
-                value={subjectId}
-                onChange={(e) => setSubjectId(e.target.value)}
-                required
-                className="col-span-1 w-full"
-              />
-              <Input
-                type="text"
-                variant="bordered"
-                label="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="col-span-1 w-full"
-              />
-              <Input
-                type="text"
-                variant="bordered"
-                label="Class"
-                value={classId}
-                onChange={(e) => setClassId(e.target.value)}
-                required
-                className="col-span-1 w-full"
-              />
-              <Input
-                type="text"
-                variant="bordered"
-                label="Teacher Name"
-                value={teacherId}
-                onChange={(e) => setTeacherId(e.target.value)}
-                required
-                className="col-span-1 w-full"
-              />
-              <div className="col-span-2">
-                <h3 className="text-lg font-bold mb-2">Content</h3>
-                {content.map((item, index) => (
-                  <div key={index} className="flex gap-4 mb-2">
-                    <Input
-                      type="text"
-                      variant="bordered"
-                      label="Title"
-                      value={item}
-                      onChange={(e) => handleContentChange(index, e)}
-                      required
-                      className="w-full"
-                    />
-                    <Button
-                      color="error"
-                      auto
-                      onClick={() => handleRemoveContent(index)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
-                <Button color="default" auto onClick={handleAddContent}>
-                  Add Content
-                </Button>
-              </div>
-              <Button color="default" className="col-span-1" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button color="primary" className="col-span-1" type="submit">
-                Register
-              </Button>
-            </form>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-
-      {/* Table to display registered subjects */}
-      <Table aria-label="Registered Subjects">
-        <TableHeader>
-          <TableColumn>Subject ID</TableColumn>
-          <TableColumn>Name</TableColumn>
-          <TableColumn>Class</TableColumn>
-          <TableColumn>Teacher</TableColumn>
-          <TableColumn>Content</TableColumn>
+      <div className="flex justify-between my-4 gap-3 items-end">
+        <Input
+          isClearable
+          classNames={{ base: "w-full sm:max-w-[44%]", inputWrapper: "border-1" }}
+          placeholder="Search by name, class, or teacher..."
+          size="sm"
+          startContent={<SearchIcon className="text-default-300" />}
+          value={filterValue}
+          variant="bordered"
+          onClear={() => setFilterValue("")}
+          onChange={(e) => setFilterValue(e.target.value)}
+        />
+        <div className="gap-4 items-center flex">
+          <Button
+            color="primary"
+            startContent="Add New"
+            size="sm"
+            auto
+            onClick={() => {
+              setModalMode("add");
+              setSelectedSubject(null);
+              setModalOpen(true);
+            }}
+          >
+            <PlusIcon /> Add Subject
+          </Button>
+        </div>
+      </div>
+      <Table aria-label="Subject Table" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+        <TableHeader columns={headerColumns}>
+          {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
         </TableHeader>
-        <TableBody>
-          {registeredSubjects.map((subject, index) => (
-            <TableRow key={index}>
-              <TableCell>{subject._id}</TableCell>
-              <TableCell>{subject.name}</TableCell>
-              <TableCell>{subject.class}</TableCell>
-              <TableCell>{subject.teacher}</TableCell>
-              <TableCell>{subject.content.join(', ')}</TableCell>
+        <TableBody items={sortedItems}>
+          {(item) => (
+            <TableRow key={item._id}>
+              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
+      <Pagination total={pages} initialPage={1} onChange={(page) => setPage(page)} className="mt-4" />
+      <SubjectModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        mode={modalMode}
+        subjectData={selectedSubject}
+        onSubmit={fetchData}
+        teachers={teachers}
+      />
     </>
   );
 }

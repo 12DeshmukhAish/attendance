@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Subject from "@/models/subject";
 
-// POST route to create a new subject
-// POST route to create a new subject
 export async function POST(req) {
     try {
         await connectMongoDB();
@@ -27,14 +25,14 @@ export async function POST(req) {
     }
 }
 
-
-// PUT route to update an existing subject
 export async function PUT(req) {
     try {
         await connectMongoDB();
+        const { searchParams } = new URL(req.url);
+        const _id = searchParams.get("_id");
         const data = await req.json();
-        const { subjectId, name, class: classId, teacher } = data;
-        const existingSubject = await Subject.findByIdAndUpdate(subjectId, {
+        const { name, class: classId, teacher } = data;
+        const existingSubject = await Subject.findByIdAndUpdate( _id, {
             name,
             class: classId,
             teacher

@@ -62,7 +62,6 @@ export async function PUT(req) {
             { $unset: { class: "" } }
         );
 
-        // Add class reference to new students
         await Student.updateMany(
             { _id: { $in: students } },
             { $set: { class: existingClass._id } }
@@ -76,7 +75,6 @@ export async function PUT(req) {
     }
 }
 
-// GET route to fetch all classes or a single class by _id
 export async function GET(req) {
     try {
         await connectMongoDB();
