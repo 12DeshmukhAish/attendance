@@ -30,6 +30,11 @@ const sidebarItems = [
     icon: TbReportAnalytics,
   },
   {
+    name: "Manage Subjects",
+    href: "/admin/subject",
+    icon: TbReportAnalytics,
+  },
+  {
     name: "Profile",
     href: "/admin/profile",
     icon: MdPortrait,
