@@ -3,11 +3,12 @@ import { connectMongoDB } from "@/lib/connectDb";
 import Subject from "@/models/subject";
 
 // POST route to create a new subject
+// POST route to create a new subject
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id,name, class: classId, teacher ,content } = data;
+        const { _id, name, class: classId, teacher, content } = data;
         console.log(data);
         const newSubject = new Subject({
             _id,
@@ -25,6 +26,7 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Register" }, { status: 500 });
     }
 }
+
 
 // PUT route to update an existing subject
 export async function PUT(req) {
