@@ -35,6 +35,16 @@ const sidebarItems = [
     icon: TbReportAnalytics,
   },
   {
+    name: "Take Attendance",
+    href: "/admin/takeattendance",
+    icon: TbReportAnalytics,
+  },
+  {
+    name: "Show Attendance",
+    href: "/admin/showattendance",
+    icon: TbReportAnalytics,
+  },
+  {
     name: "Profile",
     href: "/admin/profile",
     icon: MdPortrait,
