@@ -7,12 +7,14 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { name, class: classId, teacher } = data;
-
+        const { _id,name, class: classId, teacher ,content } = data;
+        console.log(data);
         const newSubject = new Subject({
+            _id,
             name,
             class: classId,
-            teacher
+            teacher,
+            content
         });
 
         await newSubject.save();
@@ -29,8 +31,8 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, name, class: classId, teacher } = data;
-        const existingSubject = await Subject.findByIdAndUpdate(_id, {
+        const { subjectId, name, class: classId, teacher } = data;
+        const existingSubject = await Subject.findByIdAndUpdate(subjectId, {
             name,
             class: classId,
             teacher

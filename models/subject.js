@@ -1,18 +1,14 @@
 import mongoose from 'mongoose';
 
 const SubjectSchema = new mongoose.Schema({
-  _id: mongoose.Schema.Types.ObjectId,
+  _id:String,
   name: { type: String, required: true },
-  class: { type: mongoose.Schema.Types.ObjectId, ref: 'Class', required: true },
-  teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Faculty', required: true },
-  content: [
-    {
-      title: { type: String, required: true }
-      
-    }
-  ]
+  class: { type:String },
+  teacher: { type: String},
+  content: [String]
 }, {
   timestamps: true, 
 });
 
-export default mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);
+const Subject = mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);
+export default Subject;

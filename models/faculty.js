@@ -20,14 +20,21 @@ const FacultySchema = new mongoose.Schema({
     type: [String], 
     required: true 
   },
-  
+  password:{
+    type:String
+  },
+  isAdmin:{
+    type:Boolean
+  },
   email: { 
     type: String,
     required: true, 
     unique: true },
 }, 
+  
 {
   timestamps: true, 
 });
 
-export default mongoose.models.Faculty || mongoose.model('Faculty', FacultySchema);
+const Faculty= mongoose.models.Faculty || mongoose.model('Faculty', FacultySchema);
+export default Faculty;

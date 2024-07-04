@@ -14,18 +14,10 @@ export default function LoginComponent() {
   const router = useRouter();
   const { data: session } = useSession();
   useEffect(() => {
-    if (session?.user?.role === "user") {
-      router.replace("/user");
+    if (session?.user?.role) {
+      router.replace(`/${session.user.role}`);      
     }
-    if (session?.user?.role === "faculty") {
-      router.replace("/faculty");      
-    }
-    if (session?.user?.role === "student") {
-      router.replace("/student");      
-    }
-    if (session?.user?.role === "admin") {
-      router.replace("/admin");      
-    }
+
   }, [session]);
 
   const handleSubmit = async (e) => {
@@ -52,7 +44,6 @@ export default function LoginComponent() {
     setPassword('');
   };
 
-  // Return JSX for the LoginComponent
   return (
     <div className="flex justify-center items-center h-screen">
       <form onSubmit={handleSubmit} className="w-full max-w-md">
@@ -94,7 +85,6 @@ export default function LoginComponent() {
                     stroke="currentColor"
                     className="w-6 h-6"
                   >
-                    {/* Eye slash icon */}
                   </svg>
                 )}
               </button>
@@ -113,12 +103,11 @@ export default function LoginComponent() {
             </Button>
           </div>
           <div className="mt-2">
-            <p className="text-sm">
-              Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-blue-500">
-                Register
-              </Link>
-            </p>
+          <p className="text-sm">
+             <Link href="/reset_password" className="text-blue-500">
+               reset password
+             </Link>
+           </p>
           </div>
         </div>
       </form>

@@ -3,6 +3,12 @@ import mongoose from 'mongoose';
 
 const StudentSchema = new mongoose.Schema(
     {
+        _id: 
+        { 
+          type: String, 
+          required: true, 
+          unique: true 
+        },
     rollNumber: {
          type: String, 
          required: true,
@@ -16,8 +22,12 @@ const StudentSchema = new mongoose.Schema(
         type: Number,
         required: true
     },
+    password:{
+        type:String
+      },
 
 }, {
     timestamps: true,
 });
-export default mongoose.models.Student || mongoose.model('Student', StudentSchema);
+const Student = mongoose.models.Student || mongoose.model('Student', StudentSchema);
+export default Student;

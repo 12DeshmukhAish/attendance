@@ -1,8 +1,10 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from "next-auth/providers/credentials";
-import { connectMongoDB } from "@/lib/connectDb"
+import { connectMongoDB } from "@/lib/connectDb";
+import Faculty from '@/models/faculty';
+import Student from '@/models/student'; // Assuming you have a Student model
 
-export const authOptions = ({
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -10,43 +12,34 @@ export const authOptions = ({
       async authorize(credentials) {
         try {
           await connectMongoDB();
-          const Id = credentials.userId;
+          const userId = credentials.userId;
           const password = credentials.password;
+          const faculty = await Faculty.findOne({ _id: userId });
+          const student = await Student.findOne({ _id: userId }) 
           let userRole;
           let id;
-          let classes;
-          let departmentName; 
-          console.log(credentials);
-          const department = await Department.findOne({ _id: Id });
+          let departmentName;
 
-          console.log(department);
-          if (department._id.startsWith("S")) {
-            userRole = "superadmin";
-            id = department._id;
-            classes = department.classes;
-            departmentName = department.department; 
-          } else if (department) {
-            userRole = "department";
-            id = department._id;
-            classes = department.classes;
-            departmentName = department.department; // Extract department name
-            console.log(classes);
-          }
-          else {
+          if (faculty) {
+            id = faculty._id;
+            departmentName = faculty.department;
+            userRole = faculty.isAdmin ? "admin" : "faculty";
+          } else if (student) {
+            id = student._id;
+            departmentName = student.department;
+            userRole = "student";
+          } else {
             return null;
           }
-      
-          const isVerified = (department && department.password === password) ||(admin && admin.password === password);
-          console.log(isVerified);
+
+          const isVerified = (faculty && faculty.password === password) || (student && student.password === password);
           if (isVerified) {
             const userWithRole = {
-              ...department?.toObject(), // Optional chaining to prevent errors if user is null
+              id,
               role: userRole,
-              id: id,
-              classes: classes,
-              department: departmentName // Add department name to user object
+              department: departmentName,
             };
-            return Promise.resolve(userWithRole);
+            return userWithRole;
           } else {
             return null; // Return null if credentials are invalid
           }
@@ -57,20 +50,13 @@ export const authOptions = ({
       }
     }),
   ],
-  session: {
-    sessionCallback: async (session, user) => {
-      session.user = { ...user, role: user.role, id: user.id, classes: user.classes, department: user.department }; // Add department name to the session
-      return Promise.resolve(session);
-    },
-  },
   callbacks: {
     async jwt({ token, account, user }) {
       if (account) {
         token.accessToken = account.access_token;
         token.role = user.role;
         token.id = user.id;
-        token.classes = user.classes;
-        token.department = user.department; // Add department name to the token
+        token.department = user.department;
       }
       return token;
     },
@@ -78,8 +64,7 @@ export const authOptions = ({
       session.user.accessToken = token.accessToken;
       session.user.role = token.role;
       session.user.id = token.id;
-      session.user.classes = token.classes;
-      session.user.department = token.department; // Add department name to the session
+      session.user.department = token.department;
       return session;
     }
   },
@@ -87,7 +72,7 @@ export const authOptions = ({
   pages: {
     signIn: "/", // Customize the sign-in page route as needed
   },
-});
+};
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
