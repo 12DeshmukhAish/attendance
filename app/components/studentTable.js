@@ -28,13 +28,14 @@ import StudentModal from "./studentModal";
 import * as XLSX from "xlsx";
 
 const columns = [
+  { uid: "_id", name: "ID", sortable: true },
   { uid: "rollNumber", name: "Roll Number", sortable: true },
   { uid: "name", name: "Name", sortable: true },
   { uid: "passOutYear", name: "Pass Out Year", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["rollNumber", "name", "passOutYear", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id","rollNumber", "name", "passOutYear", "actions"];
 
 export default function StudentTable() {
   const [filterValue, setFilterValue] = useState("");
