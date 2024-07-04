@@ -25,6 +25,9 @@ const StudentSchema = new mongoose.Schema(
     password:{
         type:String
       },
+      department: {
+        type: String
+      },
 
 }, {
     timestamps: true,

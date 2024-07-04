@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Input,ModalBody,ModalContent,ModalFooter,ModalHeader } from "@nextui-org/react";
+import { Modal, Button, Input,ModalBody,ModalContent,ModalFooter,ModalHeader, Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
+
+
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -9,8 +11,17 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     rollNumber: "",
     name: "",
     passOutYear: "",
+    department:""
   });
 
+  const departmentOptions = [
+    { key: "Department", label: "Department" },
+    { key: "CSE", label: "CSE" },
+    { key: "ENTC", label: "ENTC" },
+    { key: "Civil", label: "Civil" },
+    { key: "Electrical", label: "Electrical" },
+    { key: "Mechanical", label: "Mechanical" },
+  ];
   useEffect(() => {
     if (mode === "edit" && student) {
       setFormData({
@@ -18,6 +29,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         rollNumber: student.rollNumber,
         name: student.name,
         passOutYear: student.passOutYear,
+        department:student.department
       
       });
     } else {
@@ -26,7 +38,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         rollNumber: "",
         name: "",
         passOutYear: "",
-      });
+        department:""
+  });
     }
   }, [mode, student]);
 
@@ -43,7 +56,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         toast.success("Student added successfully");
         onSubmit();
       } else if (mode === "edit") {
-        response = await axios.put(`/api/student?id=${formData._id}`, formData);
+        response = await axios.put(`/api/student?_id=${formData._id}`, formData);
         console.log("Student updated:", response.data);
         toast.success("Student updated successfully");
       }
@@ -81,13 +94,27 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
             onChange={handleChange}
             required
           />
+          
           <Input
             label="Pass Out Year"
             name="passOutYear"
             value={formData.passOutYear}
             onChange={handleChange}
             required
-          />
+          /> 
+          <Select
+          label="Department"
+          placeholder="Select department"
+          name="department"
+          selectedKeys={[formData.department]}
+          onChange={handleChange}
+        >
+          {departmentOptions.map((department) => (
+            <SelectItem key={department.key} textValue={department.label}>
+              {department.label}
+            </SelectItem>
+          ))}
+        </Select>
         </ModalBody>
         <ModalFooter>
           <Button auto flat color="error" onClick={onClose}>

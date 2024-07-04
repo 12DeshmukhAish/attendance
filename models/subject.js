@@ -5,6 +5,9 @@ const SubjectSchema = new mongoose.Schema({
   name: { type: String, required: true },
   class: { type:String },
   teacher: { type: String},
+  department: {
+    type: String
+  },
   content: [String]
 }, {
   timestamps: true, 

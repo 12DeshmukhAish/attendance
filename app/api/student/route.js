@@ -6,13 +6,14 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const {_id, rollNumber, name, passOutYear } = data;
+        const {_id, rollNumber, name, passOutYear,department } = data;
 
         const newStudent = new Student({
             _id,
             rollNumber,
             name,
-            passOutYear
+            passOutYear,
+            department
         });
         await newStudent.save();
         console.log("Student Registered Successfully", newStudent);
@@ -27,11 +28,12 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, passOutYear } = data;
+        const { _id, rollNumber, name, passOutYear,department } = data;
         const existingStudent = await Student.findByIdAndUpdate(_id, {
             rollNumber,
             name,
-            passOutYear
+            passOutYear,
+            department
         }, { new: true });
 
         if (!existingStudent) {
@@ -45,7 +47,6 @@ export async function PUT(req) {
     }
 }
 
-// GET route to fetch students based on query parameters
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -54,6 +55,7 @@ export async function GET(req) {
         const rollNumber = searchParams.get("rollNumber");
         const name = searchParams.get("name");
         const passOutYear = searchParams.get("passOutYear");
+        const department = searchParams.get("department");
 
         let filter = {};
 
@@ -69,7 +71,9 @@ export async function GET(req) {
         if (passOutYear) {
             filter.passOutYear = passOutYear;
         }
-
+        if (department) {
+            filter.department = department;
+        }
         const students = await Student.find(filter);
 
         if (students.length === 0) {

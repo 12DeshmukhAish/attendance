@@ -28,14 +28,14 @@ import FacultyModal from "./facultyModal";
 import * as XLSX from "xlsx";
 
 const columns = [
-  { uid: "facultyId", name: "Faculty ID", sortable: true },
+  { uid: "_id", name: "Faculty ID", sortable: true },
   { uid: "name", name: "Name", sortable: true },
   { uid: "department", name: "Department", sortable: true },
   { uid: "email", name: "Email", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["facultyId", "name", "department", "email", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "name", "department", "email", "actions"];
 
 export default function FacultyTable() {
   const [filterValue, setFilterValue] = useState("");
