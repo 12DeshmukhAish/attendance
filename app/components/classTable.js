@@ -27,10 +27,11 @@ const columns = [
   { uid: "name", name: "Class Name", sortable: true },
   { uid: "teacher", name: "Class Coordinator" },
   { uid: "students", name: "Students" },
+  { uid: "passOutYear", name: "Pass Out Year" },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "teacher", "students", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["name", "teacher","students", "passOutYear", "actions"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -117,8 +118,8 @@ export default function ClassTable() {
     if (hasSearchFilter) {
       filteredClasses = filteredClasses.filter((cls) => {
         return (
-          (cls.className && cls.className.toLowerCase().includes(filterValue.toLowerCase())) ||
-          (cls.classCoordinator && teachers.find(teacher => teacher._id === cls.classCoordinator)?.name.toLowerCase().includes(filterValue.toLowerCase()))
+          (cls.name && cls.name.toLowerCase().includes(filterValue.toLowerCase())) ||
+          (cls.teacher && teachers.find(teacher => teacher._id === cls.teacher)?.name.toLowerCase().includes(filterValue.toLowerCase()))
         );
       });
     }
@@ -169,18 +170,14 @@ export default function ClassTable() {
             </Tooltip>
           </div>
         );
-      case "classCoordinator":
+      case "teacher":
         return (
           <span>{teachers.find(teacher => teacher._id === cellValue)?.name}</span>
         );
       case "students":
         return (
           <span>
-            {cellValue
-              .map((studentId) =>
-                students.find(student => student._id === studentId)?.name
-              )
-              .join(", ")}
+            {cellValue.length + 1}
           </span>
         );
       default:
@@ -212,24 +209,38 @@ export default function ClassTable() {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between my-4 gap-3 items-end">
         <Input
-          clearable
-          placeholder="Search..."
-          contentLeft={<SearchIcon />}
+          isClearable
+          classNames={{
+            base: "w-full sm:max-w-[44%]",
+            inputWrapper: "border-1",
+          }}
+          placeholder="Search by name, email, or faculty ID..."
+          size="sm"
+          startContent={<SearchIcon className="text-default-300" />}
           value={filterValue}
+          variant="bordered"
+          onClear={() => setFilterValue("")}
           onChange={(e) => setFilterValue(e.target.value)}
         />
-        <Button color="primary" auto onClick={() => {
-          setModalMode("add");
-          setSelectedClass(null);
-          setModalOpen(true);
-        }}>
-          <PlusIcon /> Add Class
-        </Button>
-        <Button color="secondary" auto onClick={downloadExcel}>
-          Export to Excel
-        </Button>
+        <div className="gap-4 items-center flex">
+          <Button color="primary"
+            startContent="Add New"
+            size="sm"
+            auto
+            onClick={() => {
+              setModalMode("add");
+              setSelectedClass(null);
+              setModalOpen(true);
+
+            }}>
+            <PlusIcon /> Add Class
+          </Button>
+          <Button color="primary" variant="ghost" size="sm" auto onClick={downloadExcel}>
+            Download
+          </Button>
+        </div>
       </div>
       <Table
         aria-label="Class Table"

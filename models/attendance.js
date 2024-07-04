@@ -32,14 +32,13 @@ const AttendanceSchema = new mongoose.Schema({
     type: [AttendanceRecordSchema],
     validate: {
       validator: function(records) {
-        // Ensure that at least one attendance record is provided
         return records.length > 0;
       },
       message: 'At least one attendance record is required.',
     },
   },
 }, {
-  timestamps: true, // Adds createdAt and updatedAt fields
+  timestamps: true,
 });
 
 export default mongoose.models.Attendance || mongoose.model('Attendance', AttendanceSchema);

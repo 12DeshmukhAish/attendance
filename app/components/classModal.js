@@ -3,26 +3,42 @@ import { Modal, Button, Input, Select, SelectItem, ModalBody, ModalContent, Moda
 import { toast } from "sonner";
 import axios from "axios";
 
-const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers, students }) => {
+const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) => {
   const [formData, setFormData] = useState({
+    _id:"",
     className: "",
     classCoordinator: "",
-    students: []
+    passOutYear: ""
   });
+  const [passOutYears, setPassOutYears] = useState([]);
+
+  useEffect(() => {
+    const fetchPassOutYears = async () => {
+      try {
+        const response = await axios.get("/api/passOutYears");
+        setPassOutYears(response.data);
+      } catch (error) {
+        console.error("Error fetching pass-out years:", error);
+      }
+    };
+
+    fetchPassOutYears();
+  }, []);
 
   useEffect(() => {
     if (mode === "edit" && classData) {
       setFormData({
-        className: classData.className,
-        classCoordinator: classData.classCoordinator,
-        students: classData.students,
-        _id: classData._id
+        _id:classData._id,
+        className: classData.name,
+        classCoordinator: classData.teacher,
+        passOutYear: classData.passOutYear
       });
     } else {
       setFormData({
+        _id:"",
         className: "",
         classCoordinator: "",
-        students: []
+        passOutYear: ""
       });
     }
   }, [mode, classData]);
@@ -31,27 +47,15 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers, stud
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-
-  const handleStudentsChange = (keys) => {
-    setFormData({ ...formData, students: Array.from(keys, key => key.toString()) });
-  };
-
   const handleSubmit = async () => {
     try {
       let response;
-      console.log(formData.classCoordinator);
-      const sanitizedFormData = JSON.parse(JSON.stringify({
-        className: formData.className,
-        classCoordinator: formData.classCoordinator,
-        students: formData.students,
-      }));
+      const sanitizedFormData = JSON.parse(JSON.stringify(formData));
       if (mode === "add") {
         response = await axios.post("/api/classes", sanitizedFormData);
-        console.log("Class added:", response.data);
         toast.success("Class added successfully");
       } else if (mode === "edit") {
-        response = await axios.put(`/api/classes`, { ...sanitizedFormData, _id: formData._id });
-        console.log("Class updated:", response.data);
+        response = await axios.put(`/api/classes?_id=${formData._id}`, { ...sanitizedFormData, _id: formData._id });
         toast.success("Class updated successfully");
       }
       onSubmit();
@@ -82,22 +86,21 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers, stud
             onChange={handleChange}
           >
             {teachers.map((teacher) => (
-              <SelectItem key={teacher._id}  textValue={teacher.name}>
+              <SelectItem key={teacher._id} textValue={teacher.name}>
                 {teacher.name}
               </SelectItem>
             ))}
           </Select>
           <Select
-            label="Students"
-            placeholder="Select Students"
-            name="students"
-            selectionMode="multiple"
-            selectedKeys={formData.students}
-            onChange={handleStudentsChange}
+            label="Pass-out Year"
+            placeholder="Select Pass-out Year"
+            name="passOutYear"
+            selectedKeys={[formData.passOutYear]}
+            onChange={handleChange}
           >
-            {students.map((student) => (
-              <SelectItem key={student._id} textValue={`${student.name} - ${student.passOutYear}`}>
-                {student.name} - {student.passOutYear}
+            {passOutYears.map((year) => (
+              <SelectItem key={year} textValue={year}>
+                {year}
               </SelectItem>
             ))}
           </Select>
