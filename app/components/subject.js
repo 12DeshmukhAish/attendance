@@ -23,13 +23,14 @@ import SubjectModal from './subjectModal';
 import * as XLSX from 'xlsx';
 
 const columns = [
+  { uid: "_id", name: "ID", sortable: true },
   { uid: "name", name: "Subject Name", sortable: true },
   { uid: "class", name: "Class" },
   { uid: "teacher", name: "Teacher" },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "class", "teacher", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id","name", "class", "teacher", "actions"];
 
 export default function SubjectTable() {
   const [filterValue, setFilterValue] = useState("");
