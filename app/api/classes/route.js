@@ -57,7 +57,7 @@ export async function PUT(req) {
         }
 
         const previousStudentIds = existingClass.students;
-        existingClass._id = classId;
+       
         existingClass.name = className;
         existingClass.students = students;
         existingClass.teacher = classCoordinator;

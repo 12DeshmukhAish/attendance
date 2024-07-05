@@ -29,7 +29,8 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, facultyId, name, department, email } = data;
+        const { _id, facultyId, name, department, email,password } = data;
+        console.log(data);        
         const existingFaculty = await Faculty.findByIdAndUpdate(_id, {
             facultyId,
             name,
