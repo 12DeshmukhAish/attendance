@@ -6,14 +6,15 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const {_id, rollNumber, name, passOutYear,department } = data;
+        const {_id, rollNumber, name, passOutYear,department,password } = data;
 
         const newStudent = new Student({
             _id,
             rollNumber,
             name,
             passOutYear,
-            department
+            department,
+            password
         });
         await newStudent.save();
         console.log("Student Registered Successfully", newStudent);
@@ -28,12 +29,13 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, passOutYear,department } = data;
+        const { _id, rollNumber, name, passOutYear,department,password } = data;
         const existingStudent = await Student.findByIdAndUpdate(_id, {
             rollNumber,
             name,
             passOutYear,
-            department
+            department,
+            password
         }, { new: true });
 
         if (!existingStudent) {
@@ -56,6 +58,7 @@ export async function GET(req) {
         const name = searchParams.get("name");
         const passOutYear = searchParams.get("passOutYear");
         const department = searchParams.get("department");
+        const password = searchParams.get("password");
 
         let filter = {};
 

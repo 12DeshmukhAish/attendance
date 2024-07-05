@@ -7,7 +7,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     facultyId: "",
     name: "",
     department: "",
-    email: ""
+    email: "",
+    password:""
   });
 
   useEffect(() => {
@@ -17,7 +18,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         name: faculty.name,
         department: faculty.department,
         email: faculty.email,
-        _id:faculty._id
+        _id:faculty._id,
+        password:faculty.password
       });
     } else {
       setFormData({
@@ -25,6 +27,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         name: "",
         department: "",
         email: "",
+        password:""
       });
     }
   }, [mode, faculty]);
@@ -85,6 +88,13 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
           label="Email"
           name="email"
           value={formData.email}
+          onChange={handleChange}
+          required
+        />
+         <Input
+          label="Password"
+          name="password"
+          value={formData.password}
           onChange={handleChange}
           required
         />

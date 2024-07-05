@@ -53,6 +53,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
 
   const departmentOptions = [
     { key: "Department", label: "Department" },
+    { key: "FE", label: "First Year" },
     { key: "CSE", label: "CSE" },
     { key: "ENTC", label: "ENTC" },
     { key: "Civil", label: "Civil" },
@@ -84,6 +85,13 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>
         <ModalBody>
+        <Input
+            label="Class ID"
+            name="_id"
+            value={formData._id}
+            onChange={handleChange}
+            required
+          />
           <Input
             label="Class Name"
             name="className"

@@ -7,8 +7,9 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { className, passOutYear, classCoordinator, department } = data;
-        console.log(data);
+
+        const { _id,className, passOutYear, classCoordinator, department } = data;
+
 
         let studentFilter = { passOutYear };
         if (department !== "FE") {
@@ -18,6 +19,7 @@ export async function POST(req) {
         const studentIds = await Student.find(studentFilter, "_id").lean();
         console.log(studentIds);
         const newClass = new Classes({
+            _id:classId,
             name: className,
             students: studentIds.map(student => student._id),
             teacher: classCoordinator,
@@ -55,7 +57,7 @@ export async function PUT(req) {
         }
 
         const previousStudentIds = existingClass.students;
-
+        existingClass._id = classId;
         existingClass.name = className;
         existingClass.students = students;
         existingClass.teacher = classCoordinator;

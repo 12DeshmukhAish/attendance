@@ -24,6 +24,7 @@ import ClassModal from "./classModal";
 import * as XLSX from "xlsx";
 
 const columns = [
+  { uid: "_id", name: "Class ID", sortable: true },
   { uid: "name", name: "Class Name", sortable: true },
   { uid: "teacher", name: "Class Coordinator" },
   { uid: "students", name: "Students" },
@@ -32,7 +33,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "teacher","students", "passOutYear", "department","actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id","name", "teacher","students", "passOutYear", "department","actions"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
