@@ -54,7 +54,7 @@ export async function GET(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
-
+console.log(_id);
         if (_id) {
             const subject = await Subject.findById(_id);
             if (!subject) {

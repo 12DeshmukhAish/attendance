@@ -43,7 +43,7 @@ export default function FacultyTable() {
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortDescriptor, setSortDescriptor] = useState({
-    column: "name",
+    column: "_id",
     direction: "ascending",
   });
   const [page, setPage] = useState(1);

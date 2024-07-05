@@ -8,9 +8,15 @@ export async function POST(req) {
         await connectMongoDB();
         const data = await req.json();
         const { className, passOutYear, classCoordinator, department } = data;
+        console.log(data);
 
-        const studentIds = await Student.find({ passOutYear }, "_id").lean();
+        let studentFilter = { passOutYear };
+        if (department !== "FE") {
+            studentFilter.department = department;
+        }
 
+        const studentIds = await Student.find(studentFilter, "_id").lean();
+        console.log(studentIds);
         const newClass = new Classes({
             name: className,
             students: studentIds.map(student => student._id),
@@ -56,18 +62,28 @@ export async function PUT(req) {
         existingClass.passOutYear = passOutYear;
         existingClass.department = department;
 
+        // If department changed, find new students based on the new department and passOutYear
+        if (existingClass.department !== department) {
+            let studentFilter = { passOutYear };
+            if (department !== "FE") {
+                studentFilter.department = department;
+            }
+            const newStudentIds = await Student.find(studentFilter, "_id").lean();
+            existingClass.students = newStudentIds.map(student => student._id);
+
+            // Update students to reference the new class
+            await Student.updateMany(
+                { _id: { $in: previousStudentIds } },
+                { $unset: { class: "" } }
+            );
+
+            await Student.updateMany(
+                { _id: { $in: newStudentIds.map(student => student._id) } },
+                { $set: { class: existingClass._id } }
+            );
+        }
+
         await existingClass.save();
-
-        // Remove class reference from previous students
-        await Student.updateMany(
-            { _id: { $in: previousStudentIds } },
-            { $unset: { class: "" } }
-        );
-
-        await Student.updateMany(
-            { _id: { $in: students } },
-            { $set: { class: existingClass._id } }
-        );
 
         console.log("Class Updated Successfully", existingClass);
         return NextResponse.json({ message: "Class Updated Successfully", class: existingClass }, { status: 200 });
