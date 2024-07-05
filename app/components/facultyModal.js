@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Input,ModalBody,ModalContent,ModalHeader,ModalFooter } from "@nextui-org/react";
+import { Modal, Button, Input, ModalBody, ModalContent, ModalHeader, ModalFooter } from "@nextui-org/react";
+import { Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
+
 const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [formData, setFormData] = useState({
     facultyId: "",
     name: "",
     department: "",
     email: "",
-    password:""
+    password: ""
   });
 
   useEffect(() => {
@@ -18,8 +20,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         name: faculty.name,
         department: faculty.department,
         email: faculty.email,
-        _id:faculty._id,
-        password:faculty.password
+        password: faculty.password,
+        _id: faculty._id,
       });
     } else {
       setFormData({
@@ -27,21 +29,30 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         name: "",
         department: "",
         email: "",
-        password:""
+        password: ""
       });
     }
   }, [mode, faculty]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async() => {
-    
-      try {
-        let response;
-      if (mode === "add") {          
-         response = await axios.post("/api/faculty", formData);
+  const departmentOptions = [
+    { key: "FE", label: "First Year" },
+    { key: "CSE", label: "CSE" },
+    { key: "ENTC", label: "ENTC" },
+    { key: "Civil", label: "Civil" },
+    { key: "Electrical", label: "Electrical" },
+    { key: "Mechanical", label: "Mechanical" },
+  ];
+
+  const handleSubmit = async () => {
+    try {
+      let response;
+      if (mode === "add") {
+        response = await axios.post("/api/faculty", formData);
         console.log("Faculty added:", response.data);
         toast.success('Faculty added successfully');
         onSubmit();
@@ -50,74 +61,79 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         console.log("Faculty updated:", response.data);
         toast.success('Faculty updated successfully');
       }
-      
       onClose();
     } catch (error) {
       console.error("Error:", error);
-      toast.error('Error occurred while saving student data');
+      toast.error('Error occurred while saving faculty data');
     }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-    <ModalContent>
-      <ModalHeader>{mode === "add" ? "Add Faculty" : "Edit Faculty"}</ModalHeader>
-      <ModalBody>
-        <Input
-          label="Faculty ID"
-          name="facultyId"
-          value={formData.facultyId}
-          onChange={handleChange}
-          required
-          disabled={mode!="add"}
-           variant="bordered"
+      <ModalContent>
+        <ModalHeader>{mode === "add" ? "Add Faculty" : "Edit Faculty"}</ModalHeader>
+        <ModalBody>
+          <Input
+            label="Faculty ID"
+            name="facultyId"
+            value={formData.facultyId}
+            onChange={handleChange}
+            required
+            disabled={mode !== "add"}
+            variant="bordered"
             size="sm"
-        />
-        <Input
-          label="Name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-           variant="bordered"
+          />
+          <Input
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            variant="bordered"
             size="sm"
-        />
-        <Input
-          label="Department"
-          name="department"
-          value={formData.department}
-          onChange={handleChange}
-          required
-           variant="bordered"
+          />
+          <Select
+            label="Department"
+            placeholder="Select department"
+            name="department"
+            selectedKeys={[formData.department]}
+            onChange={handleChange}
+            variant="bordered"
             size="sm"
-        />
-        <Input
-          label="Email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-           variant="bordered"
+          >
+            {departmentOptions.map((department) => (
+              <SelectItem key={department.key} textValue={department.label}>
+                {department.label}
+              </SelectItem>
+            ))}
+          </Select>
+          <Input
+            label="Email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            variant="bordered"
             size="sm"
-        />
-         <Input
-          label="Password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-           variant="bordered"
+          />
+          <Input
+            label="Password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            variant="bordered"
             size="sm"
-        />
-      </ModalBody>
-      <ModalFooter>
-        <Button auto flat color="error" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button auto onClick={handleSubmit}>
-          {mode === "add" ? "Add" : "Update"}
-        </Button>
-      </ModalFooter>
+          />
+        </ModalBody>
+        <ModalFooter>
+          <Button auto flat color="error" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button auto onClick={handleSubmit}>
+            {mode === "add" ? "Add" : "Update"}
+          </Button>
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );
