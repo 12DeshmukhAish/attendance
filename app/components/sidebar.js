@@ -4,6 +4,7 @@ import { RxDashboard, RxExit } from "react-icons/rx";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdPortrait } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 import { MdOutlineManageAccounts } from "react-icons/md";
+import { AiOutlineSchedule } from "react-icons/ai";
 import Link from "next/link";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
@@ -42,7 +43,7 @@ const sidebarItems = [
   {
     name: "Show Attendance",
     href: "/admin/showattendance",
-    icon: TbReportAnalytics,
+    icon: AiOutlineSchedule ,
   },
   {
     name: "Profile",
