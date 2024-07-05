@@ -97,7 +97,7 @@ const Sidebar = () => {
             );
           })}
            <button onClick={handleSignOut} color="primary" width="30"  >
-           <RxExit className="w-5 h-5 ml-3 my-2 " />
+           <RxExit className="w-5 h-5 ml-3 my-2 text-slate-900" />
               </button>
         </ul>
       </aside>

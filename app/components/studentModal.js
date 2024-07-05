@@ -23,6 +23,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     { key: "Civil", label: "Civil" },
     { key: "Electrical", label: "Electrical" },
     { key: "Mechanical", label: "Mechanical" },
+    { key: "FE", label: "First Year" },
   ];
   useEffect(() => {
     if (mode === "edit" && student) {

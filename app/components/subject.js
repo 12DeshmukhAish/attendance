@@ -27,10 +27,12 @@ const columns = [
   { uid: "name", name: "Subject Name", sortable: true },
   { uid: "class", name: "Class" },
   { uid: "teacher", name: "Teacher" },
+  { uid: "department", name: "Department" },
+  { uid: "subType", name: "Type" },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id","name", "class", "teacher", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id","name", "class", "teacher", "subType","actions"];
 
 export default function SubjectTable() {
   const [filterValue, setFilterValue] = useState("");

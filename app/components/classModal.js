@@ -59,6 +59,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     { key: "Civil", label: "Civil" },
     { key: "Electrical", label: "Electrical" },
     { key: "Mechanical", label: "Mechanical" },
+    { key: "FE", label: "First Year" },
   ];
   const handleSubmit = async () => {
     try {

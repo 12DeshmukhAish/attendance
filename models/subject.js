@@ -2,11 +2,25 @@ import mongoose from 'mongoose';
 
 const SubjectSchema = new mongoose.Schema({
   _id:String,
-  name: { type: String, required: true },
-  class: { type:String },
-  teacher: { type: String},
+  name: {
+     type: String, 
+     required: true 
+    },
+  class: 
+  { 
+    type:String 
+  },
+  teacher: 
+  { 
+    type: String
+
+  },
   department: {
     type: String
+  },
+  
+  subType:{
+    type:String
   },
   content: [String]
 }, {
