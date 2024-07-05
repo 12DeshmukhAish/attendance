@@ -17,9 +17,9 @@ export async function POST(req) {
         }
 
         const studentIds = await Student.find(studentFilter, "_id").lean();
-        console.log(studentIds);
+       
         const newClass = new Classes({
-            _id:classId,
+            _id,
             name: className,
             students: studentIds.map(student => student._id),
             teacher: classCoordinator,

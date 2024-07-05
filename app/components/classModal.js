@@ -91,6 +91,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             value={formData._id}
             onChange={handleChange}
             required
+            disabled={mode!="add"}
+            variant="bordered"
+            size="sm"
           />
           <Input
             label="Class Name"
@@ -98,6 +101,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             value={formData.className}
             onChange={handleChange}
             required
+            variant="bordered"
+            size="sm"
           />
           <Select
             label="Class Coordinator"
@@ -105,6 +110,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             name="classCoordinator"
             selectedKeys={[formData.classCoordinator]}
             onChange={handleChange}
+            variant="bordered"
+            size="sm"
           >
             {teachers.map((teacher) => (
               <SelectItem key={teacher._id} textValue={teacher.name}>
@@ -114,10 +121,11 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
           </Select>
           <Select
             label="Pass-out Year"
-            placeholder="Select Pass-out Year"
             name="passOutYear"
             selectedKeys={[formData.passOutYear]}
             onChange={handleChange}
+            variant="bordered"
+            size="sm"
           >
             {passOutYears.map((year) => (
               <SelectItem key={year} textValue={year}>
@@ -131,6 +139,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             name="department"
             selectedKeys={[formData.department]}
             onChange={handleChange}
+            variant="bordered"
+            size="sm"
           >
             {departmentOptions.map((department) => (
               <SelectItem key={department.key} textValue={department.label}>

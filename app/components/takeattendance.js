@@ -50,14 +50,27 @@ export default function App() {
     }
   };
 
-  const fetchSubjects = async (classId) => {
+  const fetchSubjects = async () => {
     try {
-      const response = await axios.get(`/api/subjects?classId=${classId}`);
-      setSubjectOptions(response.data.map(sub => ({ key: sub._id, label: sub.name })));
+      const params = {};
+      if (selectedDepartment) {
+        params.department = selectedDepartment;
+      }
+      if (selectedType) {
+        params.subType = selectedType;
+      }
+      if (selectedClass) {
+        params.class = selectedClass;
+      }
+
+      const response = await axios.get('/api/subject', { params });
+      setSubjectOptions(response.data || []);
+      setTeachers(response.data.teachers || []);
     } catch (error) {
-      console.error('Failed to fetch subjects', error);
+      console.error('Error fetching data:', error);
     }
   };
+
 
   const fetchStudents = async (classId) => {
     try {
@@ -118,26 +131,6 @@ export default function App() {
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
-              {selectedSubject}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Subject selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedSubject])}
-            onSelectionChange={(keys) => setSelectedSubject(Array.from(keys)[0])}
-          >
-            {subjectOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
               {selectedType}
             </Button>
           </DropdownTrigger>
@@ -151,6 +144,26 @@ export default function App() {
           >
             {typeOptions.map((option) => (
               <DropdownItem key={option.key}>{option.label}</DropdownItem>
+            ))}
+          </DropdownMenu>
+        </Dropdown>
+
+        <Dropdown>
+          <DropdownTrigger>
+            <Button variant="bordered" className="capitalize">
+              {selectedSubject}
+            </Button>
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="Subject selection"
+            variant="flat"
+            disallowEmptySelection
+            selectionMode="single"
+            selectedKeys={new Set([selectedSubject])}
+            onSelectionChange={(keys) => setSelectedSubject(Array.from(keys)[0])}
+          >
+            {subjectOptions.map((option) => (
+              <DropdownItem key={option._id}>{option.name}</DropdownItem>
             ))}
           </DropdownMenu>
         </Dropdown>
