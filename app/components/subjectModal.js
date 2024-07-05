@@ -138,6 +138,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
               required
+              disabled={mode!="add"}
               className="col-span-1 w-full"
             />
             <Input
