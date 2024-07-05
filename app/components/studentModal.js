@@ -84,6 +84,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
             value={formData._id}
             onChange={handleChange}
             required
+            disabled={mode!="add"}
+             variant="bordered"
+            size="sm"
           />
           <Input
             label="Roll Number"
@@ -91,6 +94,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
             value={formData.rollNumber}
             onChange={handleChange}
             required
+             variant="bordered"
+            size="sm"
           />
           <Input
             label="Name"
@@ -98,6 +103,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
             value={formData.name}
             onChange={handleChange}
             required
+             variant="bordered"
+            size="sm"
           />
           
           <Input
@@ -106,6 +113,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
             value={formData.passOutYear}
             onChange={handleChange}
             required
+             variant="bordered"
+            size="sm"
           /> 
            <Input
             label="Password"
@@ -113,6 +122,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
             value={formData.password}
             onChange={handleChange}
             required
+             variant="bordered"
+            size="sm"
           /> 
           <Select
           label="Department"
@@ -120,6 +131,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
           name="department"
           selectedKeys={[formData.department]}
           onChange={handleChange}
+           variant="bordered"
+            size="sm"
         >
           {departmentOptions.map((department) => (
             <SelectItem key={department.key} textValue={department.label}>

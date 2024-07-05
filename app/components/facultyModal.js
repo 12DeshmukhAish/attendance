@@ -69,6 +69,9 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
           value={formData.facultyId}
           onChange={handleChange}
           required
+          disabled={mode!="add"}
+           variant="bordered"
+            size="sm"
         />
         <Input
           label="Name"
@@ -76,6 +79,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
           value={formData.name}
           onChange={handleChange}
           required
+           variant="bordered"
+            size="sm"
         />
         <Input
           label="Department"
@@ -83,6 +88,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
           value={formData.department}
           onChange={handleChange}
           required
+           variant="bordered"
+            size="sm"
         />
         <Input
           label="Email"
@@ -90,6 +97,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
           value={formData.email}
           onChange={handleChange}
           required
+           variant="bordered"
+            size="sm"
         />
          <Input
           label="Password"
@@ -97,6 +106,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
           value={formData.password}
           onChange={handleChange}
           required
+           variant="bordered"
+            size="sm"
         />
       </ModalBody>
       <ModalFooter>
