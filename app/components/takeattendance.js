@@ -36,6 +36,7 @@ export default function App() {
 
   useEffect(() => {
     if (selectedClass !== "Class") {
+      console.log(selectedClass);
       fetchSubjects(selectedClass);
       fetchStudents(selectedClass);
     }
@@ -56,7 +57,7 @@ export default function App() {
       if (selectedDepartment) {
         params.department = selectedDepartment;
       }
-      if (selectedType) {
+      if (selectedType!=="Type") {
         params.subType = selectedType;
       }
       if (selectedClass) {
@@ -65,16 +66,14 @@ export default function App() {
 
       const response = await axios.get('/api/subject', { params });
       setSubjectOptions(response.data || []);
-      setTeachers(response.data.teachers || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
 
-
   const fetchStudents = async (classId) => {
     try {
-      const response = await axios.get(`/api/students?classId=${classId}`);
+      const response = await axios.get(`/api/fetchstudents?classId=${classId}`);
       setStudents(response.data);
     } catch (error) {
       console.error('Failed to fetch students', error);
