@@ -32,6 +32,7 @@ const columns = [
   { uid: "name", name: "Name", sortable: true },
   { uid: "department", name: "Department", sortable: true },
   { uid: "email", name: "Email", sortable: true },
+  { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
 

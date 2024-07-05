@@ -11,11 +11,13 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     rollNumber: "",
     name: "",
     passOutYear: "",
-    department:""
+    department:"",
+    password:""
   });
 
   const departmentOptions = [
     { key: "Department", label: "Department" },
+    { key: "FE", label: "First Year" },
     { key: "CSE", label: "CSE" },
     { key: "ENTC", label: "ENTC" },
     { key: "Civil", label: "Civil" },
@@ -29,7 +31,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         rollNumber: student.rollNumber,
         name: student.name,
         passOutYear: student.passOutYear,
-        department:student.department
+        department:student.department,
+        password:student.password
       
       });
     } else {
@@ -38,7 +41,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         rollNumber: "",
         name: "",
         passOutYear: "",
-        department:""
+        department:"",
+        password:""
   });
     }
   }, [mode, student]);
@@ -99,6 +103,13 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
             label="Pass Out Year"
             name="passOutYear"
             value={formData.passOutYear}
+            onChange={handleChange}
+            required
+          /> 
+           <Input
+            label="Password"
+            name="password"
+            value={formData.password}
             onChange={handleChange}
             required
           /> 

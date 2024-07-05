@@ -33,11 +33,11 @@ const columns = [
   { uid: "name", name: "Name", sortable: true },
   { uid: "passOutYear", name: "Pass Out Year", sortable: true },
   { uid: "department", name: "Department", sortable: true },
-  { uid: "content", name: "Content", sortable:true },
+  { uid: "password", name: "Password", sortable:true },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id","rollNumber", "name", "passOutYear","department","content", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id","rollNumber", "name", "passOutYear","department", "actions"];
 
 export default function StudentTable() {
   const [filterValue, setFilterValue] = useState("");

@@ -6,13 +6,14 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const {facultyId, name, department, email } = data;
+        const {facultyId, name, department, email,password } = data;
 
         const newFaculty = new Faculty({
             _id:facultyId,
             name,
             department,
-            email
+            email,
+            password
         });
 
         await newFaculty.save();
@@ -33,7 +34,8 @@ export async function PUT(req) {
             facultyId,
             name,
             department,
-            email
+            email,
+            password
         }, { new: true });
 
         if (!existingFaculty) {

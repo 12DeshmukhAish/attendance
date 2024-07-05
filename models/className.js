@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const classSchema = new Schema({
+  _id: {
+    type: String,
+    required: true,
+  },
+
   name: {
     type: String,
     required: true,
