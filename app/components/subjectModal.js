@@ -19,6 +19,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const [content, setContent] = useState(['']);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [classes, setClasses] = useState([]);
+  const [subjectType, setSubjectType] = useState('');
 
   const departmentOptions = [
     { key: 'CSE', label: 'CSE' },
@@ -29,6 +30,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     { key: 'FE', label: 'First Year' },
   ];
 
+  const subjectTypeOptions = [
+    { key: 'Theory', label: 'Theory' },
+    { key: 'Practical', label: 'Practical' },
+  ];
+
   useEffect(() => {
     if (subjectData) {
       setSubjectId(subjectData._id);
@@ -37,13 +43,9 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       setTeacherId(subjectData.teacher);
       setContent(subjectData.content);
       setSelectedDepartment(subjectData.department);
+      setSubjectType(subjectData.type);
     } else {
-      setSubjectId('');
-      setName('');
-      setClassId('');
-      setTeacherId('');
-      setContent(['']);
-      setSelectedDepartment('');
+      resetForm();
     }
   }, [subjectData]);
 
@@ -60,6 +62,16 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     } catch (error) {
       console.error('Error fetching classes:', error);
     }
+  };
+
+  const resetForm = () => {
+    setSubjectId('');
+    setName('');
+    setClassId('');
+    setTeacherId('');
+    setContent(['']);
+    setSelectedDepartment('');
+    setSubjectType('');
   };
 
   const handleCancel = () => {
@@ -91,6 +103,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       teacher: teacherId,
       content,
       department: selectedDepartment,
+      subType: subjectType,
     };
 
     try {
@@ -120,6 +133,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
             <Input
               type="text"
               variant="bordered"
+              size='sm'
               label="Subject ID"
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
@@ -129,6 +143,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
             <Input
               type="text"
               variant="bordered"
+              size='sm'
               label="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -139,9 +154,12 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               label="Department"
               placeholder="Select department"
               name="department"
+              variant="bordered"
+              size='sm'
               selectedKeys={[selectedDepartment]}
-              onChange={(keys) => setSelectedDepartment(keys[0])}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
               required
+              className="col-span-1 w-full"
             >
               {departmentOptions.map((department) => (
                 <SelectItem key={department.key} textValue={department.label}>
@@ -149,53 +167,72 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 </SelectItem>
               ))}
             </Select>
-            <div className="col-span-1 w-full">
-              <label className="block mb-2 font-medium">Class</label>
-              <select
-                value={classId}
-                onChange={(e) => setClassId(e.target.value)}
-                required
-                className="w-full p-2 border border-gray-300 rounded"
-              >
-                <option value="">Select a class</option>
-                {classes.map((classItem) => (
-                  <option key={classItem._id} value={classItem._id}>
-                    {classItem.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-span-1 w-full">
-              <label className="block mb-2 font-medium">Teacher</label>
-              <select
-                value={teacherId}
-                onChange={(e) => setTeacherId(e.target.value)}
-                required
-                className="w-full p-2 border border-gray-300 rounded"
-              >
-                <option value="">Select a teacher</option>
-                {teachers.map((teacher) => (
-                  <option key={teacher._id} value={teacher._id}>
-                    {teacher.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Class"
+              placeholder="Select Class"
+              className="col-span-1 w-full"
+              value={classId}
+              onChange={(e) => setClassId(e.target.value)}
+              required
+              variant="bordered"
+              size='sm'
+            >
+              {classes.map((classItem) => (
+                <SelectItem key={classItem._id} textValue={classItem._id}>
+                  {classItem.name}
+                </SelectItem>
+              ))}
+            </Select>
+            <Select
+              label="Class Coordinator"
+              placeholder="Select Class Coordinator"
+              className="col-span-1 w-full"
+              value={teacherId}
+              onChange={(e) => setTeacherId(e.target.value)}
+              required
+              variant="bordered"
+              size='sm'
+            >
+              {teachers.map((teacher) => (
+                <SelectItem key={teacher._id} value={teacher._id}>
+                  {teacher.name}
+                </SelectItem>
+              ))}
+            </Select>
+            <Select
+              label="Subject Type"
+              placeholder="Select Subject Type"
+              className="col-span-1 w-full"
+              value={subjectType}
+              onChange={(e) => setSubjectType(e.target.value)}
+              required
+              variant="bordered"
+              size='sm'
+            >
+              {subjectTypeOptions.map((type) => (
+                <SelectItem key={type.key} textValue={type.label}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </Select>
             <div className="col-span-2">
               <h3 className="text-lg font-bold mb-2">Content</h3>
               {content.map((item, index) => (
                 <div key={index} className="flex gap-4 mb-2">
                   <Input
                     type="text"
-                    variant="bordered"
                     label="Title"
                     value={item}
                     onChange={(e) => handleContentChange(index, e)}
                     required
                     className="w-full"
+                    variant="bordered"
+                    size='sm'
                   />
                   <Button
                     color="error"
+                    variant="bordered"
+                    size='sm'
                     auto
                     onClick={() => handleRemoveContent(index)}
                   >
@@ -203,16 +240,34 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                   </Button>
                 </div>
               ))}
-              <Button color="default" auto onClick={handleAddContent}>
+              <Button
+                color="default"
+                variant="bordered"
+                size='sm'
+                auto
+                onClick={handleAddContent}
+              >
                 Add Content
               </Button>
             </div>
-            <Button color="default" className="col-span-1" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button color="primary" className="col-span-1" type="submit">
-              {mode === 'add' ? 'Add Subject' : 'Save Changes'}
-            </Button>
+            <div className="col-span-2 flex justify-end gap-4">
+              <Button
+                variant="ghost"
+                size='sm'
+                color="default"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="ghost"
+                size='sm'
+                color="primary"
+                type="submit"
+              >
+                {mode === 'add' ? 'Add Subject' : 'Save Changes'}
+              </Button>
+            </div>
           </form>
         </ModalBody>
       </ModalContent>

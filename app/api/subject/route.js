@@ -6,14 +6,16 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, name, class: classId, teacher, content } = data;
+        const { _id, name, class: classId, teacher, content, department, subType } = data;
         console.log(data);
         const newSubject = new Subject({
             _id,
             name,
             class: classId,
             teacher,
-            content
+            content,
+            subType,
+            department
         });
 
         await newSubject.save();
@@ -31,11 +33,14 @@ export async function PUT(req) {
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
         const data = await req.json();
-        const { name, class: classId, teacher } = data;
-        const existingSubject = await Subject.findByIdAndUpdate( _id, {
+        const { name, class: classId, teacher, department,subType } = data;
+        console.log(data);
+        const existingSubject = await Subject.findByIdAndUpdate(_id, {
             name,
             class: classId,
-            teacher
+            teacher,
+            department, 
+            subType
         }, { new: true });
 
         if (!existingSubject) {
@@ -54,7 +59,7 @@ export async function GET(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
-console.log(_id);
+        console.log(_id);
         if (_id) {
             const subject = await Subject.findById(_id);
             if (!subject) {
@@ -90,4 +95,3 @@ export async function DELETE(req) {
         return NextResponse.json({ error: "Failed to Delete" }, { status: 500 });
     }
 }
-    
