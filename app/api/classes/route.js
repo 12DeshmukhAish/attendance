@@ -8,20 +8,20 @@ export async function POST(req) {
         await connectMongoDB();
         const data = await req.json();
 
-        const { _id,className, passOutYear, classCoordinator, department } = data;
-
+        const { _id, className, passOutYear, classCoordinator, department } = data;
 
         let studentFilter = { passOutYear };
         if (department !== "FE") {
             studentFilter.department = department;
         }
 
-        const studentIds = await Student.find(studentFilter, "_id").lean();
-       
+        const students = await Student.find(studentFilter).lean();
+        const studentIds = students.map(student => student._id);
+
         const newClass = new Classes({
             _id,
             name: className,
-            students: studentIds.map(student => student._id),
+            students: studentIds,
             teacher: classCoordinator,
             passOutYear,
             department
@@ -30,7 +30,7 @@ export async function POST(req) {
         await newClass.save();
 
         await Student.updateMany(
-            { _id: { $in: studentIds.map(student => student._id) } },
+            { _id: { $in: studentIds } },
             { $set: { class: newClass._id } }
         );
 
@@ -49,7 +49,7 @@ export async function PUT(req) {
         const _id = searchParams.get("_id");
 
         const data = await req.json();
-        const { className, students, classCoordinator, passOutYear, department } = data;
+        const { className, classCoordinator, passOutYear, department } = data;
         const existingClass = await Classes.findById(_id);
 
         if (!existingClass) {
@@ -57,33 +57,32 @@ export async function PUT(req) {
         }
 
         const previousStudentIds = existingClass.students;
-       
+
         existingClass.name = className;
-        existingClass.students = students;
         existingClass.teacher = classCoordinator;
         existingClass.passOutYear = passOutYear;
         existingClass.department = department;
 
-        // If department changed, find new students based on the new department and passOutYear
-        if (existingClass.department !== department) {
-            let studentFilter = { passOutYear };
-            if (department !== "FE") {
-                studentFilter.department = department;
-            }
-            const newStudentIds = await Student.find(studentFilter, "_id").lean();
-            existingClass.students = newStudentIds.map(student => student._id);
-
-            // Update students to reference the new class
-            await Student.updateMany(
-                { _id: { $in: previousStudentIds } },
-                { $unset: { class: "" } }
-            );
-
-            await Student.updateMany(
-                { _id: { $in: newStudentIds.map(student => student._id) } },
-                { $set: { class: existingClass._id } }
-            );
+        // Fetch new students based on the updated passOutYear and department
+        let studentFilter = { passOutYear };
+        if (department !== "FE") {
+            studentFilter.department = department;
         }
+        const newStudents = await Student.find(studentFilter).lean();
+        const newStudentIds = newStudents.map(student => student._id);
+
+        existingClass.students = newStudentIds;
+
+        // Update students to reference the new class
+        await Student.updateMany(
+            { _id: { $in: previousStudentIds } },
+            { $unset: { class: "" } }
+        );
+
+        await Student.updateMany(
+            { _id: { $in: newStudentIds } },
+            { $set: { class: existingClass._id } }
+        );
 
         await existingClass.save();
 
@@ -95,6 +94,7 @@ export async function PUT(req) {
     }
 }
 
+// GET and DELETE routes remain unchanged
 export async function GET(req) {
     try {
         await connectMongoDB();

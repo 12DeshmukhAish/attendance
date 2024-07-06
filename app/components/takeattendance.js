@@ -1,6 +1,6 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button,CheckboxGroup, Checkbox } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
 
@@ -13,6 +13,9 @@ export default function App() {
   const [classOptions, setClassOptions] = useState([]);
   const [subjectOptions, setSubjectOptions] = useState([]);
   const [students, setStudents] = useState([]);
+  const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [selectedSessions, setSelectedSessions] = useState([]);
+  const [sessions] = useState([1, 2, 3, 4, 5, 6, 7]); // Assuming 7 sessions per day
 
   const departmentOptions = [
     { key: "Department", label: "Department" },
@@ -28,6 +31,17 @@ export default function App() {
     { key: "Practical", label: "Practical" },
   ];
 
+  const columns = [
+    {
+      key: "rollNo",
+      label: "ROLL NO.",
+    },
+    {
+      key: "name",
+      label: "NAME",
+    },
+  ];
+
   useEffect(() => {
     if (selectedDepartment !== "Department") {
       fetchClasses(selectedDepartment);
@@ -36,7 +50,6 @@ export default function App() {
 
   useEffect(() => {
     if (selectedClass !== "Class") {
-      console.log(selectedClass);
       fetchSubjects(selectedClass);
       fetchStudents(selectedClass);
     }
@@ -53,28 +66,27 @@ export default function App() {
 
   const fetchSubjects = async () => {
     try {
-      const params = {};
-      if (selectedDepartment) {
-        params.department = selectedDepartment;
-      }
-      if (selectedType!=="Type") {
-        params.subType = selectedType;
-      }
-      if (selectedClass) {
-        params.class = selectedClass;
-      }
-
+      const params = {
+        department: selectedDepartment !== "Department" ? selectedDepartment : undefined,
+        subType: selectedType !== "Type" ? selectedType : undefined,
+        class: selectedClass !== "Class" ? selectedClass : undefined
+      };
       const response = await axios.get('/api/subject', { params });
       setSubjectOptions(response.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching subjects:', error);
     }
   };
 
   const fetchStudents = async (classId) => {
     try {
       const response = await axios.get(`/api/fetchstudents?classId=${classId}`);
-      setStudents(response.data);
+      setStudents(response.data.map(student => ({
+        key: student._id,
+        rollNumber: student.rollNumber,
+        name: student.name,
+        status: 'Absent'
+      })));
     } catch (error) {
       console.error('Failed to fetch students', error);
     }
@@ -83,10 +95,82 @@ export default function App() {
   const handleTakeAttendance = () => {
     setIsTableVisible(true);
   };
+  const handleSessionChange = (session) => {
+    setSelectedSessions(prev => 
+      prev.includes(session)
+        ? prev.filter(s => s !== session)
+        : [...prev, session]
+    );
+  };
+
+  const submitAttendance = async () => {
+    if (selectedSubject === "Subject") {
+      alert("Please select a subject");
+      return;
+    }
+
+    if (selectedSessions.length === 0) {
+      alert("Please select at least one session");
+      return;
+    }
+
+    let selectedStudents = [];
+    if (selectedKeys instanceof Set) {
+      if (selectedKeys.has("all")) {
+        selectedStudents = students.map(student => student.key);
+      } else {
+        selectedStudents = Array.from(selectedKeys);
+      }
+    } else {
+      selectedStudents = selectedKeys.includes("all")
+        ? students.map(student => student.key)
+        : selectedKeys;
+    }
+
+    const attendanceData = {
+      date: new Date(),
+      subject: selectedSubject,
+      sessions: selectedSessions,
+      records: selectedStudents.map(studentId => ({
+          student: studentId,
+          status: 'present'
+      })
+    )};
+
+    try {
+      const response = await axios.post('/api/attendance', attendanceData);
+      console.log('Attendance submitted successfully:', response.data);
+      alert("Attendance submitted successfully");
+      // Reset the form or do any other necessary actions
+    } catch (error) {
+      console.error('Failed to submit attendance:', error);
+      alert("Failed to submit attendance");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex space-x-4 mb-4">
+      <div className="flex space-x-4 mb-4 items-center">
+        
+      <Dropdown>
+          <DropdownTrigger>
+            <Button variant="bordered" className="capitalize">
+              {selectedType}
+            </Button>
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="Type selection"
+            variant="flat"
+            disallowEmptySelection
+            selectionMode="single"
+            selectedKeys={new Set([selectedType])}
+            onSelectionChange={(keys) => setSelectedType(Array.from(keys)[0])}
+          >
+            {typeOptions.map((option) => (
+              <DropdownItem key={option.key}>{option.label}</DropdownItem>
+            ))}
+          </DropdownMenu>
+        </Dropdown>
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
@@ -130,26 +214,6 @@ export default function App() {
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
-              {selectedType}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Type selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedType])}
-            onSelectionChange={(keys) => setSelectedType(Array.from(keys)[0])}
-          >
-            {typeOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
               {selectedSubject}
             </Button>
           </DropdownTrigger>
@@ -166,7 +230,17 @@ export default function App() {
             ))}
           </DropdownMenu>
         </Dropdown>
-
+        <div className="flex flex-wrap gap-4 items-center">
+        {sessions.map(session => (
+          <Checkbox
+            key={session}
+            isSelected={selectedSessions.includes(session)}
+            onValueChange={() => handleSessionChange(session)}
+          >
+          {session}
+          </Checkbox>
+        ))}
+      </div>
         <Button color="primary" variant="shadow" onClick={handleTakeAttendance}>
           Take Attendance
         </Button>
@@ -174,23 +248,32 @@ export default function App() {
 
       {isTableVisible && (
         <div className="flex flex-col gap-3 mt-4">
-          <Table
+          <Table 
+            aria-label="Attendance table"
             selectionMode="multiple"
-            aria-label="Students table"
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
           >
-            <TableHeader>
-              <TableColumn>ROLL NO.</TableColumn>
-              <TableColumn>NAME</TableColumn>
+            <TableHeader columns={columns}>
+              {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
             </TableHeader>
-            <TableBody>
-              {students.map((student) => (
-                <TableRow key={student._id}>
-                  <TableCell>{student.rollNo}</TableCell>
-                  <TableCell>{student.name}</TableCell>
+            <TableBody items={students}>
+              {(item) => (
+                <TableRow key={item.key}>
+                  {(columnKey) => 
+                    <TableCell>
+                      {columnKey === 'status' 
+                        ? (selectedKeys.has(item.key) ? 'Present' : 'Absent') 
+                        : item[columnKey]}
+                    </TableCell>
+                  }
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
+          <Button color="primary" variant="shadow" onClick={submitAttendance}>
+            Submit Attendance
+          </Button>
         </div>
       )}
     </div>

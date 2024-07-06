@@ -16,7 +16,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const [name, setName] = useState('');
   const [classId, setClassId] = useState('');
   const [teacherId, setTeacherId] = useState('');
-  const [content, setContent] = useState(['']);
+  const [content, setContent] = useState([{ name: '', status: 'not_covered' }]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [classes, setClasses] = useState([]);
   const [subjectType, setSubjectType] = useState('');
@@ -43,7 +43,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       setTeacherId(subjectData.teacher);
       setContent(subjectData.content);
       setSelectedDepartment(subjectData.department);
-      setSubjectType(subjectData.type);
+      setSubjectType(subjectData.subType);
     } else {
       resetForm();
     }
@@ -69,7 +69,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     setName('');
     setClassId('');
     setTeacherId('');
-    setContent(['']);
+    setContent([{ name: '', status: 'not_covered' }]);
     setSelectedDepartment('');
     setSubjectType('');
   };
@@ -80,12 +80,12 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
 
   const handleContentChange = (index, event) => {
     const newContent = [...content];
-    newContent[index] = event.target.value;
+    newContent[index] = { ...newContent[index], name: event.target.value };
     setContent(newContent);
   };
 
   const handleAddContent = () => {
-    setContent([...content, '']);
+    setContent([...content, { name: '', status: 'not_covered' }]);
   };
 
   const handleRemoveContent = (index) => {
@@ -138,7 +138,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
               required
-              disabled={mode!="add"}
+              disabled={mode !== 'add'}
               className="col-span-1 w-full"
             />
             <Input
@@ -157,13 +157,13 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               name="department"
               variant="bordered"
               size='sm'
-              selectedKeys={[selectedDepartment]}
+              defaultValue={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
               required
               className="col-span-1 w-full"
             >
               {departmentOptions.map((department) => (
-                <SelectItem key={department.key} textValue={department.label}>
+                <SelectItem key={department.key} value={department.key}>
                   {department.label}
                 </SelectItem>
               ))}
@@ -179,7 +179,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               size='sm'
             >
               {classes.map((classItem) => (
-                <SelectItem key={classItem._id} textValue={classItem._id}>
+                <SelectItem key={classItem._id} value={classItem._id}>
                   {classItem.name}
                 </SelectItem>
               ))}
@@ -211,7 +211,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               size='sm'
             >
               {subjectTypeOptions.map((type) => (
-                <SelectItem key={type.key} textValue={type.label}>
+                <SelectItem key={type.key} value={type.key}>
                   {type.label}
                 </SelectItem>
               ))}
@@ -223,7 +223,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                   <Input
                     type="text"
                     label="Title"
-                    value={item}
+                    value={item.name}
                     onChange={(e) => handleContentChange(index, e)}
                     required
                     className="w-full"
