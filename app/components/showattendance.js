@@ -1,25 +1,32 @@
-// import React from 'react'
-
-// const showattendance = () => {
-//   return (
-//     <div>
-//       this is attendance report page
-//     </div>
-//   )
-// }
-
-// export default showattendance
 "use client"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
+import axios from 'axios';
+import { DateRangePicker } from "@nextui-org/react";
+import { parseDate, getLocalTimeZone } from "@internationalized/date";
+import { useDateFormatter } from "@react-aria/i18n";
 
 export default function App() {
   const [selectedDepartment, setSelectedDepartment] = useState("Department");
-  const [selectedClass, setSelectedClass] = useState("Class ");
-  const [selectedSubject, setSelectedSubject] = useState("Subject ");
+  const [selectedClass, setSelectedClass] = useState("Class");
+  const [selectedSubject, setSelectedSubject] = useState("Subject");
   const [selectedType, setSelectedType] = useState("Type");
-  const [isTableVisible, setIsTableVisible] = useState(false);
+  const [classOptions, setClassOptions] = useState([]);
+  const [subjectOptions, setSubjectOptions] = useState([]);
+  const [reportData, setReportData] = useState(null);
+  const [isReportVisible, setIsReportVisible] = useState(false);
+  const currentDate = new Date();
+  const pastDate = new Date();
+  pastDate.setDate(currentDate.getDate() - 14);
+
+  const [dateRange, setDateRange] = useState({
+    start: parseDate(pastDate.toISOString().split('T')[0]),
+    end: parseDate(currentDate.toISOString().split('T')[0]),
+  });
+
+
+  let formatter = useDateFormatter({ dateStyle: "long" });
 
   const departmentOptions = [
     { key: "Department", label: "Department" },
@@ -30,33 +37,94 @@ export default function App() {
     { key: "Mechanical", label: "Mechanical" },
   ];
 
-  const classOptions = [
-    { key: "Class", label: "Class" },
-    { key: "SE", label: "SE" },
-    { key: "TE", label: "TE" },
-    { key: "BE", label: "BE" },
+  const reportColumns = [
+    { key: "name", label: "STUDENT NAME" },
+    { key: "presentCount", label: "PRESENT COUNT" },
+    { key: "attendancePercentage", label: "ATTENDANCE PERCENTAGE" },
   ];
-
-  const subjectOptions = [
-    { key: "Subject 1", label: "Subject 1" },
-    { key: "Subject 2", label: "Subject 2" },
-    { key: "Subject 3", label: "Subject 3" },
-  ];
-
   const typeOptions = [
     { key: "Theory", label: "Theory" },
     { key: "Practical", label: "Practical" },
   ];
+  useEffect(() => {
+    if (selectedDepartment !== "Department") {
+      fetchClasses(selectedDepartment);
+    }
+  }, [selectedDepartment]);
 
-  const handleTakeAttendance = () => {
-    setIsTableVisible(true);
+  useEffect(() => {
+    if (selectedClass !== "Class") {
+      fetchSubjects(selectedClass);
+    }
+  }, [selectedClass]);
+
+  useEffect(() => {
+    if (selectedSubject !== "Subject") {
+      fetchReport(selectedSubject);
+    }
+  }, [selectedSubject, dateRange]);
+
+  const fetchClasses = async (department) => {
+    try {
+      const response = await axios.get(`/api/classes?department=${department}`);
+      setClassOptions(response.data.map(cls => ({ key: cls._id, label: cls.name })));
+    } catch (error) {
+      console.error('Failed to fetch classes', error);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      const params = {
+        department: selectedDepartment !== "Department" ? selectedDepartment : undefined,
+        subType: selectedType !== "Type" ? selectedType : undefined,
+        class: selectedClass !== "Class" ? selectedClass : undefined
+      };
+      const response = await axios.get('/api/subject', { params });
+      setSubjectOptions(response.data || []);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
+  };
+
+  const fetchReport = async (subjectId) => {
+    try {
+      const params = {
+        subjectId,
+        startDate: dateRange.start.toString(),
+        endDate: dateRange.end.toString()
+      };
+      const response = await axios.get('/api/attendance', { params });
+      setReportData(response.data);
+      setIsReportVisible(true);
+    } catch (error) {
+      console.error('Failed to fetch attendance report:', error);
+    }
   };
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      {/* Dropdowns */}
+      
       <div className="flex space-x-4 mb-4">
-        {/* Department Dropdown */}
+      <Dropdown>
+          <DropdownTrigger>
+            <Button variant="bordered" className="capitalize">
+              {selectedType}
+            </Button>
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="Type selection"
+            variant="flat"
+            disallowEmptySelection
+            selectionMode="single"
+            selectedKeys={new Set([selectedType])}
+            onSelectionChange={(keys) => setSelectedType(Array.from(keys)[0])}
+          >
+            {typeOptions.map((option) => (
+              <DropdownItem key={option.key}>{option.label}</DropdownItem>
+            ))}
+          </DropdownMenu>
+        </Dropdown>
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
@@ -77,7 +145,6 @@ export default function App() {
           </DropdownMenu>
         </Dropdown>
 
-        {/* Class Dropdown */}
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
@@ -98,7 +165,6 @@ export default function App() {
           </DropdownMenu>
         </Dropdown>
 
-        {/* Subject Dropdown */}
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
@@ -114,67 +180,59 @@ export default function App() {
             onSelectionChange={(keys) => setSelectedSubject(Array.from(keys)[0])}
           >
             {subjectOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
+              <DropdownItem key={option._id}>{option.name}</DropdownItem>
             ))}
           </DropdownMenu>
         </Dropdown>
-
-        {/* Type Dropdown */}
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedType}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Type selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedType])}
-            onSelectionChange={(keys) => setSelectedType(Array.from(keys)[0])}
-          >
-            {typeOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-
-        {/* Take Attendance Button */}
-        <Button color="primary" variant="shadow" onClick={handleTakeAttendance}>
-          Take Attendance
-        </Button>
+        <div className="flex flex-row gap-2">
+        <DateRangePicker
+          label="Date range"
+          value={dateRange}
+          onChange={setDateRange}
+          variant="bordered"
+          size="sm"
+        />
+        <p className="text-default-500 text-sm">
+          Selected date:{" "}
+          {dateRange
+            ? formatter.formatRange(
+                dateRange.start.toDate(getLocalTimeZone()),
+                dateRange.end.toDate(getLocalTimeZone())
+              )
+            : "--"}
+        </p>
       </div>
 
-      {/* Table */}
-      {isTableVisible && (
-        <div className="flex flex-col gap-3 mt-4">
+      </div>
+
+      {isReportVisible && reportData && (
+        <div>
+          <h2>Subject: {reportData.subjectName}</h2>
+          <h3>Teacher: {reportData.teacherName}</h3>
+          <p>Total Lectures: {reportData.totalLectures}</p>
           <Table
-            selectionMode="multiple"
-            defaultSelectedKeys={["2", "3"]}
-            aria-label="Example static collection table"
+            aria-label="Attendance Report Table"
+            shadow={false}
+            color="secondary"
+            className="table w-full"
           >
-            <TableHeader>
-              <TableColumn>ROLL NO.</TableColumn>
-              <TableColumn>NAME</TableColumn>
+            <TableHeader columns={reportColumns}>
+              {(column) => (
+                <TableColumn key={column.key}>{column.label}</TableColumn>
+              )}
             </TableHeader>
-            <TableBody>
-              <TableRow key="1">
-                <TableCell>1</TableCell>
-                <TableCell>Tony Reichert</TableCell>
-              </TableRow>
-              <TableRow key="2">
-                <TableCell>2</TableCell>
-                <TableCell>Zoey Lang</TableCell>
-              </TableRow>
-              <TableRow key="3">
-                <TableCell>3</TableCell>
-                <TableCell>Jane Fisher</TableCell>
-              </TableRow>
-              <TableRow key="4">
-                <TableCell>4</TableCell>
-                <TableCell>William Howard</TableCell>
-              </TableRow>
+            <TableBody items={reportData.students}>
+              {(item) => (
+                <TableRow key={item.name}>
+                  {(columnKey) => (
+                    <TableCell>
+                      {columnKey === 'attendancePercentage' 
+                        ? `${item[columnKey].toFixed(2)}%` 
+                        : item[columnKey]}
+                    </TableCell>
+                  )}
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
@@ -182,4 +240,3 @@ export default function App() {
     </div>
   );
 }
-

@@ -2,20 +2,26 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Subject from "@/models/subject";
 
+
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, name, class: classId, teacher, content, department, subType } = data;
-        console.log(data);
+        const { _id, name, class: classId, teacher, department, subType, content } = data;
+
+        const newContent = content.map(item => ({
+            name: item.name,  // Access the name property
+            status: item.status || 'not_covered'  // Default status if not provided
+        }));
+
         const newSubject = new Subject({
             _id,
             name,
             class: classId,
             teacher,
-            content,
+            department,
             subType,
-            department
+            content: newContent
         });
 
         await newSubject.save();
@@ -23,7 +29,7 @@ export async function POST(req) {
         return NextResponse.json({ message: "Subject Registered Successfully", subject: newSubject }, { status: 201 });
     } catch (error) {
         console.error("Error creating subject:", error);
-        return NextResponse.json({ error: "Failed to Register" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to Register", details: error.message }, { status: 500 });
     }
 }
 
@@ -33,33 +39,43 @@ export async function PUT(req) {
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
         const data = await req.json();
-        const { name, class: classId, teacher, department, subType } = data;
-        console.log(data);
+        const { name, class: classId, teacher, department, subType, content } = data;
+
+        const updatedContent = content.map(item => ({
+            name: item.name,  // Access the name property
+            status: item.status || 'not_covered'  // Default status if not provided
+        }));
+
         const existingSubject = await Subject.findByIdAndUpdate(_id, {
             name,
             class: classId,
             teacher,
             department,
-            subType
+            subType,
+            content: updatedContent
         }, { new: true });
 
         if (!existingSubject) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
         }
+
         console.log("Subject Updated Successfully", existingSubject);
         return NextResponse.json({ message: "Subject Updated Successfully", subject: existingSubject }, { status: 200 });
     } catch (error) {
         console.error("Error updating subject:", error);
-        return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to Update", details: error.message }, { status: 500 });
     }
 }
+
 
 export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
-        const { subType, department, class: classId } = searchParams;
-        
+        const subType = searchParams.get("subType")
+        const department = searchParams.get("department")
+        const classId = searchParams.get("class")
+        console.log(department ,subType,classId);
         if (subType && department && classId) {
             const subjects = await Subject.find({ subType, department, class: classId });
             console.log("Fetched Subjects Successfully", subjects);

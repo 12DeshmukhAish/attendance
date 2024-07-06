@@ -12,7 +12,7 @@ export async function GET(req) {
             return NextResponse.json({ error: "Class ID is required" },{status:400});
         }
 
-        const classData = await Classes.findById(classId).populate('students', '_id name rollNo');
+        const classData = await Classes.findById(classId).populate('students', '_id rollNumber name ');
 
         if (!classData) {
             return NextResponse.json({ error: "Class not found" },{status:404});
