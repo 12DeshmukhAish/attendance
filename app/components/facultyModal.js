@@ -10,7 +10,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     name: "",
     department: "",
     email: "",
-    password: ""
+    password: "",
+    isAdmin: false,
   });
 
   useEffect(() => {
@@ -21,6 +22,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         department: faculty.department,
         email: faculty.email,
         password: faculty.password,
+        isAdmin: faculty.isAdmin,
         _id: faculty._id,
       });
     } else {
@@ -29,7 +31,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         name: "",
         department: "",
         email: "",
-        password: ""
+        password: "",
+        isAdmin: false,
       });
     }
   }, [mode, faculty]);
@@ -37,6 +40,10 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSelectChange = (key, value) => {
+    setFormData({ ...formData, [key]: value });
   };
 
   const departmentOptions = [
@@ -97,7 +104,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             placeholder="Select department"
             name="department"
             selectedKeys={[formData.department]}
-            onChange={handleChange}
+            onChange={(value) => handleSelectChange("department", value)}
             variant="bordered"
             size="sm"
           >
@@ -125,6 +132,22 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             variant="bordered"
             size="sm"
           />
+          <Select
+            label="Admin"
+            placeholder="Select Admin Status"
+            name="isAdmin"
+            selectedKeys={[formData.isAdmin ? "true" : "false"]}
+            onChange={(value) => handleSelectChange("isAdmin", value === "true")}
+            variant="bordered"
+            size="sm"
+          >
+            <SelectItem key="true" textValue="Yes">
+              Yes
+            </SelectItem>
+            <SelectItem key="false" textValue="No">
+              No
+            </SelectItem>
+          </Select>
         </ModalBody>
         <ModalFooter>
           <Button auto flat color="error" onClick={onClose}>
