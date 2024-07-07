@@ -21,7 +21,7 @@ const Profile = () => {
       if (session?.user && !faculty) {
         const { id } = session.user;
         try {
-          const res = await axios.get(`/api/faculty?_id=${id}`);
+          const res = await axios.get(`/api/${session.user.role}?_id=${id}`);
           setFaculty(res.data);
           setUpdatedFaculty(res.data);
         } catch (error) {
@@ -44,7 +44,7 @@ const Profile = () => {
     if (session?.user) {
       const { id } = session.user;
       try {
-        await axios.put(`/api/faculty?_id=${id}`, updatedFaculty);
+        await axios.put(`/api/${session.user.role}?_id=${id}`, updatedFaculty);
         setFaculty(updatedFaculty);
         setIsEditing(false);
       } catch (error) {
