@@ -13,7 +13,7 @@ import { SiGoogleclassroom } from "react-icons/si";
 import { PiStudentBold } from "react-icons/pi";
 import { GiTeacher } from "react-icons/gi";
 import { RiCalendarScheduleLine } from "react-icons/ri";
-import { TbReportSearch } from "react-icons/tb";
+
 import { Tooltip } from "@nextui-org/react";
 
 const sidebarItems = [
@@ -48,7 +48,7 @@ const sidebarItems = [
     icon: RiCalendarScheduleLine,
   },
   {
-    name: "Show Attendance",
+    name: "Manage Reports",
     href: "/admin/showattendance",
     icon: AiOutlineSchedule,
   },
@@ -57,13 +57,8 @@ const sidebarItems = [
     href: "/admin/profile",
     icon: MdPortrait,
   },
-  {
-    name: "Manage Reports",
-    href: "/admin/report",
-    icon: TbReportSearch,
-  },
-];
-
+  
+]
 const Sidebar = () => {
   const router = useRouter();
   const pathname = usePathname();

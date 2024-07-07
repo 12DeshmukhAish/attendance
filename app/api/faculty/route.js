@@ -6,14 +6,15 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const {facultyId, name, department, email,password } = data;
+        const { facultyId, name, department, email, password, isAdmin } = data;
 
         const newFaculty = new Faculty({
-            _id:facultyId,
+            _id: facultyId,
             name,
             department,
             email,
-            password
+            password,
+            isAdmin,
         });
 
         await newFaculty.save();
@@ -29,14 +30,15 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, facultyId, name, department, email,password } = data;
+        const { _id, facultyId, name, department, email, password, isAdmin } = data;
         console.log(data);        
         const existingFaculty = await Faculty.findByIdAndUpdate(_id, {
             facultyId,
             name,
             department,
             email,
-            password
+            password,
+            isAdmin,
         }, { new: true });
 
         if (!existingFaculty) {
