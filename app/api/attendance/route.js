@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Attendance from "@/models/attendance";
-
-
+import Subject from "@/models/subject"; // Import the Subject model
 
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { date, subject, sessions, records } = data;
+        const { date, subject, sessions, records, contents } = data; // Include coveredContents in the request data
 
-        console.log(data);  
+        console.log(data);
         if (data) {
             const validatedRecords = records.map(record => ({
                 student: record.student,
@@ -31,6 +30,19 @@ export async function POST(req) {
 
             const savedAttendances = await Promise.all(attendancePromises);
 
+            // Update content status to covered
+            if (contents && contents.length > 0) {
+              const sub =  await Subject.updateOne(
+                    { _id: subject },
+                    { 
+                        $set: { "content.$[elem].status": "covered" }
+                    },
+                    {
+                        arrayFilters: [{ "elem.name": { $in: contents } }]
+                    }
+                );
+            }
+
             console.log("Attendance Recorded Successfully", savedAttendances);
             return NextResponse.json({ message: "Attendance Recorded Successfully", attendances: savedAttendances }, { status: 200 });
         } else {
@@ -46,7 +58,7 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, date, subject, records } = data;
+        const { _id, date, subject, records, coveredContents } = data; // Include coveredContents in the request data
 
         // Validate and update each record if needed
         const validatedRecords = records.map(record => ({
@@ -62,6 +74,19 @@ export async function PUT(req) {
 
         if (!existingAttendance) {
             return NextResponse.json({ error: "Attendance record not found" });
+        }
+
+        // Update content status to covered
+        if (coveredContents && coveredContents.length > 0) {
+            await Subject.updateOne(
+                { _id: subject },
+                { 
+                    $set: { "content.$[elem].status": "covered" }
+                },
+                {
+                    arrayFilters: [{ "elem.name": { $in: coveredContents } }]
+                }
+            );
         }
 
         console.log("Attendance Updated Successfully", existingAttendance);
@@ -90,6 +115,7 @@ export async function DELETE(req) {
         return NextResponse.json({ error: "Failed to Delete Attendance Record" }, { status: 500 });
     }
 }
+
 export async function GET(req) {
     try {
         await connectMongoDB();
