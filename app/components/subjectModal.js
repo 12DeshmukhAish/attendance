@@ -180,7 +180,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
             >
               {classes.map((classItem) => (
                 <SelectItem key={classItem._id} value={classItem._id}>
-                  {classItem.name}
+                  {classItem._id}
                 </SelectItem>
               ))}
             </Select>

@@ -2,8 +2,7 @@ import mongoose from 'mongoose';
 
 const ContentSchema = new mongoose.Schema({
     name: {
-        type: String,
-        required: true
+        type: String
     },
     status: {
         type: String,
@@ -31,9 +30,7 @@ const SubjectSchema = new mongoose.Schema({
     department: {
         type: String
     },
-    subType: {
-        type: String
-    },
+    
     content: [ContentSchema]
 }, {
     timestamps: true,
