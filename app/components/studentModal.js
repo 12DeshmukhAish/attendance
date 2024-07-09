@@ -12,6 +12,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     name: "",
     passOutYear: "",
     department:"",
+    email: "",
+    phoneNo :"",
     password:"",
     year:""
   });
@@ -34,6 +36,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         name: student.name,
         passOutYear: student.passOutYear,
         department:student.department,
+        email:student.email,
+        phoneNo:student.phoneNo,
         password:student.password,
         year:student.year
       
@@ -45,6 +49,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         name: "",
         passOutYear: "",
         department:"",
+        phoneNo:"",
+        email:"",
         password:"",
         year:""
   });
@@ -121,6 +127,24 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
           <Input
             label="Pass Out Year"
             name="passOutYear"
+            value={formData.passOutYear}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          /> 
+           <Input
+            label="Phone No."
+            name="phoneNo"
+            value={formData.passOutYear}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          /> 
+           <Input
+            label="Email ID"
+            name="email"
             value={formData.passOutYear}
             onChange={handleChange}
             required
