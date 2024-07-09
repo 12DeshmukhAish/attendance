@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import { toast } from 'sonner';
+import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 import {
   Table,
   Tooltip,
@@ -34,11 +35,11 @@ const columns = [
   { uid: "passOutYear", name: "Pass Out Year", sortable: true },
   { uid: "department", name: "Department", sortable: true },
   { uid: "year", name: "Acadmic Year", sortable: true },
-  { uid: "password", name: "Password", sortable:true },
+  { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id","rollNumber", "name","year","department", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 
 export default function StudentTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -58,6 +59,34 @@ export default function StudentTable() {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        uploadStudents(jsonData);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const uploadStudents = async (studentsData) => {
+    try {
+      await axios.post('/api/upload', { students: studentsData });
+      fetchStudents();
+      toast.success('Students uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading students:', error);
+      toast.error('Error uploading students');
+    }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -181,9 +210,12 @@ export default function StudentTable() {
   };
 
   const handleModalSubmit = async (formData) => {
-  fetchStudents();
+    fetchStudents();
   }
-
+  const openFileDialog = useCallback(() => {
+    const fileInput = document.getElementById('upload-input');
+    fileInput.click();
+  }, []);
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
@@ -240,11 +272,28 @@ export default function StudentTable() {
             >
               Add New
             </Button>
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleFileUpload}
+                id="upload-input"
+                className="hidden"
+              />
+              <Button
+                color="primary"
+                variant="ghost"
+                size="sm"
+                onClick={openFileDialog}
+                endContent={<FaFileUpload />}
+              >
+                Upload File
+              </Button>
             <Button
               color="primary"
               size="sm"
               variant="ghost"
               onClick={downloadExcel}
+              endContent={<FaFileDownload />}
             >
               Download
             </Button>
@@ -257,108 +306,108 @@ export default function StudentTable() {
             <select
               className="bg-transparent outline-none text-default-400 text-small"
               onChange={onRowsPerPageChange}
-            >              
-            <option value="10">
-            10</option>
-            <option value="15">15</option>
-          </select>
-        </label>
+            >
+              <option value="10">
+                10</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+        </div>
       </div>
-    </div>
-  );
-}, [
-  filterValue,
-  visibleColumns,
-  onSearchChange,
-  onRowsPerPageChange,
-  students.length,
-]);
+    );
+  }, [
+    filterValue,
+    visibleColumns,
+    onSearchChange,
+    onRowsPerPageChange,
+    students.length,
+  ]);
 
-const bottomContent = useMemo(() => {
-  const selectedKeysText = selectedKeys === "all" ?
-    "All items selected" :
-    `${selectedKeys.size} of ${items.length} selected`;
+  const bottomContent = useMemo(() => {
+    const selectedKeysText = selectedKeys === "all" ?
+      "All items selected" :
+      `${selectedKeys.size} of ${items.length} selected`;
+
+    return (
+      <div className="py-2 px-2 flex justify-between items-center">
+        <Pagination
+          showControls
+          classNames={{
+            cursor: "bg-foreground text-background",
+          }}
+          color="default"
+          page={page}
+          total={pages}
+          variant="light"
+          onChange={setPage}
+        />
+        <span className="text-small text-default-400">
+          {selectedKeysText}
+        </span>
+      </div>
+    );
+  }, [selectedKeys, items.length, page, pages]);
+
+  const classNames = {
+    wrapper: ["max-h-[382px]", "max-w-3xl"],
+    th: ["bg-transparent", "text-default-500", "border-b", "border-divider"],
+    td: [
+      "group-data-[first=true]:first:before:rounded-none",
+      "group-data-[first=true]:last:before:rounded-none",
+      "group-data-[middle=true]:before:rounded-none",
+      "group-data-[last=true]:first:before:rounded-none",
+      "group-data-[last=true]:last:before:rounded-none",
+    ],
+  };
 
   return (
-    <div className="py-2 px-2 flex justify-between items-center">
-      <Pagination
-        showControls
-        classNames={{
-          cursor: "bg-foreground text-background",
+    <>
+      <Table
+        isCompact
+        removeWrapper
+        aria-label="Student table with custom cells, pagination and sorting"
+        bottomContent={bottomContent}
+        bottomContentPlacement="outside"
+        checkboxesProps={{
+          classNames: {
+            wrapper: "after:bg-foreground after:text-background text-background ",
+          },
         }}
-        color="default"
-        page={page}
-        total={pages}
-        variant="light"
-        onChange={setPage}
+        classNames={classNames}
+        selectedKeys={selectedKeys}
+        sortDescriptor={sortDescriptor}
+        topContent={topContent}
+        topContentPlacement="outside"
+        onSelectionChange={setSelectedKeys}
+        onSortChange={setSortDescriptor}
+      >
+        <TableHeader columns={headerColumns}>
+          {(column) => (
+            <TableColumn
+              key={column.uid}
+              align={column.uid === "actions" ? "center" : "start"}
+              allowsSorting={column.sortable}
+            >
+              {column.name}
+            </TableColumn>
+          )}
+        </TableHeader>
+        <TableBody emptyContent={"No students found"} items={sortedItems}>
+          {(student) => (
+            <TableRow key={student._id}>
+              {(columnKey) => <TableCell>{renderCell(student, columnKey)}</TableCell>}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      <StudentModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        mode={modalMode}
+        student={selectedStudent}
+        onSubmit={handleModalSubmit}
       />
-      <span className="text-small text-default-400">
-        {selectedKeysText}
-      </span>
-    </div>
+    </>
   );
-}, [selectedKeys, items.length, page, pages]);
-
-const classNames = {
-  wrapper: ["max-h-[382px]", "max-w-3xl"],
-  th: ["bg-transparent", "text-default-500", "border-b", "border-divider"],
-  td: [
-    "group-data-[first=true]:first:before:rounded-none",
-    "group-data-[first=true]:last:before:rounded-none",
-    "group-data-[middle=true]:before:rounded-none",
-    "group-data-[last=true]:first:before:rounded-none",
-    "group-data-[last=true]:last:before:rounded-none",
-  ],
-};
-
-return (
-  <>
-    <Table
-      isCompact
-      removeWrapper
-      aria-label="Student table with custom cells, pagination and sorting"
-      bottomContent={bottomContent}
-      bottomContentPlacement="outside"
-      checkboxesProps={{
-        classNames: {
-          wrapper: "after:bg-foreground after:text-background text-background ",
-        },
-      }}
-      classNames={classNames}
-      selectedKeys={selectedKeys}
-      sortDescriptor={sortDescriptor}
-      topContent={topContent}
-      topContentPlacement="outside"
-      onSelectionChange={setSelectedKeys}
-      onSortChange={setSortDescriptor}
-    >
-      <TableHeader columns={headerColumns}>
-        {(column) => (
-          <TableColumn
-            key={column.uid}
-            align={column.uid === "actions" ? "center" : "start"}
-            allowsSorting={column.sortable}
-          >
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody emptyContent={"No students found"} items={sortedItems}>
-        {(student) => (
-          <TableRow key={student._id}>
-            {(columnKey) => <TableCell>{renderCell(student, columnKey)}</TableCell>}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
-    <StudentModal
-      isOpen={modalOpen}
-      onClose={handleModalClose}
-      mode={modalMode}
-      student={selectedStudent}
-      onSubmit={handleModalSubmit}
-    />
-  </>
-);
 }
 

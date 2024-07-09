@@ -109,8 +109,10 @@ export async function DELETE(req) {
         }
 
         console.log("Student Deleted Successfully", deletedStudent);
-        const classInfo = await Classes.findById(deletedStudent.class);
+        if (deletedStudent.class) {
+            const classInfo = await Classes.findById(deletedStudent.class);
 
+        
         if (!classInfo) {
             throw new Error("Class not found for student");
         }
@@ -122,6 +124,7 @@ export async function DELETE(req) {
         if (!classUpdateResult) {
             throw new Error("Failed to update Class");
         }
+    }
         return NextResponse.json({ message: "Student Deleted Successfully" }, { status: 200 });
     } catch (error) {
         console.error("Error deleting student:", error);
