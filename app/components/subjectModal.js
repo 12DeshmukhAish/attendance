@@ -16,10 +16,10 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const [name, setName] = useState('');
   const [classId, setClassId] = useState('');
   const [teacherId, setTeacherId] = useState('');
-  const [content, setContent] = useState([{ name: '', status: 'not_covered' }]);
+  // const [content, setContent] = useState([{ name: '', status: 'not_covered' }]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [classes, setClasses] = useState([]);
-  const [subjectType, setSubjectType] = useState('');
+  // const [subjectType, setSubjectType] = useState('');
 
   const departmentOptions = [
     { key: 'CSE', label: 'CSE' },
@@ -30,10 +30,10 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     { key: 'FE', label: 'First Year' },
   ];
 
-  const subjectTypeOptions = [
-    { key: 'Theory', label: 'Theory' },
-    { key: 'Practical', label: 'Practical' },
-  ];
+  // const subjectTypeOptions = [
+  //   { key: 'Theory', label: 'Theory' },
+  //   { key: 'Practical', label: 'Practical' },
+  // ];
 
   useEffect(() => {
     if (subjectData) {
@@ -41,9 +41,9 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       setName(subjectData.name);
       setClassId(subjectData.class);
       setTeacherId(subjectData.teacher);
-      setContent(subjectData.content);
+      // setContent(subjectData.content);
       setSelectedDepartment(subjectData.department);
-      setSubjectType(subjectData.subType);
+      // setSubjectType(subjectData.subType);
     } else {
       resetForm();
     }
@@ -69,30 +69,30 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     setName('');
     setClassId('');
     setTeacherId('');
-    setContent([{ name: '', status: 'not_covered' }]);
+    // setContent([{ name: '', status: 'not_covered' }]);
     setSelectedDepartment('');
-    setSubjectType('');
+    // setSubjectType('');
   };
 
   const handleCancel = () => {
     onClose();
   };
 
-  const handleContentChange = (index, event) => {
-    const newContent = [...content];
-    newContent[index] = { ...newContent[index], name: event.target.value };
-    setContent(newContent);
-  };
+  // const handleContentChange = (index, event) => {
+  //   const newContent = [...content];
+  //   newContent[index] = { ...newContent[index], name: event.target.value };
+  //   setContent(newContent);
+  // };
 
-  const handleAddContent = () => {
-    setContent([...content, { name: '', status: 'not_covered' }]);
-  };
+  // const handleAddContent = () => {
+  //   setContent([...content, { name: '', status: 'not_covered' }]);
+  // };
 
-  const handleRemoveContent = (index) => {
-    const newContent = [...content];
-    newContent.splice(index, 1);
-    setContent(newContent);
-  };
+  // const handleRemoveContent = (index) => {
+  //   const newContent = [...content];
+  //   newContent.splice(index, 1);
+  //   setContent(newContent);
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,9 +101,9 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       name,
       class: classId,
       teacher: teacherId,
-      content,
+      // content,
       department: selectedDepartment,
-      subType: subjectType,
+      // subType: subjectType,
     };
 
     try {
@@ -185,8 +185,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               ))}
             </Select>
             <Select
-              label="Class Coordinator"
-              placeholder="Select Class Coordinator"
+              label="Subject Teacher"
+              placeholder="Select Subject Teacher"
               className="col-span-1 w-full"
               value={teacherId}
               onChange={(e) => setTeacherId(e.target.value)}
@@ -200,7 +200,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 </SelectItem>
               ))}
             </Select>
-            <Select
+            {/* <Select
               label="Subject Type"
               placeholder="Select Subject Type"
               className="col-span-1 w-full"
@@ -215,8 +215,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                   {type.label}
                 </SelectItem>
               ))}
-            </Select>
-            <div className="col-span-2">
+            </Select> */}
+            {/* <div className="col-span-2">
               <h3 className="text-lg font-bold mb-2">Content</h3>
               {content.map((item, index) => (
                 <div key={index} className="flex gap-4 mb-2">
@@ -250,7 +250,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               >
                 Add Content
               </Button>
-            </div>
+            </div> */}
             <div className="col-span-2 flex justify-end gap-4">
               <Button
                 variant="ghost"
