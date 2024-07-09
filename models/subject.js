@@ -11,8 +11,9 @@ const ContentSchema = new mongoose.Schema({
         default: 'not_covered'
     },
 }, {
-    _id: false, 
+    _id: false,
 });
+
 const SubjectSchema = new mongoose.Schema({
     _id: String,
     name: {
@@ -20,10 +21,12 @@ const SubjectSchema = new mongoose.Schema({
         required: true
     },
     class: {
-        type: String
+        type: String,
+        ref: 'Classes'  // Ensure correct reference to Class model
     },
     teacher: {
-        type: String
+        type: String,
+        ref: 'Faculty'  // Ensure correct reference to Faculty model
     },
     department: {
         type: String

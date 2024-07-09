@@ -1,10 +1,10 @@
-import Profile from '@/app/components/profile'
+import ShowAttendance from '@/app/components/showattendance'
 import React from 'react'
 
 const page = () => {
   return (
     <div className='mx-10 my-10'>
-      <Profile/>
+      <ShowAttendance/>
     </div>
   )
 }

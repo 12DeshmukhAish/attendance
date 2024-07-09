@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import Image from "next/image";
 import { RxDashboard, RxExit } from "react-icons/rx";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdPortrait } from "react-icons/md";
@@ -9,59 +9,17 @@ import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Tooltip } from "@nextui-org/react";
 import { SiGoogleclassroom } from "react-icons/si";
 import { PiStudentBold } from "react-icons/pi";
 import { GiTeacher } from "react-icons/gi";
 import { RiCalendarScheduleLine } from "react-icons/ri";
 
-import { Tooltip } from "@nextui-org/react";
-
-const sidebarItems = [
-  {
-    name: "Dashboard",
-    href: "/admin",
-    icon: RxDashboard,
-  },
-  {
-    name: "Manage Faculty",
-    href: "/admin/faculty",
-    icon: GiTeacher,
-  },
-  {
-    name: "Manage Students",
-    href: "/admin/students",
-    icon: PiStudentBold,
-  },
-  {
-    name: "Manage Class",
-    href: "/admin/classes",
-    icon: SiGoogleclassroom,
-  },
-  {
-    name: "Manage Subjects",
-    href: "/admin/subject",
-    icon: TbReportAnalytics,
-  },
-  {
-    name: "Take Attendance",
-    href: "/admin/takeattendance",
-    icon: RiCalendarScheduleLine,
-  },
-  {
-    name: "Manage Reports",
-    href: "/admin/showattendance",
-    icon: AiOutlineSchedule,
-  },
-  {
-    name: "Profile",
-    href: "/admin/profile",
-    icon: MdPortrait,
-  },
-  
-]
 const Sidebar = () => {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname =usePathname();
+  const { data: session } = useSession();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -69,7 +27,7 @@ const Sidebar = () => {
     setMounted(true);
   }, []);
 
-  const toggleSidebarcollapse = () => {
+  const toggleSidebarCollapse = () => {
     setIsCollapsed((prevState) => !prevState);
   };
 
@@ -82,9 +40,84 @@ const Sidebar = () => {
     return null;
   }
 
+  // Define sidebar items based on roles
+  let sidebarItems = [];
+  if (session && session.user) {
+    const { role } = session.user;
+    if (role === "admin" || role==="superadmin") {
+      sidebarItems = [
+        {
+          name: "Profile",
+          href: "/admin",
+          icon: MdPortrait,
+        },
+        {
+          name: "Manage Faculty",
+          href: "/admin/faculty",
+          icon: GiTeacher,
+        },
+        {
+          name: "Manage Students",
+          href: "/admin/students",
+          icon: PiStudentBold,
+        },
+        {
+          name: "Manage Class",
+          href: "/admin/classes",
+          icon: SiGoogleclassroom,
+        },
+        {
+          name: "Manage Subjects",
+          href: "/admin/subject",
+          icon: TbReportAnalytics,
+        },
+        {
+          name: "Take Attendance",
+          href: "/admin/takeattendance",
+          icon: RiCalendarScheduleLine,
+        },
+        {
+          name: "Manage Reports",
+          href: "/admin/showattendance",
+          icon: AiOutlineSchedule,
+        },
+        
+      ];
+    } else if (role === "faculty") {
+      sidebarItems = [
+        {
+          name: "Profile",
+          href: "/faculty",
+          icon: MdPortrait,
+        },{
+          name: "Take Attendance",
+          href: "/faculty/takeattendance",
+          icon: RiCalendarScheduleLine,
+        },
+        {
+          name: "Manage Reports",
+          href: "/faculty/showattendance",
+          icon: AiOutlineSchedule,
+        },
+      ];
+    } else if (role === "student") {
+      sidebarItems = [
+        {
+          name: "Profile",
+          href: "/student",
+          icon: MdPortrait,
+        },{
+          name: "Manage Reports",
+          href: "/student/showattendance",
+          icon: AiOutlineSchedule,
+        }
+      ];
+    }
+  }
+
   return (
     <div className={`h-screen sidebar__wrapper ${isCollapsed ? 'collapsed' : ''}`}>
-      <button className="btn shadow-xl" onClick={toggleSidebarcollapse}>
+      <button className="btn shadow-xl" onClick={toggleSidebarCollapse}>
         {isCollapsed ? <MdKeyboardArrowRight className=" " /> : <MdKeyboardArrowLeft />}
       </button>
       <aside className="sidebar rounded-r-lg shadow-2xl bg-primary-500 text-gray-100" data-collapse={isCollapsed}>
@@ -103,7 +136,7 @@ const Sidebar = () => {
             return (
               <li className="sidebar__item items-center" key={name}>
                 <Link
-                  className={`sidebar__link ${pathname === href ? "sidebar__link--active" : ""}`}
+                  className={`sidebar__link ${pathname == href ? "sidebar__link--active" : ""}`}
                   href={href}
                 >
                   <Tooltip content={name}>

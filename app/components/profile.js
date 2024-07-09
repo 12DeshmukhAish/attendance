@@ -5,55 +5,69 @@ import { useSession } from 'next-auth/react';
 import { Card, CardBody, CardHeader, Spinner, Button, Input } from '@nextui-org/react';
 import { Avatar, AvatarIcon } from "@nextui-org/react";
 
-const Profile = () => {  
+const Profile = () => {
   const { data: session } = useSession();
-  const [faculty, setFaculty] = useState(null);
+  const [userProfile, setUserProfile] = useState(null); // Changed to null for initial state
   const [isEditing, setIsEditing] = useState(false);
-  const [updatedFaculty, setUpdatedFaculty] = useState({
+  const [updatedProfile, setUpdatedProfile] = useState({
     _id: '',
     name: '',
     department: '',
     email: '',
+    role: '', // Added role to updatedProfile state
   });
 
   useEffect(() => {
-    const fetchFacultyData = async () => {
-      if (session?.user && !faculty) {
+    const fetchUserProfile = async () => {
+      if (session?.user && !userProfile) {
+        const role = session.user.role === "admin" ? "faculty" : session.user.role;
         const { id } = session.user;
-        try {
-          const res = await axios.get(`/api/${session.user.role}?_id=${id}`);
-          setFaculty(res.data);
-          setUpdatedFaculty(res.data);
-        } catch (error) {
-          console.error("Error fetching faculty data:", error);
+        const storedProfile = sessionStorage.getItem('userProfile');
+
+        if (storedProfile) {
+          setUserProfile(JSON.parse(storedProfile));
+          setUpdatedProfile(JSON.parse(storedProfile));
+        } else {
+          try {
+            const res = await axios.get(`/api/${role}?_id=${id}`);
+            const profileData = Array.isArray(res.data) ? res.data[0] : res.data; // Ensure userProfile is an object
+            profileData.role = session?.user?.role; // Add role to profile data
+            setUserProfile(profileData);
+            setUpdatedProfile(profileData);
+            sessionStorage.setItem('userProfile', JSON.stringify(profileData));
+          } catch (error) {
+            console.error("Error fetching user profile:", error);
+          }
         }
       }
     };
-    fetchFacultyData();
-  }, [session, faculty]);
+    fetchUserProfile();
+  }, [session, userProfile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUpdatedFaculty({
-      ...updatedFaculty,
+    setUpdatedProfile({
+      ...updatedProfile,
       [name]: value,
     });
   };
 
   const handleSave = async () => {
     if (session?.user) {
+      const role = session.user.role === "admin" ? "faculty" : session.user.role;
       const { id } = session.user;
       try {
-        await axios.put(`/api/${session.user.role}?_id=${id}`, updatedFaculty);
-        setFaculty(updatedFaculty);
+        await axios.put(`/api/${role}?_id=${id}`, updatedProfile);
+        setUserProfile(updatedProfile);
+        sessionStorage.setItem('userProfile', JSON.stringify(updatedProfile));
         setIsEditing(false);
       } catch (error) {
-        console.error("Error updating faculty data:", error);
+        console.error("Error updating user profile:", error);
       }
     }
   };
 
-  if (!session || !faculty) {
+  if (!session) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <Spinner type="points" />
@@ -75,9 +89,9 @@ const Profile = () => {
               }}
             />
           </div>
-          <div className="flex items-center space-x-4 mt-4"> {/* Added mt-4 for margin top */}
+          <div className="flex items-center space-x-4 mt-4">
             <h4 className="text-2xl font-semibold text-gray-800">
-              Faculty Profile
+              {session.user.role === 'admin' ? 'Admin Profile' : session.user.role === 'faculty' ? 'Faculty Profile' : 'Student Profile'}
             </h4>
             <Button auto size="sm" variant='ghost' color='primary' onClick={() => setIsEditing(!isEditing)}>
               {isEditing ? 'Cancel' : 'Edit'}
@@ -87,46 +101,49 @@ const Profile = () => {
         <CardBody className="space-y-4">
           {isEditing ? (
             <>
-              <Input 
-                fullWidth 
-                label="ID" 
-                name="_id" 
-                value={updatedFaculty._id} 
-                onChange={handleInputChange} 
-                disabled // Make the ID field read-only
+              <Input
+                fullWidth
+                label="ID"
+                name="_id"
+                value={updatedProfile._id}
+                onChange={handleInputChange}
+                disabled 
               />
-              <Input 
-                fullWidth 
-                label="Name" 
-                name="name" 
-                value={updatedFaculty.name} 
-                onChange={handleInputChange} 
+              <Input
+                fullWidth
+                label="Name"
+                name="name"
+                value={updatedProfile.name}
+                onChange={handleInputChange}
               />
-              <Input 
-                fullWidth 
-                label="Department" 
-                name="department" 
-                value={updatedFaculty.department} 
-                onChange={handleInputChange} 
+              <Input
+                fullWidth
+                label="Department"
+                name="department"
+                value={updatedProfile.department}
+                onChange={handleInputChange}
               />
-              <Input 
-                fullWidth 
-                label="Email" 
-                name="email" 
-                value={updatedFaculty.email} 
-                onChange={handleInputChange} 
+              <Input
+                fullWidth
+                label="Email"
+                name="email"
+                value={updatedProfile.email}
+                onChange={handleInputChange}
               />
               <Button auto size='sm' onClick={handleSave} variant='ghost' color="primary">
                 Save
               </Button>
             </>
           ) : (
-            <>
-              <h6 className="text-lg font-medium text-gray-700">ID: {faculty._id}</h6>
-              <p className="text-gray-600">Name: {faculty.name}</p>
-              <p className="text-gray-600">Department: {faculty.department}</p>
-              <p className="text-gray-600">Email: {faculty.email}</p>
-            </>
+            userProfile && (
+              <>
+                <h6 className="text-lg font-medium">ID: {session?.user?.id}</h6>
+                <h6 className="text-lg font-medium">Role: {userProfile.role}</h6>
+                <p className="text-gray-600">Name: {userProfile.name}</p>
+                <p className="text-gray-600">Department: {userProfile.department}</p>
+                <p className="text-gray-600">Email: {userProfile.email}</p>
+              </>
+            )
           )}
         </CardBody>
       </Card>

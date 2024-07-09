@@ -1,242 +1,297 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
-import axios from 'axios';
-import { DateRangePicker } from "@nextui-org/react";
-import { parseDate, getLocalTimeZone } from "@internationalized/date";
-import { useDateFormatter } from "@react-aria/i18n";
+import axios from "axios";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Button,
+  Spinner,
+  RangeCalendar,
+  DateRangePicker,
+} from "@nextui-org/react";
+import { today, getLocalTimeZone } from "@internationalized/date";
 
-export default function App() {
-  const [selectedDepartment, setSelectedDepartment] = useState("Department");
-  const [selectedClass, setSelectedClass] = useState("Class");
-  const [selectedSubject, setSelectedSubject] = useState("Subject");
-  const [selectedType, setSelectedType] = useState("Type");
-  const [classOptions, setClassOptions] = useState([]);
-  const [subjectOptions, setSubjectOptions] = useState([]);
-  const [reportData, setReportData] = useState(null);
-  const [isReportVisible, setIsReportVisible] = useState(false);
-  const currentDate = new Date();
-  const pastDate = new Date();
-  pastDate.setDate(currentDate.getDate() - 14);
-
+const AttendanceDisplay = () => {
+  const [attendanceData, setAttendanceData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedClass, setSelectedClass] = useState("");
+  const [viewType, setViewType] = useState("individual");
+  const [userProfile, setUserProfile] = useState(null);
   const [dateRange, setDateRange] = useState({
-    start: parseDate(pastDate.toISOString().split('T')[0]),
-    end: parseDate(currentDate.toISOString().split('T')[0]),
+    start: today(getLocalTimeZone()).subtract({ weeks: 2 }),
+    end: today(getLocalTimeZone()),
   });
 
-
-  let formatter = useDateFormatter({ dateStyle: "long" });
-
-  const departmentOptions = [
-    { key: "Department", label: "Department" },
-    { key: "CSE", label: "CSE" },
-    { key: "ENTC", label: "ENTC" },
-    { key: "Civil", label: "Civil" },
-    { key: "Electrical", label: "Electrical" },
-    { key: "Mechanical", label: "Mechanical" },
-  ];
-
-  const reportColumns = [
-    { key: "name", label: "STUDENT NAME" },
-    { key: "presentCount", label: "PRESENT COUNT" },
-    { key: "attendancePercentage", label: "ATTENDANCE PERCENTAGE" },
-  ];
-  const typeOptions = [
-    { key: "Theory", label: "Theory" },
-    { key: "Practical", label: "Practical" },
-  ];
   useEffect(() => {
-    if (selectedDepartment !== "Department") {
-      fetchClasses(selectedDepartment);
+    const storedProfile = sessionStorage.getItem("userProfile");
+    if (storedProfile) {
+      setUserProfile(JSON.parse(storedProfile));
     }
-  }, [selectedDepartment]);
+  }, []);
 
-  useEffect(() => {
-    if (selectedClass !== "Class") {
-      fetchSubjects(selectedClass);
-    }
-  }, [selectedClass]);
+  const fetchAttendance = async () => {
+    setLoading(true);
+    setError(null);
 
-  useEffect(() => {
-    if (selectedSubject !== "Subject") {
-      fetchReport(selectedSubject);
-    }
-  }, [selectedSubject, dateRange]);
-
-  const fetchClasses = async (department) => {
     try {
-      const response = await axios.get(`/api/classes?department=${department}`);
-      setClassOptions(response.data.map(cls => ({ key: cls._id, label: cls.name })));
-    } catch (error) {
-      console.error('Failed to fetch classes', error);
+      let url = "/api/attendance-reports?";
+      if (userProfile.role === "student") {
+        url += `studentId=${userProfile._id}`;
+      } else if (userProfile.role === "faculty") {
+        url += `subjectId=${selectedSubject}`;
+      } else if (userProfile.role === "admin") {
+        url += `classId=${selectedClass}`;
+        if (viewType === "individual" && selectedSubject) {
+          url += `&subjectId=${selectedSubject}`;
+        }
+      }
+
+      url += `&startDate=${dateRange.start.toString()}&endDate=${dateRange.end.toString()}`;
+
+      const response = await axios.get(url);
+      setAttendanceData(response.data);
+    } catch (err) {
+      setError("Failed to fetch attendance data");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchSubjects = async () => {
-    try {
-      const params = {
-        department: selectedDepartment !== "Department" ? selectedDepartment : undefined,
-        subType: selectedType !== "Type" ? selectedType : undefined,
-        class: selectedClass !== "Class" ? selectedClass : undefined
-      };
-      const response = await axios.get('/api/subject', { params });
-      setSubjectOptions(response.data || []);
-    } catch (error) {
-      console.error('Error fetching subjects:', error);
+  useEffect(() => {
+    if (userProfile) {
+      if (userProfile.role === "student" || (userProfile.role === "faculty" && selectedSubject) || (userProfile.role === "admin" && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
+        fetchAttendance();
+      }
     }
-  };
+  }, [userProfile, selectedSubject, selectedClass, viewType, dateRange]);
 
-  const fetchReport = async (subjectId) => {
-    try {
-      const params = {
-        subjectId,
-        startDate: dateRange.start.toString(),
-        endDate: dateRange.end.toString()
-      };
-      const response = await axios.get('/api/attendance', { params });
-      setReportData(response.data);
-      setIsReportVisible(true);
-    } catch (error) {
-      console.error('Failed to fetch attendance report:', error);
+  const renderStudentAttendance = () => (
+    <Table aria-label="Student Attendance Table">
+      <TableHeader>
+        <TableColumn>Subject</TableColumn>
+        <TableColumn>Total Lectures</TableColumn>
+        <TableColumn>Present</TableColumn>
+        <TableColumn>Attendance %</TableColumn>
+      </TableHeader>
+      <TableBody>
+        {attendanceData.map((subject) => (
+          <TableRow key={subject._id}>
+            <TableCell>{subject.name}</TableCell>
+            <TableCell>{subject.totalLectures}</TableCell>
+            <TableCell>{subject.presentCount}</TableCell>
+            <TableCell>{((subject.presentCount / subject.totalLectures) * 100).toFixed(2)}%</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
+  const renderFacultyAttendance = () => (
+    <Table aria-label="Faculty Attendance Table">
+      <TableHeader>
+        <TableColumn>Student Name</TableColumn>
+        <TableColumn>Roll Number</TableColumn>
+        <TableColumn>Present</TableColumn>
+        <TableColumn>Attendance %</TableColumn>
+      </TableHeader>
+      <TableBody>
+        {attendanceData[0].students.map((student) => (
+          <TableRow key={student._id}>
+            <TableCell>{student.name}</TableCell>
+            <TableCell>{student.rollNumber}</TableCell>
+            <TableCell>{student.presentCount}</TableCell>
+            <TableCell>{((student.presentCount / attendanceData[0].totalLectures) * 100).toFixed(2)}%</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+  const renderAdminAttendance = () => {
+    const totalLectures = attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0);
+    if (viewType === "cumulative") {
+      return (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border px-4 py-2">Roll No</th>
+                <th className="border px-4 py-2">Student Name</th>
+                {attendanceData.map((subject) => (
+                  <th key={subject._id} className="border px-4 py-2">
+                    {subject.name}<br />
+                    Faculty: {subject.facultyName}
+                  </th>
+                ))}
+                <th className="border px-4 py-2">Total Attendance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attendanceData[0].students.map((student) => (
+                <tr key={student.rollNumber}>
+                  <td className="border px-4 py-2">{student.rollNumber}</td>
+                  <td className="border px-4 py-2">{student.name}</td>
+                  {attendanceData.map((subject) => {
+                    const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                    return (
+                      <td key={subject._id} className="border px-4 py-2">
+                        <div>Present: {studentData ? studentData.presentCount : 0}</div>
+                        <div>Total: {subject.totalLectures}</div>
+                        <div>{studentData ? ((studentData.presentCount / subject.totalLectures) * 100).toFixed(2) : "NaN"}%</div>
+                      </td>
+                    );
+                  })}
+                  <td className="border px-4 py-2">
+                    {attendanceData.reduce((sum, subject) => {
+                      const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                      return sum + (studentData ? studentData.presentCount : 0);
+                    }, 0)}
+                    /
+                    {totalLectures}
+                    ({((attendanceData.reduce((sum, subject) => {
+                      const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                      return sum + (studentData ? studentData.presentCount : 0);
+                    }, 0) / totalLectures) * 100).toFixed(2)}%)
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    } else {
+      return (
+        <Table aria-label="Individual Attendance Table">
+          <TableHeader>
+            <TableColumn>Student Name</TableColumn>
+            <TableColumn>Roll Number</TableColumn>
+            <TableColumn>Total Lectures</TableColumn>
+            <TableColumn>Present</TableColumn>
+            <TableColumn>Total Percentage</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {attendanceData[0].students.map((student) => (
+              <TableRow key={student._id}>
+                <TableCell>{student.name}</TableCell>
+                <TableCell>{student.rollNumber}</TableCell>
+                <TableCell>
+                  {attendanceData[0].totalLectures}</TableCell>
+
+                <TableCell>{student.presentCount}</TableCell>
+                <TableCell>{((student.presentCount / attendanceData[0].totalLectures) * 100).toFixed(2)}%</TableCell>
+                
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      );
     }
   };
+  if (!userProfile) {
+    return <div>Loading user profile...</div>;
+  }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      
-      <div className="flex space-x-4 mb-4">
-      <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedType}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Type selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedType])}
-            onSelectionChange={(keys) => setSelectedType(Array.from(keys)[0])}
-          >
-            {typeOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedDepartment}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Department selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedDepartment])}
-            onSelectionChange={(keys) => setSelectedDepartment(Array.from(keys)[0])}
-          >
-            {departmentOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
+    <div className="p-4">
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div className="mb-4 md:mb-0">
+          <h1 className="text-2xl font-bold mb-2">Attendance Report</h1>
+          <p className="text-gray-600">User: {userProfile.name} ({userProfile.role})</p>
+        </div>
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+          {userProfile.role === "faculty" && (
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered">
+                  {selectedSubject ? userProfile.subjects.find((s) => s === selectedSubject) : "Select Subject"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
+                {userProfile.subjects.map((subject) => (
+                  <DropdownItem key={subject}>{subject}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+          )}
 
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedClass}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Class selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedClass])}
-            onSelectionChange={(keys) => setSelectedClass(Array.from(keys)[0])}
-          >
-            {classOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
+          {userProfile.role === "admin" && (
+            <>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant="bordered">
+                    {selectedClass ? userProfile.classes.find((c) => c === selectedClass) : "Select Class"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
+                  {userProfile.classes.map((classItem) => (
+                    <DropdownItem key={classItem}>{classItem}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant="bordered">{viewType === "cumulative" ? "Cumulative View" : "Individual View"}</Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="View type selection" onAction={(key) => setViewType(key)}>
+                  <DropdownItem key="cumulative">Cumulative View</DropdownItem>
+                  <DropdownItem key="individual">Individual View</DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+              {viewType === "individual" && (
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button variant="bordered">
+                      {selectedSubject ? userProfile.subjects.find((s) => s === selectedSubject) : "Select Subject"}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
+                    {userProfile.subjects.map((subject) => (
+                      <DropdownItem key={subject}>{subject}</DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedSubject}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Subject selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedSubject])}
-            onSelectionChange={(keys) => setSelectedSubject(Array.from(keys)[0])}
-          >
-            {subjectOptions.map((option) => (
-              <DropdownItem key={option._id}>{option.name}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-        <div className="flex flex-row gap-2">
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-2">Select Date Range</h2>
         <DateRangePicker
-          label="Date range"
+          aria-label="Date Range"
           value={dateRange}
           onChange={setDateRange}
-          variant="bordered"
-          size="sm"
         />
-        <p className="text-default-500 text-sm">
-          Selected date:{" "}
-          {dateRange
-            ? formatter.formatRange(
-                dateRange.start.toDate(getLocalTimeZone()),
-                dateRange.end.toDate(getLocalTimeZone())
-              )
-            : "--"}
-        </p>
       </div>
 
-      </div>
-
-      {isReportVisible && reportData && (
-        <div>
-          <h2>Subject: {reportData.subjectName}</h2>
-          <h3>Teacher: {reportData.teacherName}</h3>
-          <p>Total Lectures: {reportData.totalLectures}</p>
-          <Table
-            aria-label="Attendance Report Table"
-            shadow={false}
-            color="secondary"
-            className="table w-full"
-          >
-            <TableHeader columns={reportColumns}>
-              {(column) => (
-                <TableColumn key={column.key}>{column.label}</TableColumn>
-              )}
-            </TableHeader>
-            <TableBody items={reportData.students}>
-              {(item) => (
-                <TableRow key={item.name}>
-                  {(columnKey) => (
-                    <TableCell>
-                      {columnKey === 'attendancePercentage' 
-                        ? `${item[columnKey].toFixed(2)}%` 
-                        : item[columnKey]}
-                    </TableCell>
-                  )}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+      {loading ? (
+        <div className="flex justify-center items-center">
+          <Spinner size="large" />
         </div>
+      ) : error ? (
+        <div className="text-red-500">{error}</div>
+      ) : attendanceData ? (
+        <div>
+          {userProfile.role === "student" && renderStudentAttendance()}
+          {userProfile.role === "faculty" && renderFacultyAttendance()}
+          {userProfile.role === "admin" && renderAdminAttendance()}
+        </div>
+      ) : (
+        <div>No attendance data available</div>
       )}
     </div>
   );
-}
+};
+
+export default AttendanceDisplay;
