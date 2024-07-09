@@ -7,7 +7,7 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, passOutYear, department, password, year } = data;
+        const { _id, rollNumber, name, passOutYear, department, phoneNo,email,password, year } = data;
         console.log(data);
 
         const newStudent = new Student({
@@ -16,6 +16,8 @@ export async function POST(req) {
             name,
             passOutYear,
             department,
+            email,
+            phoneNo,
             password: password || "1234",
             year
         });
@@ -33,7 +35,7 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, passOutYear, department, password, year } = data;
+        const { _id, rollNumber, name, passOutYear, department, phoneNo,email,password, year } = data;
 
         const existingStudent = await Student.findByIdAndUpdate(_id, {
             rollNumber,
@@ -41,6 +43,9 @@ export async function PUT(req) {
             passOutYear,
             department,
             year,
+            email,
+            phoneNo,
+
             password
         }, { new: true });
 
@@ -64,6 +69,8 @@ export async function GET(req) {
         const name = searchParams.get("name");
         const passOutYear = searchParams.get("passOutYear");
         const department = searchParams.get("department");
+        const phoneNo = searchParams.get("phoneNo");
+        const email = searchParams.get("email");
         const password = searchParams.get("password");
         let filter = {};
 
@@ -81,6 +88,9 @@ export async function GET(req) {
         }
         if (department) {
             filter.department = department;
+        }
+        if (email) {
+            filter.email = email;
         }
         const students = await Student.find(filter);
 
