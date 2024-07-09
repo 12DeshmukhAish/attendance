@@ -65,6 +65,7 @@ export async function GET(req) {
         const passOutYear = searchParams.get("passOutYear");
         const department = searchParams.get("department");
         const password = searchParams.get("password");
+        const year = searchParams.get("year");
         let filter = {};
 
         if (_id) {
@@ -82,6 +83,7 @@ export async function GET(req) {
         if (department) {
             filter.department = department;
         }
+        if (year) filter.year = year;
         const students = await Student.find(filter);
 
         if (students.length === 0) {
