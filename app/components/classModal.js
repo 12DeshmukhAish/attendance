@@ -9,39 +9,26 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     className: "",
     classCoordinator: "",
     passOutYear: "",
+    year:"",
     department:""
   });
-  const [passOutYears, setPassOutYears] = useState([]);
-
-  useEffect(() => {
-    const fetchPassOutYears = async () => {
-      try {
-        const response = await axios.get("/api/passOutYears");
-        setPassOutYears(response.data);
-      } catch (error) {
-        console.error("Error fetching pass-out years:", error);
-      }
-    };
-
-    fetchPassOutYears();
-  }, []);
-
+ 
   useEffect(() => {
     if (mode === "edit" && classData) {
       setFormData({
         _id:classData._id,
-        className: classData.name,
         classCoordinator: classData.teacher,
         passOutYear: classData.passOutYear,
-        department:classData.department
+        department:classData.department,
+        year:classData.year
       });
     } else {
       setFormData({
         _id:"",
-        className: "",
         classCoordinator: "",
         passOutYear: "",
-        department:""
+        department:"",
+        year:""
       });
     }
   }, [mode, classData]);
@@ -53,7 +40,6 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
 
   const departmentOptions = [
     { key: "Department", label: "Department" },
-    { key: "FE", label: "First Year" },
     { key: "CSE", label: "CSE" },
     { key: "ENTC", label: "ENTC" },
     { key: "Civil", label: "Civil" },
@@ -95,15 +81,6 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             variant="bordered"
             size="sm"
           />
-          <Input
-            label="Class Name"
-            name="className"
-            value={formData.className}
-            onChange={handleChange}
-            required
-            variant="bordered"
-            size="sm"
-          />
           <Select
             label="Class Coordinator"
             placeholder="Select Coordinator"
@@ -119,20 +96,23 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
               </SelectItem>
             ))}
           </Select>
-          <Select
+          <Input
+            label="Acadmic Year"
+            name="year"
+            value={formData.year}
+            onChange={handleChange}
+            required
+            variant="bordered"
+            size="sm"
+          />
+          <Input
             label="Pass-out Year"
             name="passOutYear"
-            selectedKeys={[formData.passOutYear]}
+            selectedKeys={formData.passOutYear}
             onChange={handleChange}
             variant="bordered"
             size="sm"
-          >
-            {passOutYears.map((year) => (
-              <SelectItem key={year} textValue={year}>
-                {year}
-              </SelectItem>
-            ))}
-          </Select>
+            />
           <Select
             label="Department"
             placeholder="Select department"

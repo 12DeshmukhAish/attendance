@@ -8,7 +8,7 @@ export async function POST(req) {
         await connectMongoDB();
         const data = await req.json();
 
-        const { _id, className, passOutYear, classCoordinator, department } = data;
+        const { _id, passOutYear, classCoordinator, department ,year} = data;
 
         let studentFilter = { passOutYear };
         if (department !== "FE") {
@@ -20,11 +20,11 @@ export async function POST(req) {
 
         const newClass = new Classes({
             _id,
-            name: className,
             students: studentIds,
             teacher: classCoordinator,
             passOutYear,
-            department
+            department,
+            year
         });
 
         await newClass.save();
@@ -49,7 +49,7 @@ export async function PUT(req) {
         const _id = searchParams.get("_id");
 
         const data = await req.json();
-        const { className, classCoordinator, passOutYear, department } = data;
+        const { classCoordinator, passOutYear, department,year } = data;
         const existingClass = await Classes.findById(_id);
 
         if (!existingClass) {
@@ -58,10 +58,10 @@ export async function PUT(req) {
 
         const previousStudentIds = existingClass.students;
 
-        existingClass.name = className;
         existingClass.teacher = classCoordinator;
         existingClass.passOutYear = passOutYear;
         existingClass.department = department;
+        existingClass.year = year;
 
         // Fetch new students based on the updated passOutYear and department
         let studentFilter = { passOutYear };

@@ -37,24 +37,26 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     }
   }, [mode, faculty]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+ 
 
   const handleSelectChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
+    console.log(formData);
+  };
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const departmentOptions = [
-    { key: "FE", label: "First Year" },
+    { key: "Department", label: "Department" },
+
     { key: "CSE", label: "CSE" },
     { key: "ENTC", label: "ENTC" },
     { key: "Civil", label: "Civil" },
     { key: "Electrical", label: "Electrical" },
     { key: "Mechanical", label: "Mechanical" },
+    { key: "FE", label: "First Year" },
   ];
-
   const handleSubmit = async () => {
     try {
       let response;
@@ -99,12 +101,12 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             variant="bordered"
             size="sm"
           />
-          <Select
+            <Select
             label="Department"
             placeholder="Select department"
             name="department"
             selectedKeys={[formData.department]}
-            onChange={(value) => handleSelectChange("department", value)}
+            onChange={handleChange}
             variant="bordered"
             size="sm"
           >
@@ -113,7 +115,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
                 {department.label}
               </SelectItem>
             ))}
-          </Select>
+            </Select>
           <Input
             label="Email"
             name="email"
@@ -137,7 +139,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             placeholder="Select Admin Status"
             name="isAdmin"
             selectedKeys={[formData.isAdmin ? "true" : "false"]}
-            onChange={(value) => handleSelectChange("isAdmin", value === "true")}
+            onChange={handleChange}
             variant="bordered"
             size="sm"
           >

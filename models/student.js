@@ -19,6 +19,10 @@ const StudentSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    year: {
+        type: String,
+        required: true
+    },
     password: {
         type: String
     },
