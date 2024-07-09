@@ -28,7 +28,7 @@ const columns = [
   { uid: "class", name: "Class" },
   { uid: "teacher", name: "Teacher" },
   { uid: "department", name: "Department" },
-  // { uid: "subType", name: "Type" },
+
   { uid: "actions", name: "Actions" },
 ];
 

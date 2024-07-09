@@ -72,6 +72,7 @@ export async function GET(req) {
         const phoneNo = searchParams.get("phoneNo");
         const email = searchParams.get("email");
         const password = searchParams.get("password");
+        const year = searchParams.get("year");
         let filter = {};
 
         if (_id) {
@@ -89,9 +90,13 @@ export async function GET(req) {
         if (department) {
             filter.department = department;
         }
+
         if (email) {
             filter.email = email;
         }
+
+        if (year) filter.year = year;
+
         const students = await Student.find(filter);
 
         if (students.length === 0) {
