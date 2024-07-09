@@ -92,6 +92,9 @@ export async function GET(req) {
         if (email) {
             filter.email = email;
         }
+        if (phoneNo) {
+            filter.phoneNo = phoneNo;
+        }
         const students = await Student.find(filter);
 
         if (students.length === 0) {

@@ -136,7 +136,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
            <Input
             label="Phone No."
             name="phoneNo"
-            value={formData.passOutYear}
+            value={formData.phoneNo}
             onChange={handleChange}
             required
              variant="bordered"
@@ -145,7 +145,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
            <Input
             label="Email ID"
             name="email"
-            value={formData.passOutYear}
+            value={formData.email}
             onChange={handleChange}
             required
              variant="bordered"
