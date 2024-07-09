@@ -12,7 +12,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     name: "",
     passOutYear: "",
     department:"",
-    password:""
+    password:"",
+    year:""
   });
 
   const departmentOptions = [
@@ -33,7 +34,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         name: student.name,
         passOutYear: student.passOutYear,
         department:student.department,
-        password:student.password
+        password:student.password,
+        year:student.year
       
       });
     } else {
@@ -43,7 +45,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         name: "",
         passOutYear: "",
         department:"",
-        password:""
+        password:"",
+        year:""
   });
     }
   }, [mode, student]);
@@ -106,7 +109,15 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
              variant="bordered"
             size="sm"
           />
-          
+          <Input
+            label="Acadmic Year"
+            name="year"
+            value={formData.year}
+            onChange={handleChange}
+            required
+            variant="bordered"
+            size="sm"
+          />
           <Input
             label="Pass Out Year"
             name="passOutYear"
