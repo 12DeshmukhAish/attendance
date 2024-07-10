@@ -44,6 +44,14 @@ const columns = [
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
+const departmentOptions = [
+  { key: 'CSE', label: 'CSE' },
+  { key: 'ENTC', label: 'ENTC' },
+  { key: 'Civil', label: 'Civil' },
+  { key: 'Electrical', label: 'Electrical' },
+  { key: 'Mechanical', label: 'Mechanical' },
+  { key: 'FE', label: 'First Year' },
+];
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 
@@ -61,10 +69,12 @@ export default function StudentTable() {
   const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    fetchStudents(selectedDepartment);
+  }, [selectedDepartment]);
 
 
   const handleFileUpload = (event) => {
@@ -94,10 +104,29 @@ export default function StudentTable() {
     }
   };
 
-  const fetchStudents = async () => {
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
+  
+  useEffect(() => {
+    if (profile?.role !== "superadmin") {
+      setSelectedDepartment(profile?.department[0]);
+    }
+  }, [profile]);
+  const handleSelectChange = (key, value) => {
+    setSelectedDepartment({ ...formData, [key]: value });
+  };
+  const fetchStudents = async (selectedDepartment) => {
     try {
-      const response = await axios.get('/api/student');
+      if (selectedDepartment) {
+        const response = await axios.get(`/api/student?department=${selectedDepartment}`);
       setStudents(response.data);
+      }
+      
     } catch (error) {
       console.error('Error fetching students:', error);
     }
@@ -241,6 +270,23 @@ export default function StudentTable() {
             onValueChange={onSearchChange}
           />
           <div className="flex gap-3">
+          {profile?.role === "superadmin" && (
+              <Select
+                label="Department"
+                placeholder="Select department"
+                name="department"
+                selectedKeys={[selectedDepartment]}
+                onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            )}
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex">
                 <Button

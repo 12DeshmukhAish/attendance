@@ -21,11 +21,16 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const [classes, setClasses] = useState([]);
 
   useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
+
+  useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
-      setFormData((prev) => ({
-        ...prev,
-        department: profile?.department[0],
-      }));
+      setSelectedDepartment(profile?.department[0]);
     }
   }, [profile]);
   const departmentOptions = [
@@ -37,14 +42,16 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     { key: 'FE', label: 'First Year' },
   ];
 
- 
+
   useEffect(() => {
     if (subjectData) {
       setSubjectId(subjectData._id);
       setName(subjectData.name);
       setClassId(subjectData.class);
       setTeacherId(subjectData.teacher);
+      // setContent(subjectData.content);
       setSelectedDepartment(subjectData.department);
+      // setSubjectType(subjectData.subType);
     } else {
       resetForm();
     }
@@ -70,7 +77,9 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     setName('');
     setClassId('');
     setTeacherId('');
+    // setContent([{ name: '', status: 'not_covered' }]);
     setSelectedDepartment('');
+    // setSubjectType('');
   };
 
   const handleSelectChange = (key, value) => {
@@ -82,6 +91,22 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     onClose();
   };
 
+  // const handleContentChange = (index, event) => {
+  //   const newContent = [...content];
+  //   newContent[index] = { ...newContent[index], name: event.target.value };
+  //   setContent(newContent);
+  // };
+
+  // const handleAddContent = () => {
+  //   setContent([...content, { name: '', status: 'not_covered' }]);
+  // };
+
+  // const handleRemoveContent = (index) => {
+  //   const newContent = [...content];
+  //   newContent.splice(index, 1);
+  //   setContent(newContent);
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = {
@@ -89,7 +114,9 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       name,
       class: classId,
       teacher: teacherId,
+      // content,
       department: selectedDepartment,
+      // subType: subjectType,
     };
 
     try {
@@ -137,32 +164,32 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               required
               className="col-span-1 w-full"
             />
-                {profile?.role === "superadmin" ? (
-            <Select
-              label="Department"
-              placeholder="Select department"
-              name="department"
-              selectedKeys={new Set([formData.department])}
-              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
-              variant="bordered"
-              size="sm"
-            >
-              {departmentOptions.map((department) => (
-                <SelectItem key={department.key} textValue={department.label}>
-                  {department.label}
-                </SelectItem>
-              ))}
-            </Select>
-          ) : (
-            <Input
-              label="Department"
-              name="department"
-              value={profile?.department[0]}
-              disabled
-              variant="bordered"
-              size="sm"
-            />
-          )}
+            {profile?.role === "superadmin" ? (
+              <Select
+                label="Department"
+                placeholder="Select department"
+                name="department"
+                selectedKeys={new Set([formData.department])}
+                onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                label="Department"
+                name="department"
+                value={profile?.department[0]}
+                disabled
+                variant="bordered"
+                size="sm"
+              />
+            )}
             <Select
               label="Class"
               placeholder="Select Class"

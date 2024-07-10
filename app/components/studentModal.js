@@ -18,6 +18,14 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     password:"",
     year:""
   });
+
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
   useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
       setFormData((prev) => ({
