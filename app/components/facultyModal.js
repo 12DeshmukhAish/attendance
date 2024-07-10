@@ -66,7 +66,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
       setFormData((prev) => ({
         ...prev,
-        department: departmentOptions[0].key,
+        department: profile?.department[0],
       }));
     }
   }, [profile]);
@@ -133,7 +133,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             <Input
               label="Department"
               name="department"
-              value={departmentOptions[0].label}
+              value={profile?.department[0]}
               disabled
               variant="bordered"
               size="sm"

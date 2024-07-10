@@ -196,6 +196,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     }
   };
 
+  console.log(profile);
   const handleChange = (e) => {
     const { name, value } = e.target;
     const updatedFormData = { ...formData, [name]: value };
@@ -214,6 +215,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       setSelectedStudents(new Set(allStudents.map(student => student._id)));
     }
     setSelectAll(!selectAll);
+  };
+  const handleSelectChange = (key, value) => {
+    setFormData({ ...formData, [key]: value });
   };
 
   const handleSelectionChange = (e) => {
@@ -252,7 +256,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
       setFormData((prev) => ({
         ...prev,
-        department: departmentOptions[0].key,
+        department: profile?.department[0],
       }));
     }
   }, [profile]);
@@ -334,7 +338,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             <Input
               label="Department"
               name="department"
-              value={departmentOptions[0].label}
+              value={profile?.department[0]}
               disabled
               variant="bordered"
               size="sm"

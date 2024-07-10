@@ -6,6 +6,7 @@ import axios from "axios";
 
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
+  const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     _id: "",
     rollNumber: "",
@@ -15,7 +16,14 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     password:"",
     year:""
   });
-
+  useEffect(() => {
+    if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        department: profile?.department[0],
+      }));
+    }
+  }, [profile]);
   const departmentOptions = [
     { key: "Department", label: "Department" },
     { key: "FE", label: "First Year" },
@@ -53,6 +61,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const handleSelectChange = (key, value) => {
+    setFormData({ ...formData, [key]: value });
   };
 
   const handleSubmit = async () => {
@@ -136,21 +147,32 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
              variant="bordered"
             size="sm"
           /> 
-          <Select
-          label="Department"
-          placeholder="Select department"
-          name="department"
-          selectedKeys={[formData.department]}
-          onChange={handleChange}
-           variant="bordered"
-            size="sm"
-        >
-          {departmentOptions.map((department) => (
-            <SelectItem key={department.key} textValue={department.label}>
-              {department.label}
-            </SelectItem>
-          ))}
-        </Select>
+              {profile?.role === "superadmin" ? (
+            <Select
+              label="Department"
+              placeholder="Select department"
+              name="department"
+              selectedKeys={new Set([formData.department])}
+              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+              variant="bordered"
+              size="sm"
+            >
+              {departmentOptions.map((department) => (
+                <SelectItem key={department.key} textValue={department.label}>
+                  {department.label}
+                </SelectItem>
+              ))}
+            </Select>
+          ) : (
+            <Input
+              label="Department"
+              name="department"
+              value={profile?.department[0]}
+              disabled
+              variant="bordered"
+              size="sm"
+            />
+          )}
         </ModalBody>
         <ModalFooter>
           <Button auto flat color="error" onClick={onClose}>
