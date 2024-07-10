@@ -32,7 +32,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       }));
     }
   }, [profile]);
-  
+
   const departmentOptions = [
     { key: "Department", label: "Department" },
     { key: "FE", label: "First Year" },
@@ -179,7 +179,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
               variant="bordered"
               size="sm"
             />
-
             {profile?.role === "superadmin" ? (
 
               <Select
