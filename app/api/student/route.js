@@ -49,11 +49,8 @@ export async function PUT(req) {
             password
         }, { new: true });
 
-        if (!updatedStudent) {
-            throw new Error("Failed to update student's class field");
-        }
 
-        return NextResponse.json({ message: "Student Updated Successfully", student: updatedStudent }, { status: 200 });
+        return NextResponse.json({ message: "Student Updated Successfully", student:existingStudent }, { status: 200 });
     } catch (error) {
         console.error("Error updating student:", error);
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
