@@ -14,13 +14,13 @@ const Profile = () => {
     name: '',
     department: '',
     email: '',
-    role: '', // Added role to updatedProfile state
+    role: '', 
   });
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (session?.user && !userProfile) {
-        const role = session.user.role === "admin" ? "faculty" : session.user.role;
+        const role = session.user.role === "admin" || "superadmin" ? "faculty" : session.user.role;
         const { id } = session.user;
         const storedProfile = sessionStorage.getItem('userProfile');
 
