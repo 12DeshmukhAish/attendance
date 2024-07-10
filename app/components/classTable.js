@@ -50,7 +50,7 @@ export default function ClassTable() {
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
-
+  const [profile, setProfile] = useState(null);
   useEffect(() => {
     fetchClasses();
     fetchTeachers();

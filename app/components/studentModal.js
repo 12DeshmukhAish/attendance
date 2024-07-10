@@ -16,6 +16,14 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     password: "",
     year: ""
   });
+
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
   useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
       setFormData((prev) => ({
@@ -171,112 +179,110 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
               size="sm"
             />
 
-        <Input
-            label="ID"
-            name="_id"
-            value={formData._id}
-            onChange={handleChange}
-            required
-            disabled={mode!="add"}
-             variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Roll Number"
-            name="rollNumber"
-            value={formData.rollNumber}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Acadmic Year"
-            name="year"
-            value={formData.year}
-            onChange={handleChange}
-            required
-            variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Pass Out Year"
-            name="passOutYear"
-            value={formData.passOutYear}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-           <Input
-            label="Phone No."
-            name="phoneNo"
-            value={formData.phoneNo}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-           <Input
-            label="Email ID"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-           <Input
-            label="Password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-              {profile?.role === "superadmin" ? (
-
-            <Select
-              label="Department"
-              placeholder="Select department"
-              name="department"
-
-              selectedKeys={new Set([formData.department])}
-              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
-
-              variant="bordered"
-              size="sm"
-            >
-              {departmentOptions.map((department) => (
-                <SelectItem key={department.key} textValue={department.label}>
-                  {department.label}
-                </SelectItem>
-              ))}
-            </Select>
-
-          </div>
-
-          ) : (
             <Input
-              label="Department"
-              name="department"
-              value={profile?.department[0]}
-              disabled
+              label="ID"
+              name="_id"
+              value={formData._id}
+              onChange={handleChange}
+              required
+              disabled={mode != "add"}
               variant="bordered"
               size="sm"
             />
-          )}
+            <Input
+              label="Roll Number"
+              name="rollNumber"
+              value={formData.rollNumber}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Acadmic Year"
+              name="year"
+              value={formData.year}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Pass Out Year"
+              name="passOutYear"
+              value={formData.passOutYear}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Phone No."
+              name="phoneNo"
+              value={formData.phoneNo}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Email ID"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            {profile?.role === "superadmin" ? (
 
+              <Select
+                label="Department"
+                placeholder="Select department"
+                name="department"
+
+                selectedKeys={new Set([formData.department])}
+                onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+
+            ) : (
+              <Input
+                label="Department"
+                name="department"
+                value={profile?.department[0]}
+                disabled
+                variant="bordered"
+                size="sm"
+              />
+            )}
+          </div>
         </ModalBody>
         <ModalFooter>
           <Button auto flat color="error" onClick={onClose}>

@@ -18,7 +18,7 @@ import {
   Dropdown,
   DropdownMenu,
   DropdownItem,
-  Pagination,
+  Pagination, Select, SelectItem
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -44,6 +44,14 @@ const columns = [
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
+const departmentOptions = [
+  { key: 'CSE', label: 'CSE' },
+  { key: 'ENTC', label: 'ENTC' },
+  { key: 'Civil', label: 'Civil' },
+  { key: 'Electrical', label: 'Electrical' },
+  { key: 'Mechanical', label: 'Mechanical' },
+  { key: 'FE', label: 'First Year' },
+];
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 
@@ -61,11 +69,19 @@ export default function StudentTable() {
   const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
-
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [profile, setProfile] = useState(null);
   useEffect(() => {
-    fetchStudents();
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
   }, []);
 
+  useEffect(() => {
+    fetchStudents(selectedDepartment);
+  }, [selectedDepartment]);
+  console.log(profile);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -94,10 +110,23 @@ export default function StudentTable() {
     }
   };
 
-  const fetchStudents = async () => {
+  
+
+  useEffect(() => {
+    if (profile?.role !== "superadmin") {
+      setSelectedDepartment(profile?.department[0]);
+    }
+  }, [profile]);
+  const handleSelectChange = ( value) => {
+    setSelectedDepartment(value);
+  };
+  const fetchStudents = async (selectedDepartment) => {
     try {
-      const response = await axios.get('/api/student');
-      setStudents(response.data);
+      if (selectedDepartment) {
+        const response = await axios.get(`/api/student?department=${selectedDepartment}`);
+        setStudents(response.data);
+      }
+
     } catch (error) {
       console.error('Error fetching students:', error);
     }
@@ -241,6 +270,23 @@ export default function StudentTable() {
             onValueChange={onSearchChange}
           />
           <div className="flex gap-3">
+            {profile?.role != "admin" && (
+              <Select
+                label="Department"
+                placeholder="Select department"
+                name="department"
+                selectedKeys={[selectedDepartment]}
+                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            )}
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex">
                 <Button
@@ -278,22 +324,22 @@ export default function StudentTable() {
             >
               Add New
             </Button>
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={handleFileUpload}
-                id="upload-input"
-                className="hidden"
-              />
-              <Button
-                color="primary"
-                variant="ghost"
-                size="sm"
-                onClick={openFileDialog}
-                endContent={<FaFileUpload />}
-              >
-                Upload File
-              </Button>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              id="upload-input"
+              className="hidden"
+            />
+            <Button
+              color="primary"
+              variant="ghost"
+              size="sm"
+              onClick={openFileDialog}
+              endContent={<FaFileUpload />}
+            >
+              Upload File
+            </Button>
             <Button
               color="primary"
               size="sm"
