@@ -82,8 +82,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     // setSubjectType('');
   };
 
-  const handleSelectChange = (key, value) => {
-    setFormData({ ...formData, [key]: value });
+  const handleSelectChange = (value) => {
+    setSelectedDepartment( value );
   };
 
 
@@ -169,8 +169,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 label="Department"
                 placeholder="Select department"
                 name="department"
-                selectedKeys={new Set([formData.department])}
-                onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+                selectedKeys={[selectedDepartment]}
+                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
                 variant="bordered"
                 size="sm"
               >

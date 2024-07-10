@@ -18,7 +18,7 @@ import {
   Dropdown,
   DropdownMenu,
   DropdownItem,
-  Pagination,
+  Pagination, Select, SelectItem
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -71,11 +71,17 @@ export default function StudentTable() {
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
 
   useEffect(() => {
     fetchStudents(selectedDepartment);
   }, [selectedDepartment]);
-
+  console.log(profile);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -104,29 +110,23 @@ export default function StudentTable() {
     }
   };
 
-  useEffect(() => {
-    const storedProfile = sessionStorage.getItem('userProfile');
-    if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
-    }
-  }, []);
-
   
+
   useEffect(() => {
     if (profile?.role !== "superadmin") {
       setSelectedDepartment(profile?.department[0]);
     }
   }, [profile]);
-  const handleSelectChange = (key, value) => {
-    setSelectedDepartment({ ...formData, [key]: value });
+  const handleSelectChange = ( value) => {
+    setSelectedDepartment(value);
   };
   const fetchStudents = async (selectedDepartment) => {
     try {
       if (selectedDepartment) {
         const response = await axios.get(`/api/student?department=${selectedDepartment}`);
-      setStudents(response.data);
+        setStudents(response.data);
       }
-      
+
     } catch (error) {
       console.error('Error fetching students:', error);
     }
@@ -270,13 +270,13 @@ export default function StudentTable() {
             onValueChange={onSearchChange}
           />
           <div className="flex gap-3">
-          {profile?.role === "superadmin" && (
+            {profile?.role != "admin" && (
               <Select
                 label="Department"
                 placeholder="Select department"
                 name="department"
                 selectedKeys={[selectedDepartment]}
-                onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
                 variant="bordered"
                 size="sm"
               >
@@ -324,22 +324,22 @@ export default function StudentTable() {
             >
               Add New
             </Button>
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={handleFileUpload}
-                id="upload-input"
-                className="hidden"
-              />
-              <Button
-                color="primary"
-                variant="ghost"
-                size="sm"
-                onClick={openFileDialog}
-                endContent={<FaFileUpload />}
-              >
-                Upload File
-              </Button>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              id="upload-input"
+              className="hidden"
+            />
+            <Button
+              color="primary"
+              variant="ghost"
+              size="sm"
+              onClick={openFileDialog}
+              endContent={<FaFileUpload />}
+            >
+              Upload File
+            </Button>
             <Button
               color="primary"
               size="sm"

@@ -44,7 +44,7 @@ const Sidebar = () => {
   let sidebarItems = [];
   if (session && session.user) {
     const { role } = session.user;
-    if (role === "admin" || role==="superadmin") {
+    if (role === "admin" ) {
       sidebarItems = [
         {
           name: "Profile",
@@ -83,7 +83,38 @@ const Sidebar = () => {
         },
         
       ];
-    } else if (role === "faculty") {
+    } 
+    else
+    if (role==="superadmin") {
+      sidebarItems = [
+        {
+          name: "Profile",
+          href: "/admin",
+          icon: MdPortrait,
+        },
+        {
+          name: "Manage Faculty",
+          href: "/admin/faculty",
+          icon: GiTeacher,
+        },
+        {
+          name: "Manage Students",
+          href: "/admin/students",
+          icon: PiStudentBold,
+        },
+        {
+          name: "Manage Class",
+          href: "/admin/classes",
+          icon: SiGoogleclassroom,
+        },
+        {
+          name: "Manage Reports",
+          href: "/admin/showattendance",
+          icon: AiOutlineSchedule,
+        },
+        
+      ];
+    }else if (role === "faculty") {
       sidebarItems = [
         {
           name: "Profile",
