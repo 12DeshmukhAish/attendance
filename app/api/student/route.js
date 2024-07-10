@@ -94,9 +94,11 @@ export async function GET(req) {
         if (email) {
             filter.email = email;
         }
+
         if (phoneNo) {
             filter.phoneNo = phoneNo;
         }
+
 
         if (year) filter.year = year;
 
