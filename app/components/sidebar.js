@@ -99,6 +99,11 @@ const Sidebar = () => {
           href: "/faculty/showattendance",
           icon: AiOutlineSchedule,
         },
+        {
+          name: "Add Teaching plan",
+          href: "/faculty/content",
+          icon: AiOutlineSchedule,
+        },
       ];
     } else if (role === "student") {
       sidebarItems = [
@@ -111,6 +116,7 @@ const Sidebar = () => {
           href: "/student/showattendance",
           icon: AiOutlineSchedule,
         }
+
       ];
     }
   }

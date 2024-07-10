@@ -23,6 +23,14 @@ const StudentSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String
+        
+    },
+    phoneNo: {
+        type: String
+        
+    },
     password: {
         type: String
     },
