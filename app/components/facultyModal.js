@@ -13,6 +13,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     password: "",
     isAdmin: false,
   });
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     if (mode === "edit" && faculty) {
@@ -37,19 +38,22 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     }
   }, [mode, faculty]);
 
- 
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
 
   const handleSelectChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
-    console.log(formData);
   };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const departmentOptions = [
-    { key: "Department", label: "Department" },
-
     { key: "CSE", label: "CSE" },
     { key: "ENTC", label: "ENTC" },
     { key: "Civil", label: "Civil" },
@@ -57,17 +61,25 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     { key: "Mechanical", label: "Mechanical" },
     { key: "FE", label: "First Year" },
   ];
+
+  useEffect(() => {
+    if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        department: departmentOptions[0].key,
+      }));
+    }
+  }, [profile]);
+
   const handleSubmit = async () => {
     try {
       let response;
       if (mode === "add") {
         response = await axios.post("/api/faculty", formData);
-        console.log("Faculty added:", response.data);
         toast.success('Faculty added successfully');
         onSubmit();
       } else if (mode === "edit") {
         response = await axios.put(`/api/faculty`, formData);
-        console.log("Faculty updated:", response.data);
         toast.success('Faculty updated successfully');
       }
       onClose();
@@ -101,21 +113,32 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             variant="bordered"
             size="sm"
           />
+          {profile?.role === "superadmin" ? (
             <Select
-            label="Department"
-            placeholder="Select department"
-            name="department"
-            selectedKeys={[formData.department]}
-            onChange={handleChange}
-            variant="bordered"
-            size="sm"
-          >
-            {departmentOptions.map((department) => (
-              <SelectItem key={department.key} textValue={department.label}>
-                {department.label}
-              </SelectItem>
-            ))}
+              label="Department"
+              placeholder="Select department"
+              name="department"
+              selectedKeys={new Set([formData.department])}
+              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+              variant="bordered"
+              size="sm"
+            >
+              {departmentOptions.map((department) => (
+                <SelectItem key={department.key} textValue={department.label}>
+                  {department.label}
+                </SelectItem>
+              ))}
             </Select>
+          ) : (
+            <Input
+              label="Department"
+              name="department"
+              value={departmentOptions[0].label}
+              disabled
+              variant="bordered"
+              size="sm"
+            />
+          )}
           <Input
             label="Email"
             name="email"
@@ -138,8 +161,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             label="Admin"
             placeholder="Select Admin Status"
             name="isAdmin"
-            selectedKeys={[formData.isAdmin ? "true" : "false"]}
-            onChange={handleChange}
+            selectedKeys={new Set([formData.isAdmin ? "true" : "false"])}
+            onSelectionChange={(value) => handleSelectChange("isAdmin", value.currentKey === "true")}
             variant="bordered"
             size="sm"
           >
