@@ -8,7 +8,7 @@ export default function App() {
   const [selectedDepartment, setSelectedDepartment] = useState("Department");
   const [selectedClass, setSelectedClass] = useState("Class");
   const [selectedSubject, setSelectedSubject] = useState("Subject");
-  const [selectedType, setSelectedType] = useState("Type");
+  // const [selectedType, setSelectedType] = useState("Type");
   const [isTableVisible, setIsTableVisible] = useState(false);
   const [students, setStudents] = useState([]);
   const [selectedKeys, setSelectedKeys] = useState(new Set());
@@ -18,10 +18,10 @@ export default function App() {
   const [profile, setProfile] = useState(null); // State to store user profile
   const [subjectDetails, setSubjectDetails] = useState(null); // State to store subject details
 
-  const typeOptions = [
-    { key: "Theory", label: "Theory" },
-    { key: "Practical", label: "Practical" },
-  ];
+  // const typeOptions = [
+  //   { key: "Theory", label: "Theory" },
+  //   { key: "Practical", label: "Practical" },
+  // ];
 
   // Fetch profile data from session storage on component mount
   useEffect(() => {
@@ -122,13 +122,13 @@ export default function App() {
     <div className="flex flex-col gap-4 p-4">
       <div className="flex space-x-4 mb-4 items-center">
 
-        <Dropdown>
-          <DropdownTrigger>
+        {/* <Dropdown>
+          {/* <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
               {selectedType}
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
+          </DropdownTrigger> */}
+          {/* <DropdownMenu
             aria-label="Type selection"
             variant="flat"
             disallowEmptySelection
@@ -140,7 +140,7 @@ export default function App() {
               <DropdownItem key={option.key}>{option.label}</DropdownItem>
             ))}
           </DropdownMenu>
-        </Dropdown>
+        </Dropdown> */} 
 
         {/* <Dropdown>
           <DropdownTrigger>
