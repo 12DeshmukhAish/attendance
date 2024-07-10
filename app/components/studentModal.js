@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Input,ModalBody,ModalContent,ModalFooter,ModalHeader, Select, SelectItem } from "@nextui-org/react";
+import { Modal, Button, Input, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
-
-
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -11,11 +9,11 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     rollNumber: "",
     name: "",
     passOutYear: "",
-    department:"",
+    department: "",
     email: "",
-    phoneNo :"",
-    password:"",
-    year:""
+    phoneNo: "",
+    password: "",
+    year: ""
   });
 
   const departmentOptions = [
@@ -26,8 +24,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     { key: "Civil", label: "Civil" },
     { key: "Electrical", label: "Electrical" },
     { key: "Mechanical", label: "Mechanical" },
-    { key: "FE", label: "First Year" },
   ];
+
   useEffect(() => {
     if (mode === "edit" && student) {
       setFormData({
@@ -35,25 +33,24 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         rollNumber: student.rollNumber,
         name: student.name,
         passOutYear: student.passOutYear,
-        department:student.department,
-        email:student.email,
-        phoneNo:student.phoneNo,
-        password:student.password,
-        year:student.year
-      
+        department: student.department,
+        email: student.email,
+        phoneNo: student.phoneNo,
+        password: student.password,
+        year: student.year
       });
     } else {
       setFormData({
-        _id:"",
+        _id: "",
         rollNumber: "",
         name: "",
         passOutYear: "",
-        department:"",
-        phoneNo:"",
-        email:"",
-        password:"",
-        year:""
-  });
+        department: "",
+        phoneNo: "",
+        email: "",
+        password: "",
+        year: ""
+      });
     }
   }, [mode, student]);
 
@@ -87,94 +84,96 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Student" : "Edit Student"}</ModalHeader>
         <ModalBody>
-        <Input
-            label="ID"
-            name="_id"
-            value={formData._id}
-            onChange={handleChange}
-            required
-            disabled={mode!="add"}
-             variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Roll Number"
-            name="rollNumber"
-            value={formData.rollNumber}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Acadmic Year"
-            name="year"
-            value={formData.year}
-            onChange={handleChange}
-            required
-            variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Pass Out Year"
-            name="passOutYear"
-            value={formData.passOutYear}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-           <Input
-            label="Phone No."
-            name="phoneNo"
-            value={formData.phoneNo}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-           <Input
-            label="Email ID"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-           <Input
-            label="Password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-             variant="bordered"
-            size="sm"
-          /> 
-          <Select
-          label="Department"
-          placeholder="Select department"
-          name="department"
-          selectedKeys={[formData.department]}
-          onChange={handleChange}
-           variant="bordered"
-            size="sm"
-        >
-          {departmentOptions.map((department) => (
-            <SelectItem key={department.key} textValue={department.label}>
-              {department.label}
-            </SelectItem>
-          ))}
-        </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="ID"
+              name="_id"
+              value={formData._id}
+              onChange={handleChange}
+              required
+              disabled={mode !== "add"}
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Roll Number"
+              name="rollNumber"
+              value={formData.rollNumber}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Academic Year"
+              name="year"
+              value={formData.year}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Pass Out Year"
+              name="passOutYear"
+              value={formData.passOutYear}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Phone No."
+              name="phoneNo"
+              value={formData.phoneNo}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Email ID"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Select
+              label="Department"
+              placeholder="Select department"
+              name="department"
+              selectedKeys={[formData.department]}
+              onChange={handleChange}
+              variant="bordered"
+              size="sm"
+            >
+              {departmentOptions.map((department) => (
+                <SelectItem key={department.key} textValue={department.label}>
+                  {department.label}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
         </ModalBody>
         <ModalFooter>
           <Button auto flat color="error" onClick={onClose}>
