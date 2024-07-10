@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import axios from "axios";
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
+  const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     _id: "",
     rollNumber: "",
@@ -15,7 +16,14 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     password: "",
     year: ""
   });
-
+  useEffect(() => {
+    if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        department: profile?.department[0],
+      }));
+    }
+  }, [profile]);
   const departmentOptions = [
     { key: "Department", label: "Department" },
     { key: "FE", label: "First Year" },
@@ -57,6 +65,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const handleSelectChange = (key, value) => {
+    setFormData({ ...formData, [key]: value });
+  };
 
   const handleSubmit = async () => {
     try {
@@ -84,6 +95,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Student" : "Edit Student"}</ModalHeader>
         <ModalBody>
+
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="ID"
@@ -158,12 +170,90 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
               variant="bordered"
               size="sm"
             />
+
+        <Input
+            label="ID"
+            name="_id"
+            value={formData._id}
+            onChange={handleChange}
+            required
+            disabled={mode!="add"}
+             variant="bordered"
+            size="sm"
+          />
+          <Input
+            label="Roll Number"
+            name="rollNumber"
+            value={formData.rollNumber}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          />
+          <Input
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          />
+          <Input
+            label="Acadmic Year"
+            name="year"
+            value={formData.year}
+            onChange={handleChange}
+            required
+            variant="bordered"
+            size="sm"
+          />
+          <Input
+            label="Pass Out Year"
+            name="passOutYear"
+            value={formData.passOutYear}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          /> 
+           <Input
+            label="Phone No."
+            name="phoneNo"
+            value={formData.phoneNo}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          /> 
+           <Input
+            label="Email ID"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          /> 
+           <Input
+            label="Password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+             variant="bordered"
+            size="sm"
+          /> 
+              {profile?.role === "superadmin" ? (
+
             <Select
               label="Department"
               placeholder="Select department"
               name="department"
-              selectedKeys={[formData.department]}
-              onChange={handleChange}
+
+              selectedKeys={new Set([formData.department])}
+              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+
               variant="bordered"
               size="sm"
             >
@@ -173,7 +263,20 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
                 </SelectItem>
               ))}
             </Select>
+
           </div>
+
+          ) : (
+            <Input
+              label="Department"
+              name="department"
+              value={profile?.department[0]}
+              disabled
+              variant="bordered"
+              size="sm"
+            />
+          )}
+
         </ModalBody>
         <ModalFooter>
           <Button auto flat color="error" onClick={onClose}>

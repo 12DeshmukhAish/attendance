@@ -15,22 +15,26 @@ export const authOptions = {
           const userId = credentials.userId;
           const password = credentials.password;
           const faculty = await Faculty.findOne({ _id: userId });
-          const student = await Student.findOne({ _id: userId }) 
+          const student = await Student.findOne({ _id: userId })
           let userRole;
           let id;
           let departmentName;
-
-          if (faculty) {
+          if (faculty && faculty._id.startsWith("S")) {
             id = faculty._id;
-            departmentName = faculty.department;
-            userRole = faculty.isAdmin ? "admin" : "faculty";
-          } else if (student) {
-            id = student._id;
-            departmentName = student.department;
-            userRole = "student";
-          } else {
-            return null;
-          }
+            userRole = "superadmin";
+          }  else
+            if (faculty) {
+              id = faculty._id;
+              departmentName = faculty.department;
+              userRole = faculty.isAdmin ? "admin" : "faculty";
+            }
+            else if (student) {
+              id = student._id;
+              departmentName = student.department;
+              userRole = "student";
+            } else {
+              return null;
+            }
 
           const isVerified = (faculty && faculty.password === password) || (student && student.password === password);
           if (isVerified) {
@@ -41,7 +45,7 @@ export const authOptions = {
             };
             return userWithRole;
           } else {
-            return null; // Return null if credentials are invalid
+            return null;
           }
         } catch (error) {
           console.error('Error during authorization:', error);

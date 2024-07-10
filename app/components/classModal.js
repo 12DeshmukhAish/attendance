@@ -160,6 +160,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   const [allStudents, setAllStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     if (mode === "edit" && classData) {
@@ -195,6 +196,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     }
   };
 
+  console.log(profile);
   const handleChange = (e) => {
     const { name, value } = e.target;
     const updatedFormData = { ...formData, [name]: value };
@@ -213,6 +215,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       setSelectedStudents(new Set(allStudents.map(student => student._id)));
     }
     setSelectAll(!selectAll);
+  };
+  const handleSelectChange = (key, value) => {
+    setFormData({ ...formData, [key]: value });
   };
 
   const handleSelectionChange = (e) => {
@@ -240,6 +245,21 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       toast.error(`Error occurred while ${mode === "add" ? "adding" : "updating"} class`);
     }
   };
+  
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+  useEffect(() => {
+    if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        department: profile?.department[0],
+      }));
+    }
+  }, [profile]);
 
   const departmentOptions = [
     { key: "Department", label: "Department" },
@@ -298,21 +318,32 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             variant="bordered"
             size="sm"
           />
-          <Select
-            label="Department"
-            placeholder="Select department"
-            name="department"
-            selectedKeys={[formData.department]}
-            onChange={handleChange}
-            variant="bordered"
-            size="sm"
-          >
-            {departmentOptions.map((department) => (
-              <SelectItem key={department.key} textValue={department.label}>
-                {department.label}
-              </SelectItem>
-            ))}
-          </Select>
+          {profile?.role === "superadmin" ? (
+            <Select
+              label="Department"
+              placeholder="Select department"
+              name="department"
+              selectedKeys={new Set([formData.department])}
+              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+              variant="bordered"
+              size="sm"
+            >
+              {departmentOptions.map((department) => (
+                <SelectItem key={department.key} textValue={department.label}>
+                  {department.label}
+                </SelectItem>
+              ))}
+            </Select>
+          ) : (
+            <Input
+              label="Department"
+              name="department"
+              value={profile?.department[0]}
+              disabled
+              variant="bordered"
+              size="sm"
+            />
+          )}
           <div>
             <Checkbox
               isSelected={selectAll}

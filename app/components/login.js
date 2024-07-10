@@ -15,7 +15,11 @@ export default function LoginComponent() {
   const { data: session } = useSession();
   useEffect(() => {
     if (session?.user?.role) {
-      router.replace(`/${session.user.role}`);      
+      let role ;
+      if (session?.user?.role=="superadmin") {
+        role = "admin"
+      }
+      router.replace(`/${role}`);      
     }
 
   }, [session]);
