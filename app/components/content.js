@@ -70,7 +70,7 @@ export default function ContentModal({ isOpen, onClose, mode, subjectData, onSub
 
   return (
     <Modal
-      isOpen={isOpen}
+      isOpen={true}
       onClose={onClose}
       placement="top-center"
       className="max-w-[40vw] max-h-[80vh] overflow-y-auto"

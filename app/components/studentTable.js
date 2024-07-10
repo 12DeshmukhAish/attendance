@@ -254,6 +254,23 @@ export default function StudentTable() {
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
+        {profile?.role != "admin" && (
+              <Select              
+                placeholder="Select department"
+                name="department"
+                className=" w-[40%] "
+                selectedKeys={[selectedDepartment]}
+                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            )}
         <div className="flex justify-between gap-3 items-end">
           <Input
             isClearable
@@ -270,23 +287,7 @@ export default function StudentTable() {
             onValueChange={onSearchChange}
           />
           <div className="flex gap-3">
-            {profile?.role != "admin" && (
-              <Select
-                label="Department"
-                placeholder="Select department"
-                name="department"
-                selectedKeys={[selectedDepartment]}
-                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
-                variant="bordered"
-                size="sm"
-              >
-                {departmentOptions.map((department) => (
-                  <SelectItem key={department.key} textValue={department.label}>
-                    {department.label}
-                  </SelectItem>
-                ))}
-              </Select>
-            )}
+            
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex">
                 <Button

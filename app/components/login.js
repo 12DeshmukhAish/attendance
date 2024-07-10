@@ -1,29 +1,29 @@
-"use client"
-import React, { useState,useEffect } from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Input, Button } from '@nextui-org/react';
-import { signIn,useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner'
-export default function LoginComponent() {
+import { toast } from 'sonner';
 
+export default function LoginComponent() {
   const [isVisible, setIsVisible] = useState(false);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const toggleVisibility = () => setIsVisible(!isVisible);
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+let role;
   useEffect(() => {
-    if (session?.user?.role) {
-      let role ;
-      if (session?.user?.role=="superadmin") {
-        role = "admin"
+    if (status === 'authenticated' && session?.user?.role) {
+       role = session.user.role;
+      if (role === 'superadmin' || role === 'admin') {
+        router.replace(`/admin`);
+      } else {
+        router.replace(`/${role}`);
       }
-      router.replace(`/${role}`);      
     }
-
-  }, [session]);
-
+  }, [session, status, router]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -32,10 +32,11 @@ export default function LoginComponent() {
         password,
         redirect: false,
       });
-      
+
       if (result.ok) {
-        console.log('Login Successful !');
         toast.success('Login Successful');
+      } else {
+        toast.error('Failed to login');
       }
     } catch (error) {
       console.error('Failed to login', error);
@@ -98,7 +99,7 @@ export default function LoginComponent() {
             onChange={(e) => setPassword(e.target.value)}
             className="mb-4"
           />
-            <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-4">
             <Button color="default" onClick={handleCancel} className="w-36">
               Cancel
             </Button>
@@ -107,11 +108,11 @@ export default function LoginComponent() {
             </Button>
           </div>
           <div className="mt-2">
-          <p className="text-sm">
-             <Link href="/reset_password" className="text-blue-500">
-               reset password
-             </Link>
-           </p>
+            <p className="text-sm">
+              <Link href="/reset_password" className="text-blue-500">
+                reset password
+              </Link>
+            </p>
           </div>
         </div>
       </form>

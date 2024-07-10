@@ -32,6 +32,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       }));
     }
   }, [profile]);
+  
   const departmentOptions = [
     { key: "Department", label: "Department" },
     { key: "FE", label: "First Year" },
@@ -179,79 +180,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
               size="sm"
             />
 
-            <Input
-              label="ID"
-              name="_id"
-              value={formData._id}
-              onChange={handleChange}
-              required
-              disabled={mode != "add"}
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Roll Number"
-              name="rollNumber"
-              value={formData.rollNumber}
-              onChange={handleChange}
-              required
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Acadmic Year"
-              name="year"
-              value={formData.year}
-              onChange={handleChange}
-              required
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Pass Out Year"
-              name="passOutYear"
-              value={formData.passOutYear}
-              onChange={handleChange}
-              required
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Phone No."
-              name="phoneNo"
-              value={formData.phoneNo}
-              onChange={handleChange}
-              required
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Email ID"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              variant="bordered"
-              size="sm"
-            />
             {profile?.role === "superadmin" ? (
 
               <Select
