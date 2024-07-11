@@ -10,14 +10,19 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, name, class: classId, teacher, department } = data;
+        const { _id, name, class: classId, teacher, department, subType, content } = data;
 
         const newSubject = new Subject({
             _id,
             name,
             class: classId,
             teacher,
-            department
+            department,
+            subType,
+            content: content.map(item => ({
+                name: item.name,
+                status: item.status || 'not_covered'
+            }))
         });
 
         await newSubject.save();
@@ -56,6 +61,7 @@ export async function POST(req) {
     }
 }
 
+// PUT operation - Update subject
 export async function PUT(req) {
     try {
         await connectMongoDB();
@@ -64,14 +70,11 @@ export async function PUT(req) {
         const data = await req.json();
         const { name, class: classId, teacher, department, subType, content } = data;
 
-        console.log(data);
-        let updatedContent;
-        if(content){
-         updatedContent = content.map(item => ({
+        const updatedContent = content.map(item => ({
             name: item.name,
             status: item.status || 'not_covered'
         }));
-    }
+
         const existingSubject = await Subject.findByIdAndUpdate(_id, {
             name,
             class: classId,
@@ -118,7 +121,6 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to Update", details: error.message }, { status: 500 });
     }
 }
-
 
 // DELETE operation - Delete subject
 export async function DELETE(req) {
@@ -167,6 +169,8 @@ export async function DELETE(req) {
         return NextResponse.json({ error: "Failed to Delete", details: error.message }, { status: 500 });
     }
 }
+
+// GET operation - Get subject details and students
 export async function GET(req) {
     try {
         await connectMongoDB();
