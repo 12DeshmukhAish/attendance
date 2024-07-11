@@ -44,14 +44,7 @@ const columns = [
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
-const departmentOptions = [
-  { key: 'CSE', label: 'CSE' },
-  { key: 'ENTC', label: 'ENTC' },
-  { key: 'Civil', label: 'Civil' },
-  { key: 'Electrical', label: 'Electrical' },
-  { key: 'Mechanical', label: 'Mechanical' },
-  { key: 'FE', label: 'First Year' },
-];
+import { departmentOptions } from "../utils/department";
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 

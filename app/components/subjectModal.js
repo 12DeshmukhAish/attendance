@@ -10,6 +10,7 @@ import {
   Select,
   SelectItem,
 } from '@nextui-org/react';
+import { departmentOptions } from '../utils/department';
 
 export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSubmit, teachers }) {
   const [subjectId, setSubjectId] = useState('');
@@ -27,21 +28,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, []);
 
-
   useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
       setSelectedDepartment(profile?.department[0]);
     }
   }, [profile]);
-  const departmentOptions = [
-    { key: 'CSE', label: 'CSE' },
-    { key: 'ENTC', label: 'ENTC' },
-    { key: 'Civil', label: 'Civil' },
-    { key: 'Electrical', label: 'Electrical' },
-    { key: 'Mechanical', label: 'Mechanical' },
-    { key: 'FE', label: 'First Year' },
-  ];
-
 
   useEffect(() => {
     if (subjectData) {
@@ -49,9 +40,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       setName(subjectData.name);
       setClassId(subjectData.class);
       setTeacherId(subjectData.teacher);
-      // setContent(subjectData.content);
       setSelectedDepartment(subjectData.department);
-      // setSubjectType(subjectData.subType);
     } else {
       resetForm();
     }
@@ -77,35 +66,17 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     setName('');
     setClassId('');
     setTeacherId('');
-    // setContent([{ name: '', status: 'not_covered' }]);
     setSelectedDepartment('');
-    // setSubjectType('');
   };
 
   const handleSelectChange = (value) => {
-    setSelectedDepartment( value );
+    setSelectedDepartment(value);
   };
-
 
   const handleCancel = () => {
+    resetForm();
     onClose();
   };
-
-  // const handleContentChange = (index, event) => {
-  //   const newContent = [...content];
-  //   newContent[index] = { ...newContent[index], name: event.target.value };
-  //   setContent(newContent);
-  // };
-
-  // const handleAddContent = () => {
-  //   setContent([...content, { name: '', status: 'not_covered' }]);
-  // };
-
-  // const handleRemoveContent = (index) => {
-  //   const newContent = [...content];
-  //   newContent.splice(index, 1);
-  //   setContent(newContent);
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,9 +85,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       name,
       class: classId,
       teacher: teacherId,
-      // content,
       department: selectedDepartment,
-      // subType: subjectType,
     };
 
     try {
@@ -125,6 +94,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       } else {
         await axios.put(`/api/subject?_id=${subjectId}`, formData);
       }
+      resetForm();
       onSubmit();
       onClose();
     } catch (error) {
@@ -135,7 +105,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleCancel}
       placement="top-center"
       className="max-w-[40vw] max-h-[80vh] overflow-y-auto"
     >
@@ -222,57 +192,6 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 </SelectItem>
               ))}
             </Select>
-            {/* <Select
-              label="Subject Type"
-              placeholder="Select Subject Type"
-              className="col-span-1 w-full"
-              value={subjectType}
-              onChange={(e) => setSubjectType(e.target.value)}
-              required
-              variant="bordered"
-              size='sm'
-            >
-              {subjectTypeOptions.map((type) => (
-                <SelectItem key={type.key} value={type.key}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </Select> */}
-            {/* <div className="col-span-2">
-              <h3 className="text-lg font-bold mb-2">Content</h3>
-              {content.map((item, index) => (
-                <div key={index} className="flex gap-4 mb-2">
-                  <Input
-                    type="text"
-                    label="Title"
-                    value={item.name}
-                    onChange={(e) => handleContentChange(index, e)}
-                    required
-                    className="w-full"
-                    variant="bordered"
-                    size='sm'
-                  />
-                  <Button
-                    color="error"
-                    variant="bordered"
-                    size='sm'
-                    auto
-                    onClick={() => handleRemoveContent(index)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button
-                color="default"
-                variant="bordered"
-                size='sm'
-                auto
-                onClick={handleAddContent}
-              >
-                Add Content
-              </Button>
-            </div> */}
             <div className="col-span-2 flex justify-end gap-4">
               <Button
                 variant="ghost"
