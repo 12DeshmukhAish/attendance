@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+import { ObjectId } from 'mongodb';
 const ContentSchema = new mongoose.Schema({
     name: {
         type: String
@@ -29,6 +29,10 @@ const SubjectSchema = new mongoose.Schema({
     },
     department: {
         type: String
+    },
+    reports:{
+        type:[ObjectId],
+        ref:'Attendance'
     },
     
     content: [ContentSchema]

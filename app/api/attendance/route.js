@@ -30,9 +30,18 @@ export async function POST(req) {
 
             const savedAttendances = await Promise.all(attendancePromises);
 
+            // Get the IDs of the saved attendance reports
+            const attendanceIds = savedAttendances.map(att => att._id);
+
+            // Update the subject's reports array with the new attendance report references
+            await Subject.findByIdAndUpdate(
+                subject,
+                { $addToSet: { reports: { $each: attendanceIds } } }
+            );
+
             // Update content status to covered
             if (contents && contents.length > 0) {
-              const sub =  await Subject.updateOne(
+                await Subject.updateOne(
                     { _id: subject },
                     { 
                         $set: { "content.$[elem].status": "covered" }
@@ -53,6 +62,7 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Record Attendance" }, { status: 500 });
     }
 }
+
 
 // export async function PUT(req) {
 //     try {
