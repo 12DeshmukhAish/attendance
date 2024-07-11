@@ -52,13 +52,13 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
 
   useEffect(() => {
     if (selectedDepartment) {
-      fetchClasses(selectedDepartment);
+      fetchClasses();
     }
   }, [selectedDepartment]);
 
-  const fetchClasses = async (department) => {
+  const fetchClasses = async () => {
     try {
-      const response = await axios.get(`/api/classes?department=${department}`);
+      const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
       setClasses(response.data);
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -124,7 +124,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       console.error('Error submitting subject:', error);
     }
   };
-
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
   return (
     <Modal
       isOpen={isOpen}
@@ -157,7 +161,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               required
               className="col-span-1 w-full"
             />
-            {profile?.role === "superadmin" ? (
+            {profile?.role === "superadmin" && (
               <Select
                 label="Department"
                 placeholder="Select department"
@@ -173,16 +177,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                   </SelectItem>
                 ))}
               </Select>
-            ) : (
-              <Input
-                label="Department"
-                name="department"
-                value={profile?.department[0]}
-                disabled
-                variant="bordered"
-                size="sm"
-              />
-            )}
+          )}
             <Select
               label="Class"
               placeholder="Select Class"
@@ -215,58 +210,9 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 </SelectItem>
               ))}
             </Select>
-            {/* <Select
-              label="Subject Type"
-              placeholder="Select Subject Type"
-              className="col-span-1 w-full"
-              value={subjectType}
-              onChange={(e) => setSubjectType(e.target.value)}
-              required
-              variant="bordered"
-              size='sm'
-            >
-              {subjectTypeOptions.map((type) => (
-                <SelectItem key={type.key} value={type.key}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </Select> */}
-            {/* <div className="col-span-2">
-              <h3 className="text-lg font-bold mb-2">Content</h3>
-              {content.map((item, index) => (
-                <div key={index} className="flex gap-4 mb-2">
-                  <Input
-                    type="text"
-                    label="Title"
-                    value={item.name}
-                    onChange={(e) => handleContentChange(index, e)}
-                    required
-                    className="w-full"
-                    variant="bordered"
-                    size='sm'
-                  />
-                  <Button
-                    color="error"
-                    variant="bordered"
-                    size='sm'
-                    auto
-                    onClick={() => handleRemoveContent(index)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button
-                color="default"
-                variant="bordered"
-                size='sm'
-                auto
-                onClick={handleAddContent}
-              >
-                Add Content
-              </Button>
-            </div> */}
+
             <div className="col-span-2 flex justify-end gap-4">
+
               <Button
                 variant="ghost"
                 size='sm'

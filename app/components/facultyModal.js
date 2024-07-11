@@ -54,7 +54,16 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-
+  const handleClear = (e) => {
+    setFormData({
+      facultyId: "",
+      name: "",
+      department: "",
+      email: "",
+      password: "",
+      isAdmin: false,
+    });
+  };
 
   useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
@@ -72,17 +81,26 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         response = await axios.post("/api/faculty", formData);
         toast.success('Faculty added successfully');
         onSubmit();
+        handleClear()
+
       } else if (mode === "edit") {
         response = await axios.put(`/api/faculty`, formData);
         toast.success('Faculty updated successfully');
+        handleClear()
+
       }
       onClose();
+      handleClear()
     } catch (error) {
       console.error("Error:", error);
       toast.error('Error occurred while saving faculty data');
     }
   };
-
+  useEffect(() => {
+    if (!isOpen) {
+      handleClear();
+    }
+  }, [isOpen]);
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalContent>

@@ -202,7 +202,6 @@ export async function PUT(req) {
         existingClass.year = year;
         existingClass.students = students;
 
-        // Update students to reference the new class
         await Student.updateMany(
             { _id: { $in: previousStudentIds } },
             { $unset: { class: "" } }

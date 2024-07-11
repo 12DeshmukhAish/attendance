@@ -7,7 +7,7 @@ import { Avatar, AvatarIcon } from "@nextui-org/react";
 
 const Profile = () => {
   const { data: session } = useSession();
-  const [userProfile, setUserProfile] = useState(null); // Changed to null for initial state
+  const [userProfile, setUserProfile] = useState(null); 
   const [isEditing, setIsEditing] = useState(false);
   const [updatedProfile, setUpdatedProfile] = useState({
     _id: '',
@@ -16,11 +16,12 @@ const Profile = () => {
     email: '',
     role: '', 
   });
-
+let role
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (session?.user && !userProfile) {
-        const role = session.user.role === "admin" || "superadmin" ? "faculty" : session.user.role;
+        role = session.user.role === !("admin" || "superadmin") ? session.user.role :"faculty";
+        console.log(role);
         const { id } = session.user;
         const storedProfile = sessionStorage.getItem('userProfile');
 
@@ -29,6 +30,7 @@ const Profile = () => {
           setUpdatedProfile(JSON.parse(storedProfile));
         } else {
           try {
+         console.log(role);
             const res = await axios.get(`/api/${role}?_id=${id}`);
             const profileData = Array.isArray(res.data) ? res.data[0] : res.data; // Ensure userProfile is an object
             profileData.role = session?.user?.role; // Add role to profile data
@@ -54,7 +56,7 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (session?.user) {
-      const role = session.user.role === "admin" ? "faculty" : session.user.role;
+      const role = session.user.role === "admin"|| "superadmin" ? "faculty" : session.user.role;
       const { id } = session.user;
       try {
         await axios.put(`/api/${role}?_id=${id}`, updatedProfile);
@@ -91,7 +93,7 @@ const Profile = () => {
           </div>
           <div className="flex items-center space-x-4 mt-4">
             <h4 className="text-2xl font-semibold text-gray-800">
-              {session.user.role === 'admin' ? 'Admin Profile' : session.user.role === 'faculty' ? 'Faculty Profile' : 'Student Profile'}
+              {session.user.role === 'admin' ? 'Admin Profile' : session.user.role === 'faculty' ? 'Faculty Profile' :session.user.role === 'superadmin' ? "Superadmin Profile" :'Student Profile'}
             </h4>
             <Button auto size="sm" variant='ghost' color='primary' onClick={() => setIsEditing(!isEditing)}>
               {isEditing ? 'Cancel' : 'Edit'}
