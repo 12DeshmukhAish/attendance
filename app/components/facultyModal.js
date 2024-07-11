@@ -96,7 +96,11 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       toast.error('Error occurred while saving faculty data');
     }
   };
-
+  useEffect(() => {
+    if (!isOpen) {
+      handleClear();
+    }
+  }, [isOpen]);
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalContent>

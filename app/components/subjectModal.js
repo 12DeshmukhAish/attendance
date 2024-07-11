@@ -34,18 +34,6 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, [profile]);
 
-<<<<<<< HEAD
-  const departmentOptions = [
-    { key: 'CSE', label: 'CSE' },
-    { key: 'ENTC', label: 'ENTC' },
-    { key: 'Civil', label: 'Civil' },
-    { key: 'Electrical', label: 'Electrical' },
-    { key: 'Mechanical', label: 'Mechanical' },
-    { key: 'FE', label: 'First Year' },
-  ];
-
-=======
->>>>>>> ed5779b35281b7e19e63641b90194b323c7a2724
   useEffect(() => {
     if (subjectData) {
       setSubjectId(subjectData._id);
@@ -113,7 +101,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       console.error('Error submitting subject:', error);
     }
   };
-
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
   return (
     <Modal
       isOpen={isOpen}
@@ -195,11 +187,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 </SelectItem>
               ))}
             </Select>
-<<<<<<< HEAD
-       
-=======
->>>>>>> ed5779b35281b7e19e63641b90194b323c7a2724
-            <div className="col-span-2 flex justify-end gap-4">
+    <div className="col-span-2 flex justify-end gap-4">
               <Button
                 variant="ghost"
                 size='sm'
