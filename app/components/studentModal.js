@@ -34,8 +34,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     }
   }, [profile]);
 
- 
-
   useEffect(() => {
     if (mode === "edit" && student) {
       setFormData({
@@ -64,11 +62,32 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     }
   }, [mode, student]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      handleClear();
+    }
+  }, [isOpen]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  
   const handleSelectChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
+  };
+
+  const handleClear = () => {
+    setFormData({
+      _id: "",
+      rollNumber: "",
+      name: "",
+      passOutYear: "",
+      department: "",
+      phoneNo: "",
+      email: "",
+      password: "",
+      year: ""
+    });
   };
 
   const handleSubmit = async () => {
@@ -84,8 +103,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         console.log("Student updated:", response.data);
         toast.success("Student updated successfully");
       }
-
       onClose();
+      handleClear();
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error occurred while saving student data");
@@ -97,7 +116,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Student" : "Edit Student"}</ModalHeader>
         <ModalBody>
-
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="ID"
@@ -173,15 +191,12 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
               size="sm"
             />
             {profile?.role === "superadmin" ? (
-
               <Select
                 label="Department"
                 placeholder="Select department"
                 name="department"
-
                 selectedKeys={new Set([formData.department])}
                 onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
-
                 variant="bordered"
                 size="sm"
               >
@@ -191,7 +206,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
                   </SelectItem>
                 ))}
               </Select>
-
             ) : (
               <Input
                 label="Department"
@@ -205,7 +219,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button auto flat color="error" onClick={onClose}>
+          <Button auto flat color="error" onClick={() => { onClose(); handleClear(); }}>
             Cancel
           </Button>
           <Button auto onClick={handleSubmit}>
