@@ -1,123 +1,153 @@
-"use client"
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Input, Button, Dropdown } from '@nextui-org/react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import axios from 'axios';
+import { Button, Input } from '@nextui-org/react';
 
-const ContentPage = ({ subjectId }) => {
-  const [subject, setSubject] = useState(null);
-  const [newContentName, setNewContentName] = useState('');
-  const [newContentStatus, setNewContentStatus] = useState('not_covered');
-  const [profile, setProfile] = useState(null); // State to store user profile
-  const [subjectDetails, setSubjectDetails] = useState(null); // State to store subject details
+const TeachingPlanPage = () => {
+  const [subjectId, setSubjectId] = useState('');
+  const [content, setContent] = useState([{ name: '', status: 'not_covered' }]);
+  const [subjects, setSubjects] = useState([]);
 
   useEffect(() => {
-    fetchSubject();
+    fetchSubjects();
   }, []);
-  useEffect(() => {
-    const storedProfile = sessionStorage.getItem('userProfile');
-    if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
-    }
-  }, []);
-  const fetchSubject = async () => {
+
+  const fetchSubjects = async () => {
     try {
-      const response = await axios.get(`/api/subject/${subjectId}`);
-      setSubject(response.data);
+      const response = await axios.get('/api/subjectData');
+      setSubjects(response.data.subjects || []);
     } catch (error) {
-      console.error('Failed to fetch subject', error);
-      toast.error('Failed to fetch subject');
+      console.error('Error fetching subjects:', error);
     }
   };
 
-  const handleAddContent = async () => {
-    if (!newContentName) {
-      toast.error('Content name is required');
+  const handleAddContent = () => {
+    setContent([...content, { name: '', status: 'not_covered' }]);
+  };
+
+  const handleContentChange = (index, event) => {
+    const newContent = [...content];
+    newContent[index].name = event.target.value;
+    setContent(newContent);
+  };
+
+  const handleRemoveContent = (index) => {
+    const newContent = [...content];
+    newContent.splice(index, 1);
+    setContent(newContent);
+  };
+
+  const handleCancel = () => {
+    setSubjectId('');
+    setContent([{ name: '', status: 'not_covered' }]);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!subjectId) {
+      toast.error('Please select a subject');
       return;
     }
 
-    const newContent = { name: newContentName, status: newContentStatus };
+    const validContent = content.filter(item => item.name.trim() !== '');
+    if (validContent.length === 0) {
+      toast.error('Please add at least one content item');
+      return;
+    }
 
     try {
-      const response = await axios.post(`/api/subject/${subjectId}`, newContent);
-      setSubject(response.data);
-      setNewContentName('');
-      setNewContentStatus('not_covered');
-      toast.success('Content added successfully');
+      const response = await axios.put(`/api/subject?_id=${subjectId}`, {
+        content: validContent,
+      });
+      if (response.status === 200) {
+        toast.success('Content added successfully');
+        handleCancel();
+      } else {
+        toast.error('Failed to add content');
+      }
     } catch (error) {
-      console.error('Failed to add content', error);
-      toast.error('Failed to add content');
+      console.error('Error adding content:', error);
+      toast.error('Error adding content');
     }
   };
-
-  const handleUpdateContentStatus = async (contentIndex, newStatus) => {
-    try {
-      const updatedContent = [...subject.content];
-      updatedContent[contentIndex].status = newStatus;
-
-      const response = await axios.put(`/api/subject/${subjectId}`, { content: updatedContent });
-      setSubject(response.data);
-      toast.success('Content status updated successfully');
-    } catch (error) {
-      console.error('Failed to update content status', error);
-      toast.error('Failed to update content status');
-    }
-  };
-
-  if (!subject) {
-    return <div>Loading...</div>;
-  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Manage Subject Content</h1>
-      
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Add Teaching Plan</h1>
       <div className="mb-4">
-        <Input
-          type="text"
-          variant="bordered"
-          label="Content Name"
-          value={newContentName}
-          onChange={(e) => setNewContentName(e.target.value)}
-          className="mb-2"
-        />
-        <Dropdown>
-          <Dropdown.Button flat>{newContentStatus}</Dropdown.Button>
-          <Dropdown.Menu
-            aria-label="Single selection actions"
-            selectionMode="single"
-            onSelectionChange={(key) => setNewContentStatus(key)}
-          >
-            <Dropdown.Item key="covered">covered</Dropdown.Item>
-            <Dropdown.Item key="not_covered">not_covered</Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-        <Button color="primary" onClick={handleAddContent} className="mt-2">
-          Add Content
-        </Button>
+        <label className="block text-sm font-medium text-gray-700">Subject</label>
+        <select
+          value={subjectId}
+          onChange={(e) => setSubjectId(e.target.value)}
+          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+        >
+          <option value="">Select Subject</option>
+          {subjects.map((subject) => (
+            <option key={subject._id} value={subject._id}>
+              {subject.name}
+            </option>
+          ))}
+        </select>
       </div>
-
-      <div>
-        <h2 className="text-xl font-bold mb-2">Existing Content</h2>
-        {subject.content.map((content, index) => (
-          <div key={index} className="mb-4 p-4 border rounded-lg">
-            <p className="text-lg font-semibold">{content.name}</p>
-            <Dropdown>
-              <Dropdown.Button flat>{content.status}</Dropdown.Button>
-              <Dropdown.Menu
-                aria-label="Single selection actions"
-                selectionMode="single"
-                onSelectionChange={(key) => handleUpdateContentStatus(index, key)}
+      <form onSubmit={handleSubmit} className="w-full bg-white p-2 grid grid-cols-1 gap-4">
+        <div className="col-span-1">
+          <h3 className="text-lg font-bold mb-2">Content</h3>
+          {content.map((item, index) => (
+            <div key={index} className="flex gap-4 mb-2">
+              <Input
+                type="text"
+                label="Title"
+                value={item.name}
+                onChange={(e) => handleContentChange(index, e)}
+                required
+                className="w-full"
+                variant="bordered"
+                size='sm'
+              />
+              <Button
+                color="error"
+                variant="bordered"
+                size='sm'
+                auto
+                onClick={() => handleRemoveContent(index)}
               >
-                <Dropdown.Item key="covered">covered</Dropdown.Item>
-                <Dropdown.Item key="not_covered">not_covered</Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </div>
-        ))}
-      </div>
+                Remove
+              </Button>
+            </div>
+          ))}
+          <Button
+            color="default"
+            variant="bordered"
+            size='sm'
+            auto
+            onClick={handleAddContent}
+          >
+            Add Content
+          </Button>
+        </div>
+        <div className="col-span-1 flex justify-end gap-4">
+          <Button
+            variant="ghost"
+            size='sm'
+            color="default"
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="ghost"
+            size='sm'
+            color="primary"
+            type="submit"
+          >
+            Add Teaching Plan
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };
 
-export default ContentPage;
+export default TeachingPlanPage;
