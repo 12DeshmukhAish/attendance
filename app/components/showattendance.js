@@ -16,6 +16,8 @@ import {
   Spinner,
   RangeCalendar,
   DateRangePicker,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { departmentOptions } from "../utils/department";
@@ -84,7 +86,7 @@ const AttendanceDisplay = () => {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     if (userProfile) {
       if (userProfile.role === "student" || (userProfile.role === "faculty" && selectedSubject) || (userProfile.role === "admin" && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
@@ -226,8 +228,9 @@ const AttendanceDisplay = () => {
           <p className="text-gray-600">User: {userProfile.name} ({userProfile.role})</p>
         </div>
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-        {userProfile?.role != "admin"|| "superadmin" && (
-              <Select              
+          
+        {userProfile?.role === "superadmin" && (
+              <Select            
                 placeholder="Select department"
                 name="department"
                 className=" w-[40%] "
@@ -258,7 +261,7 @@ const AttendanceDisplay = () => {
             </Dropdown>
           )}
 
-          {userProfile.role === "admin" && (
+          {(userProfile.role === "admin" ||"superadmin") && (
             <>
               <Dropdown>
                 <DropdownTrigger>
@@ -268,7 +271,7 @@ const AttendanceDisplay = () => {
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
                   {classes.map((classItem) => (
-                    <DropdownItem key={classItem}>{classItem}</DropdownItem>
+                    <DropdownItem key={classItem._id}>{classItem._id}</DropdownItem>
                   ))}
                 </DropdownMenu>
               </Dropdown>
