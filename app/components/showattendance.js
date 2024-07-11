@@ -17,6 +17,7 @@ import {
   DateRangePicker,
 } from "@nextui-org/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
+import { departmentOptions } from "../utils/department";
 
 const AttendanceDisplay = () => {
   const [attendanceData, setAttendanceData] = useState(null);
@@ -25,7 +26,10 @@ const AttendanceDisplay = () => {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [viewType, setViewType] = useState("individual");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
   const [userProfile, setUserProfile] = useState(null);
+  
+  const [classes, setClasses] = useState([]);
   const [dateRange, setDateRange] = useState({
     start: today(getLocalTimeZone()).subtract({ weeks: 2 }),
     end: today(getLocalTimeZone()),
@@ -37,6 +41,10 @@ const AttendanceDisplay = () => {
       setUserProfile(JSON.parse(storedProfile));
     }
   }, []);
+
+  useEffect(() => {
+    fetchClasses()
+  }, [selectedDepartment]);
 
   const fetchAttendance = async () => {
     setLoading(true);
@@ -219,6 +227,23 @@ const AttendanceDisplay = () => {
           <p className="text-gray-600">User: {userProfile.name} ({userProfile.role})</p>
         </div>
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+        {userProfile?.role != "admin"|| "superadmin" && (
+              <Select              
+                placeholder="Select department"
+                name="department"
+                className=" w-[40%] "
+                selectedKeys={[selectedDepartment]}
+                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            )}
           {userProfile.role === "faculty" && (
             <Dropdown>
               <DropdownTrigger>
@@ -243,7 +268,7 @@ const AttendanceDisplay = () => {
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
-                  {userProfile.classes.map((classItem) => (
+                  {classes.map((classItem) => (
                     <DropdownItem key={classItem}>{classItem}</DropdownItem>
                   ))}
                 </DropdownMenu>

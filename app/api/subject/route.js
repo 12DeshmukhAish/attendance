@@ -64,11 +64,14 @@ export async function PUT(req) {
         const data = await req.json();
         const { name, class: classId, teacher, department, subType, content } = data;
 
-        const updatedContent = content.map(item => ({
+        console.log(data);
+        let updatedContent;
+        if(content){
+         updatedContent = content.map(item => ({
             name: item.name,
             status: item.status || 'not_covered'
         }));
-
+    }
         const existingSubject = await Subject.findByIdAndUpdate(_id, {
             name,
             class: classId,

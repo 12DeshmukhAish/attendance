@@ -16,12 +16,12 @@ const Profile = () => {
     email: '',
     role: '', 
   });
-let role
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (session?.user && !userProfile) {
-        role = session.user.role === !("admin" || "superadmin") ? session.user.role :"faculty";
-        console.log(role);
+        console.log(session.user);
+        const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
+         console.log(role);
         const { id } = session.user;
         const storedProfile = sessionStorage.getItem('userProfile');
 
@@ -56,8 +56,8 @@ let role
 
   const handleSave = async () => {
     if (session?.user) {
-      const role = session.user.role === "admin"|| "superadmin" ? "faculty" : session.user.role;
-      const { id } = session.user;
+      const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
+        const { id } = session.user;
       try {
         await axios.put(`/api/${role}?_id=${id}`, updatedProfile);
         setUserProfile(updatedProfile);

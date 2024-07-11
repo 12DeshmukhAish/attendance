@@ -71,6 +71,7 @@ const Sidebar = () => {
           href: "/admin/subject",
           icon: TbReportAnalytics,
         },
+        
         {
           name: "Manage Reports",
           href: "/admin/showattendance",
