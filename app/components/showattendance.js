@@ -37,17 +37,33 @@ const AttendanceDisplay = () => {
     end: today(getLocalTimeZone()),
   });
 
+  const fetchClasses = async () => {
+    if (userProfile?.role === "admin") {
+      try {
+        const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
+        setClasses(response.data);
+      } catch (error) {
+        console.error('Error fetching classes:', error);
+      }
+    }
+  };
+
   useEffect(() => {
     const storedProfile = sessionStorage.getItem("userProfile");
     if (storedProfile) {
-      setUserProfile(JSON.parse(storedProfile));
+      const profile = JSON.parse(storedProfile);
+      setUserProfile(profile);
+      if (profile.role === "admin") {
+        setSelectedDepartment(profile.department);
+      }
     }
   }, []);
 
   useEffect(() => {
-    fetchClasses()
-  }, [selectedDepartment]);
-
+    if (userProfile?.role === "admin") {
+      fetchClasses();
+    }
+  }, [selectedDepartment, userProfile]);
   const fetchAttendance = async () => {
     setLoading(true);
     setError(null);
@@ -77,9 +93,12 @@ const AttendanceDisplay = () => {
     }
   };
   
+
   useEffect(() => {
     if (userProfile) {
-      if (userProfile.role === "student" || (userProfile.role === "faculty" && selectedSubject) || (userProfile.role === "admin" && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
+      if (userProfile.role === "student" ||
+          (userProfile.role === "faculty" && selectedSubject) ||
+          (userProfile.role === "admin" && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
         fetchAttendance();
       }
     }
@@ -247,22 +266,7 @@ const AttendanceDisplay = () => {
                 ))}
               </Select>
             )}
-          {userProfile.role === "faculty" && (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button variant="bordered">
-                  {selectedSubject ? userProfile.subjects.find((s) => s === selectedSubject) : "Select Subject"}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
-                {userProfile.subjects.map((subject) => (
-                  <DropdownItem key={subject}>{subject}</DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          )}
-
-          {(userProfile.role === "admin" ||"superadmin") && (
+          {(userProfile.role === "admin" ||userProfile.role === "superadmin") && (
             <>
               <Dropdown>
                 <DropdownTrigger>
@@ -300,6 +304,20 @@ const AttendanceDisplay = () => {
                 </Dropdown>
               )}
             </>
+          )}
+          {userProfile?.role === "faculty" && (
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered">
+                  {selectedSubject || "Select Subject"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
+                {userProfile.subjects.map((subject) => (
+                  <DropdownItem key={subject}>{subject}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
           )}
         </div>
       </div>
