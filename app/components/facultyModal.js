@@ -3,6 +3,7 @@ import { Modal, Button, Input, ModalBody, ModalContent, ModalHeader, ModalFooter
 import { Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
+import { departmentOptions } from "../utils/department";
 
 const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -63,14 +64,6 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       isAdmin: false,
     });
   };
-  const departmentOptions = [
-    { key: "CSE", label: "CSE" },
-    { key: "ENTC", label: "ENTC" },
-    { key: "Civil", label: "Civil" },
-    { key: "Electrical", label: "Electrical" },
-    { key: "Mechanical", label: "Mechanical" },
-    { key: "FE", label: "First Year" },
-  ];
 
   useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {

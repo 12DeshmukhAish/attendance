@@ -147,6 +147,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Checkbox, Input, Select, SelectItem, ModalBody, ModalContent, ModalHeader, ModalFooter } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
+import { departmentOptions } from "../utils/department";
 
 const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) => {
   const [formData, setFormData] = useState({
@@ -261,15 +262,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     }
   }, [profile]);
 
-  const departmentOptions = [
-    { key: "Department", label: "Department" },
-    { key: "CSE", label: "CSE" },
-    { key: "ENTC", label: "ENTC" },
-    { key: "Civil", label: "Civil" },
-    { key: "Electrical", label: "Electrical" },
-    { key: "Mechanical", label: "Mechanical" },
-    { key: "FE", label: "First Year" },
-  ];
+ 
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>

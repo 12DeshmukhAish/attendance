@@ -207,7 +207,7 @@ const AttendanceDisplay = () => {
     }
   };
   if (!userProfile) {
-    return <div>Loading user profile...</div>;
+    return <div>Loading please wait...</div>;
   }
 
   return (

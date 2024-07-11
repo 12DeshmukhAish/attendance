@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
+import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 import { toast } from 'sonner';
 import {
   Table,
@@ -245,6 +246,7 @@ export default function FacultyTable() {
               size="sm"
               variant="ghost"
               onClick={downloadExcel}
+              endContent={<FaFileDownload />}
             >
               Download
             </Button>

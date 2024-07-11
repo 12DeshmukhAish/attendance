@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Input, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
+import { departmentOptions } from "../utils/department";
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   const [profile, setProfile] = useState(null);
@@ -33,15 +34,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     }
   }, [profile]);
 
-  const departmentOptions = [
-    { key: "Department", label: "Department" },
-    { key: "FE", label: "First Year" },
-    { key: "CSE", label: "CSE" },
-    { key: "ENTC", label: "ENTC" },
-    { key: "Civil", label: "Civil" },
-    { key: "Electrical", label: "Electrical" },
-    { key: "Mechanical", label: "Mechanical" },
-  ];
+ 
 
   useEffect(() => {
     if (mode === "edit" && student) {

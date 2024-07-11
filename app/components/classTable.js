@@ -24,6 +24,7 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import ClassModal from "./classModal";
 import * as XLSX from "xlsx";
+import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 
 const departmentOptions = [
   { key: 'CSE', label: 'CSE' },
@@ -286,9 +287,15 @@ export default function ClassTable() {
             }}>
             <PlusIcon /> Add Class
           </Button>
-          <Button color="primary" variant="ghost" size="sm" auto onClick={downloadExcel}>
-            Download
-          </Button>
+          <Button
+              color="primary"
+              size="sm"
+              variant="ghost"
+              onClick={downloadExcel}
+              endContent={<FaFileDownload />}
+            >
+              Download
+            </Button>
         </div>
       </div>
       <Table

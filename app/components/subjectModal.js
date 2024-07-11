@@ -10,6 +10,7 @@ import {
   Select,
   SelectItem,
 } from '@nextui-org/react';
+import { departmentOptions } from '../utils/department';
 
 export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSubmit, teachers }) {
   const [subjectId, setSubjectId] = useState('');
@@ -33,6 +34,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, [profile]);
 
+<<<<<<< HEAD
   const departmentOptions = [
     { key: 'CSE', label: 'CSE' },
     { key: 'ENTC', label: 'ENTC' },
@@ -42,6 +44,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     { key: 'FE', label: 'First Year' },
   ];
 
+=======
+>>>>>>> ed5779b35281b7e19e63641b90194b323c7a2724
   useEffect(() => {
     if (subjectData) {
       setSubjectId(subjectData._id);
@@ -82,6 +86,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   };
 
   const handleCancel = () => {
+    resetForm();
     onClose();
   };
 
@@ -101,6 +106,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       } else {
         await axios.put(`/api/subject?_id=${subjectId}`, formData);
       }
+      resetForm();
       onSubmit();
       onClose();
     } catch (error) {
@@ -111,7 +117,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleCancel}
       placement="top-center"
       className="max-w-[40vw] max-h-[80vh] overflow-y-auto"
     >
@@ -189,7 +195,10 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 </SelectItem>
               ))}
             </Select>
+<<<<<<< HEAD
        
+=======
+>>>>>>> ed5779b35281b7e19e63641b90194b323c7a2724
             <div className="col-span-2 flex justify-end gap-4">
               <Button
                 variant="ghost"
