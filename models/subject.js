@@ -25,7 +25,7 @@ const SubjectSchema = new mongoose.Schema({
     },
     teacher: {
         type: String,
-        ref: 'Faculty'  // Ensure correct reference to Faculty model
+        ref: 'Faculty'  
     },
     department: {
         type: String
