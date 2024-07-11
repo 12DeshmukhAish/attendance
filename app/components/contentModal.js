@@ -1,5 +1,5 @@
 "use client"
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Modal,
@@ -29,6 +29,7 @@ export default function ContentModal({ isOpen, onClose, mode, subjectData, onSub
   };
 
   const handleCancel = () => {
+    resetForm();
     onClose();
   };
 
@@ -63,6 +64,7 @@ export default function ContentModal({ isOpen, onClose, mode, subjectData, onSub
       }
       onSubmit();
       onClose();
+      resetForm();
     } catch (error) {
       console.error('Error submitting subject:', error);
     }
@@ -70,7 +72,7 @@ export default function ContentModal({ isOpen, onClose, mode, subjectData, onSub
 
   return (
     <Modal
-      isOpen={true}
+      isOpen={isOpen}
       onClose={onClose}
       placement="top-center"
       className="max-w-[40vw] max-h-[80vh] overflow-y-auto"
