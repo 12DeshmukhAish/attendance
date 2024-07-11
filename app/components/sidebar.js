@@ -72,11 +72,6 @@ const Sidebar = () => {
           icon: TbReportAnalytics,
         },
         {
-          name: "Take Attendance",
-          href: "/admin/takeattendance",
-          icon: RiCalendarScheduleLine,
-        },
-        {
           name: "Manage Reports",
           href: "/admin/showattendance",
           icon: AiOutlineSchedule,

@@ -34,12 +34,8 @@ const columns = [
   { uid: "name", name: "Name", sortable: true },
   { uid: "passOutYear", name: "Pass Out Year", sortable: true },
   { uid: "department", name: "Department", sortable: true },
-
-
   { uid: "phoneNo", name: "Phone No", sortable: true },
   { uid: "email", name: "Email ID", sortable: true },
-
-
   { uid: "year", name: "Acadmic Year", sortable: true },
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
@@ -81,7 +77,7 @@ export default function StudentTable() {
   useEffect(() => {
     fetchStudents(selectedDepartment);
   }, [selectedDepartment]);
-  console.log(profile);
+
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

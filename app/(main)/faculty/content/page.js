@@ -8,14 +8,21 @@ const ContentPage = ({ subjectId }) => {
   const [subject, setSubject] = useState(null);
   const [newContentName, setNewContentName] = useState('');
   const [newContentStatus, setNewContentStatus] = useState('not_covered');
+  const [profile, setProfile] = useState(null); // State to store user profile
+  const [subjectDetails, setSubjectDetails] = useState(null); // State to store subject details
 
   useEffect(() => {
     fetchSubject();
   }, []);
-
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
   const fetchSubject = async () => {
     try {
-      const response = await axios.get(`/api/subjects/${subjectId}`);
+      const response = await axios.get(`/api/subject/${subjectId}`);
       setSubject(response.data);
     } catch (error) {
       console.error('Failed to fetch subject', error);
@@ -32,7 +39,7 @@ const ContentPage = ({ subjectId }) => {
     const newContent = { name: newContentName, status: newContentStatus };
 
     try {
-      const response = await axios.post(`/api/subjects/${subjectId}/content`, newContent);
+      const response = await axios.post(`/api/subject/${subjectId}`, newContent);
       setSubject(response.data);
       setNewContentName('');
       setNewContentStatus('not_covered');
@@ -48,7 +55,7 @@ const ContentPage = ({ subjectId }) => {
       const updatedContent = [...subject.content];
       updatedContent[contentIndex].status = newStatus;
 
-      const response = await axios.put(`/api/subjects/${subjectId}/content`, { content: updatedContent });
+      const response = await axios.put(`/api/subject/${subjectId}`, { content: updatedContent });
       setSubject(response.data);
       toast.success('Content status updated successfully');
     } catch (error) {

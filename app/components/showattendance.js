@@ -32,6 +32,15 @@ const AttendanceDisplay = () => {
     end: today(getLocalTimeZone()),
   });
 
+
+  const fetchClasses = async () => {
+    try {
+      const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
+      setClasses(response.data);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
   useEffect(() => {
     const storedProfile = sessionStorage.getItem("userProfile");
     if (storedProfile) {

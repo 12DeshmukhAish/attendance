@@ -14,6 +14,8 @@ import {
   Input,
   Button,
   Pagination,
+  SelectItem,
+  Select,
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -22,6 +24,16 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import ClassModal from "./classModal";
 import * as XLSX from "xlsx";
+
+const departmentOptions = [
+  { key: 'CSE', label: 'CSE' },
+  { key: 'ENTC', label: 'ENTC' },
+  { key: 'Civil', label: 'Civil' },
+  { key: 'Electrical', label: 'Electrical' },
+  { key: 'Mechanical', label: 'Mechanical' },
+  { key: 'FE', label: 'First Year' },
+];
+
 
 const columns = [
   { uid: "_id", name: "Class ID", sortable: true },
@@ -50,16 +62,34 @@ export default function ClassTable() {
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
   useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedDepartment) {
     fetchClasses();
     fetchTeachers();
-    fetchStudents();
-  }, []);
+    }
+  }, [selectedDepartment]);
+
+  useEffect(() => {
+    if (profile?.role !== "superadmin") {
+      setSelectedDepartment(profile?.department[0]);
+    }
+  }, [profile]);
+  const handleSelectChange = ( value) => {
+    setSelectedDepartment(value);
+  };
 
   const fetchClasses = async () => {
     try {
-      const response = await axios.get('/api/classes');
+      const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
       setClasses(response.data);
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -179,7 +209,7 @@ export default function ClassTable() {
       case "students":
         return (
           <span>
-            {cellValue? cellValue.length+1 :0}
+            {cellValue? cellValue.length :0}
           </span>
         );
       default:
@@ -212,6 +242,23 @@ export default function ClassTable() {
   return (
     <>
       <div className="flex justify-between my-4 gap-3 items-end">
+      {profile?.role != "admin" && (
+              <Select              
+                placeholder="Select department"
+                name="department"
+                className=" w-[40%] "
+                selectedKeys={[selectedDepartment]}
+                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            )}
         <Input
           isClearable
           classNames={{
