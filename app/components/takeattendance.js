@@ -250,14 +250,14 @@ export default function App() {
             <TableHeader>
               <TableColumn>Roll Number</TableColumn>
               <TableColumn>Name</TableColumn>
-              <TableColumn>Status</TableColumn>
+              {/* <TableColumn>Status</TableColumn> */}
             </TableHeader>
             <TableBody>
               {students.map((student) => (
                 <TableRow key={student._id}>
                   <TableCell>{student.rollNumber}</TableCell>
                   <TableCell>{student.name}</TableCell>
-                  <TableCell>{student.status}</TableCell>
+                  {/* <TableCell>{student.status}</TableCell> */}
                 </TableRow>
               ))}
             </TableBody>
