@@ -139,7 +139,7 @@ const Sidebar = () => {
           href: "/student",
           icon: MdPortrait,
         },{
-          name: "Manage Reports",
+          name: "Check Attendance",
           href: "/student/showattendance",
           icon: AiOutlineSchedule,
         }
@@ -162,7 +162,7 @@ const Sidebar = () => {
             src="/logo.png"
             alt="logo"
           />
-          <p className="sidebar__logo-name">Student Assure</p>
+          <p className="sidebar__logo-name">Attendance System</p>
         </div>
         <ul className="sidebar__list text-slate-900 dark:text-slate-50">
           {sidebarItems.map(({ name, href, icon: Icon }) => {

@@ -14,7 +14,6 @@ import {
   DropdownItem,
   Button,
   Spinner,
-  RangeCalendar,
   DateRangePicker,
 } from "@nextui-org/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
@@ -36,15 +35,6 @@ const AttendanceDisplay = () => {
     end: today(getLocalTimeZone()),
   });
 
-
-  const fetchClasses = async () => {
-    try {
-      const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
-      setClasses(response.data);
-    } catch (error) {
-      console.error('Error fetching classes:', error);
-    }
-  };
   useEffect(() => {
     const storedProfile = sessionStorage.getItem("userProfile");
     if (storedProfile) {
@@ -93,26 +83,37 @@ const AttendanceDisplay = () => {
     }
   }, [userProfile, selectedSubject, selectedClass, viewType, dateRange]);
 
-  const renderStudentAttendance = () => (
-    <Table aria-label="Student Attendance Table">
-      <TableHeader>
-        <TableColumn>Subject</TableColumn>
-        <TableColumn>Total Lectures</TableColumn>
-        <TableColumn>Present</TableColumn>
-        <TableColumn>Attendance %</TableColumn>
-      </TableHeader>
-      <TableBody>
-        {attendanceData.map((subject) => (
-          <TableRow key={subject._id}>
-            <TableCell>{subject.name}</TableCell>
-            <TableCell>{subject.totalLectures}</TableCell>
-            <TableCell>{subject.presentCount}</TableCell>
-            <TableCell>{((subject.presentCount / subject.totalLectures) * 100).toFixed(2)}%</TableCell>
+  const renderStudentAttendance = () => {
+    const totalLectures = attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0);
+    const totalPresent = attendanceData.reduce((sum, subject) => sum + subject.presentCount, 0);
+
+    return (
+      <Table aria-label="Student Attendance Table">
+        <TableHeader>
+          <TableColumn>Subject</TableColumn>
+          <TableColumn>Total Lectures</TableColumn>
+          <TableColumn>Present</TableColumn>
+          <TableColumn>Attendance %</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {attendanceData.map((subject) => (
+            <TableRow key={subject._id}>
+              <TableCell>{subject.name}</TableCell>
+              <TableCell>{subject.totalLectures}</TableCell>
+              <TableCell>{subject.presentCount}</TableCell>
+              <TableCell>{((subject.presentCount / subject.totalLectures) * 100).toFixed(2)}%</TableCell>
+            </TableRow>
+          ))}
+          <TableRow>
+            <TableCell><strong>Total</strong></TableCell>
+            <TableCell><strong>{totalLectures}</strong></TableCell>
+            <TableCell><strong>{totalPresent}</strong></TableCell>
+            <TableCell><strong>{((totalPresent / totalLectures) * 100).toFixed(2)}%</strong></TableCell>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+        </TableBody>
+      </Table>
+    );
+  };
 
   const renderFacultyAttendance = () => (
     <Table aria-label="Faculty Attendance Table">
@@ -134,8 +135,10 @@ const AttendanceDisplay = () => {
       </TableBody>
     </Table>
   );
+
   const renderAdminAttendance = () => {
     const totalLectures = attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0);
+
     if (viewType === "cumulative") {
       return (
         <div className="overflow-x-auto">
@@ -201,12 +204,9 @@ const AttendanceDisplay = () => {
               <TableRow key={student._id}>
                 <TableCell>{student.name}</TableCell>
                 <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>
-                  {attendanceData[0].totalLectures}</TableCell>
-
+                <TableCell>{attendanceData[0].totalLectures}</TableCell>
                 <TableCell>{student.presentCount}</TableCell>
                 <TableCell>{((student.presentCount / attendanceData[0].totalLectures) * 100).toFixed(2)}%</TableCell>
-                
               </TableRow>
             ))}
           </TableBody>
@@ -214,6 +214,7 @@ const AttendanceDisplay = () => {
       );
     }
   };
+
   if (!userProfile) {
     return <div>Loading please wait...</div>;
   }
