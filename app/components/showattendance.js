@@ -38,7 +38,7 @@ const AttendanceDisplay = () => {
   });
 
   const fetchClasses = async () => {
-    if (userProfile?.role === "admin") {
+    if (userProfile?.role === "admin" || userProfile?.role === "superadmin") {
       try {
         const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
         setClasses(response.data);
@@ -58,9 +58,12 @@ const AttendanceDisplay = () => {
       }
     }
   }, []);
+  const handleSelectChange = ( value) => {
+    setSelectedDepartment(value);
+  };
 
   useEffect(() => {
-    if (userProfile?.role === "admin") {
+    if (userProfile?.role === "admin" || userProfile?.role === "superadmin") {
       fetchClasses();
     }
   }, [selectedDepartment, userProfile]);
@@ -74,7 +77,7 @@ const AttendanceDisplay = () => {
         url += `studentId=${userProfile._id}`;
       } else if (userProfile.role === "faculty") {
         url += `subjectId=${selectedSubject}`;
-      } else if (userProfile.role === "admin") {
+      } else if (userProfile.role === "admin" ||userProfile.role === "superadmin") {
         url += `classId=${selectedClass}`;
         if (viewType === "individual" && selectedSubject) {
           url += `&subjectId=${selectedSubject}`;
@@ -98,7 +101,7 @@ const AttendanceDisplay = () => {
     if (userProfile) {
       if (userProfile.role === "student" ||
           (userProfile.role === "faculty" && selectedSubject) ||
-          (userProfile.role === "admin" && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
+          ((userProfile.role === "admin" || userProfile.role === "superadmin") && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
         fetchAttendance();
       }
     }

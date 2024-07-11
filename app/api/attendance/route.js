@@ -244,9 +244,8 @@ export async function PUT(req, res) {
             student: record.student,
             status: record.status || 'absent' // Assuming default status if not provided
         }));
-
         const existingAttendance = await Attendance.findByIdAndUpdate(_id, {
-            date,
+            date : date ? new Date(date) : new Date(),
             subject,
             records: validatedRecords
         }, { new: true });
