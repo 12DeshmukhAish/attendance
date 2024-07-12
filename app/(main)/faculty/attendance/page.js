@@ -3,147 +3,95 @@ import React, { useState, useEffect } from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, CheckboxGroup, Checkbox } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
-import {DatePicker} from "@nextui-org/date-picker"; // Make sure to install this package
-
+import { DatePicker } from "@nextui-org/date-picker";
 
 export default function App() {
-  const [selectedSubject, setSelectedSubject] = useState("Subject");
-  const [isTableVisible, setIsTableVisible] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [students, setStudents] = useState([]);
   const [selectedKeys, setSelectedKeys] = useState(new Set());
-  const [selectedSessions, setSelectedSessions] = useState([]);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [selectedContents, setSelectedContents] = useState([]);
   const [sessions] = useState([1, 2, 3, 4, 5, 6, 7]);
   const [profile, setProfile] = useState(null);
   const [subjectDetails, setSubjectDetails] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isUpdateMode, setIsUpdateMode] = useState(false);
-  const [existingAttendance, setExistingAttendance] = useState(null);
+  const [attendanceRecord, setAttendanceRecord] = useState(null);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
+      const parsedProfile = JSON.parse(storedProfile);
+      setProfile(parsedProfile);
+      if (parsedProfile.subjects.length === 1) {
+        setSelectedSubject(parsedProfile.subjects[0]);
+      }
     }
   }, []);
 
-  const subjectOptions = profile ? profile.subjects.map(sub => ({ _id: sub, name: sub })) : [];
-
   useEffect(() => {
-    if (selectedSubject !== "Subject") {
-      fetchSubjectDetails(selectedSubject);
+    if (selectedSubject && selectedDate && selectedSession) {
+      console.log(selectedSession, selectedSubject, selectedDate);
+      console.log('Fetching attendance for:', { selectedSubject, selectedDate, selectedSession });
+      fetchSubjectAttendance();
     }
-  }, [selectedSubject]);
+  }, [selectedSubject, selectedDate, selectedSession]);
 
-  useEffect(() => {
-    if (isUpdateMode && selectedSubject !== "Subject") {
-      fetchAttendanceForDate();
-    }
-  }, [isUpdateMode, selectedSubject, selectedDate]);
-
-  const fetchSubjectDetails = async (subjectId) => {
+  const fetchSubjectAttendance = async () => {
     try {
-      const response = await axios.get(`/api/subject?_id=${subjectId}`);
-      const { subject, students } = response.data;
+      const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate}&session=${selectedSession}`);
+      const { subject, students, attendanceRecord } = response.data;
+      console.log(response.data);
       setSubjectDetails(subject);
-      setStudents(students || []);
-    } catch (error) {
-      console.error('Error fetching subject details:', error);
-    }
-  };
-
-  const fetchAttendanceForDate = async () => {
-    try {
-      const response = await axios.get('/api/attendance', {
-        params: {
-          subject: selectedSubject,
-          date: selectedDate.toISOString().split('T')[0]
-        }
-      });
-      setExistingAttendance(response.data);
-      if (response.data) {
-        setSelectedSessions(response.data.sessions);
-        setSelectedContents(response.data.contents);
-        setSelectedKeys(new Set(response.data.records.map(record => record.student)));
+      setStudents(students);
+      setAttendanceRecord(attendanceRecord);
+      if (attendanceRecord) {
+        setSelectedKeys(new Set(attendanceRecord.records.map(r => r.student)));
+        setSelectedContents(attendanceRecord.contents || []);
       } else {
-        setSelectedSessions([]);
-        setSelectedContents([]);
         setSelectedKeys(new Set());
+        setSelectedContents([]);
       }
     } catch (error) {
-      console.error('Error fetching attendance:', error);
+      console.error('Error fetching subject attendance:', error);
     }
   };
 
-  const handleTakeAttendance = () => {
-    setIsTableVisible(true);
-  };
-
-  const handleSessionChange = (session) => {
-    setSelectedSessions(prev =>
-      prev.includes(session)
-        ? prev.filter(s => s !== session)
-        : [...prev, session]
-    );
-  };
-
-  const submitAttendance = async () => {
-    if (selectedSubject === "Subject") {
-      alert("Please select a subject");
+  const updateAttendance = async () => {
+    if (!selectedSubject || !selectedDate || !selectedSession) {
+      alert("Please select subject, date, and session");
       return;
     }
-
-    if (selectedSessions.length === 0) {
-      alert("Please select at least one session");
-      return;
-    }
-
-    let selectedStudents = [];
-    if (selectedKeys instanceof Set) {
-      if (selectedKeys.has("all")) {
-        selectedStudents = students.map(student => student._id);
-      } else {
-        selectedStudents = Array.from(selectedKeys);
-      }
-    } else {
-      selectedStudents = selectedKeys.includes("all")
-        ? students.map(student => student._id)
-        : selectedKeys;
-    }
-
-    const attendanceData = {
-      date: selectedDate,
-      subject: selectedSubject,
-      sessions: selectedSessions,
-      records: selectedStudents.map(studentId => ({
-        student: studentId,
-        status: 'present'
-      })),
-      contents: selectedContents
-    };
-
+  
+    const attendanceData = students.map(student => ({
+      studentId: student._id,
+      status: selectedKeys.has(student._id) ? 'present' : 'absent'
+    }));
+  
     try {
-      let response;
-      if (isUpdateMode && existingAttendance) {
-        response = await axios.put(`/api/attendance/${existingAttendance._id}`, attendanceData);
-      } else {
-        response = await axios.post('/api/attendance', attendanceData);
-      }
-      console.log('Attendance submitted successfully:', response.data);
-      alert(isUpdateMode ? "Attendance updated successfully" : "Attendance submitted successfully");
+      const response = await axios.put(`/api/update`, {
+        subjectId: selectedSubject,
+        // date: selectedDate.toISOString().split('T')[0],
+        session: selectedSession,
+        attendanceData
+      });
+  
+      console.log('Attendance updated successfully:', response.data);
+      alert("Attendance updated successfully");
+      fetchSubjectAttendance(); // Refresh the data
     } catch (error) {
-      console.error('Failed to submit attendance:', error);
-      alert("Failed to submit attendance");
+      console.error('Failed to update attendance:', error);
+      alert("Failed to update attendance");
     }
   };
-
+  
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex space-x-4 mb-4 items-center">
+      <div className="flex gap-4">
+      {profile && profile.subjects.length > 1 && (
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
-              {selectedSubject}
+              {selectedSubject ? profile.subjects.find(s => s._id === selectedSubject)?.name : "Select Subject"}
             </Button>
           </DropdownTrigger>
           <DropdownMenu
@@ -151,45 +99,52 @@ export default function App() {
             variant="flat"
             disallowEmptySelection
             selectionMode="single"
-            selectedKeys={new Set([selectedSubject])}
+            selectedKeys={selectedSubject ? new Set([selectedSubject]) : new Set()}
             onSelectionChange={(keys) => setSelectedSubject(Array.from(keys)[0])}
           >
-            {subjectOptions.map((option) => (
-              <DropdownItem key={option._id}>{option.name}</DropdownItem>
+            {profile.subjects.map((subject) => (
+              <DropdownItem key={subject._id}>{subject.name}</DropdownItem>
             ))}
           </DropdownMenu>
         </Dropdown>
-
-        <DatePicker
-          selected={selectedDate}
-          onChange={date => setSelectedDate(date)}
-          dateFormat="yyyy-MM-dd"
-        />
-
-        <Button color="primary" variant="shadow" onClick={() => setIsUpdateMode(!isUpdateMode)}>
-          {isUpdateMode ? "Take New Attendance" : "Update Attendance"}
-        </Button>
-
-        {!isUpdateMode && (
-          <Button color="primary" variant="shadow" onClick={handleTakeAttendance}>
-            Take Attendance
+      )}
+<div className="max-w-[60%]">
+      <DatePicker
+        selected={selectedDate}
+        onChange={date => {
+          console.log('Date changed:', date);
+          setSelectedDate(date);
+        }}
+        dateFormat="yyyy-MM-dd"
+      />
+      </div>
+<div className="max-w-[60%]">
+      <Dropdown >
+        <DropdownTrigger>
+          <Button variant="bordered" className="capitalize">
+            {selectedSession ? `Session ${selectedSession}` : "Select Session"}
           </Button>
-        )}
+        </DropdownTrigger>
+        <DropdownMenu
+          aria-label="Session selection"
+          variant="flat"
+          disallowEmptySelection
+          selectionMode="single"
+          selectedKeys={selectedSession ? new Set([selectedSession.toString()]) : new Set()}
+          onSelectionChange={(keys) => {
+            const session = parseInt(Array.from(keys)[0]);
+            console.log('Session changed:', session);
+            setSelectedSession(session);
+          }}
+        >
+          {sessions.map((session) => (
+            <DropdownItem key={session.toString()}>Session {session}</DropdownItem>
+          ))}
+        </DropdownMenu>
+      </Dropdown>
       </div>
-
-      <div className="flex flex-wrap gap-4 items-center">
-        {sessions.map(session => (
-          <Checkbox
-            key={session}
-            isSelected={selectedSessions.includes(session)}
-            onValueChange={() => handleSessionChange(session)}
-          >
-            {session}
-          </Checkbox>
-        ))}
       </div>
-
-      {selectedSubject !== "Subject" && subjectDetails && (
+      {subjectDetails && (
         <div className="mb-4">
           <h2>Subject Content</h2>
           <CheckboxGroup
@@ -207,7 +162,7 @@ export default function App() {
         </div>
       )}
 
-      {(isTableVisible || isUpdateMode) && (
+      {students.length > 0 && (
         <div className="flex flex-col gap-3 mt-4">
           <Table
             aria-label="Attendance table"
@@ -218,21 +173,21 @@ export default function App() {
             <TableHeader>
               <TableColumn>Roll Number</TableColumn>
               <TableColumn>Name</TableColumn>
-              <TableColumn>Status</TableColumn>
+
             </TableHeader>
             <TableBody>
               {students.map((student) => (
                 <TableRow key={student._id}>
                   <TableCell>{student.rollNumber}</TableCell>
                   <TableCell>{student.name}</TableCell>
-                  <TableCell>{student.status}</TableCell>
+
                 </TableRow>
               ))}
             </TableBody>
           </Table>
 
-          <Button color="primary" variant="shadow" onClick={submitAttendance}>
-            {isUpdateMode ? "Update Attendance" : "Submit Attendance"}
+          <Button color="primary" variant="shadow" onClick={updateAttendance}>
+            Update Attendance
           </Button>
         </div>
       )}
