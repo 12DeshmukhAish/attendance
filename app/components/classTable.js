@@ -25,6 +25,7 @@ import { SearchIcon } from "@/public/SearchIcon";
 import ClassModal from "./classModal";
 import * as XLSX from "xlsx";
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
+import Image from "next/image";
 
 const departmentOptions = [
   { key: 'CSE', label: 'CSE' },
@@ -35,13 +36,12 @@ const departmentOptions = [
   { key: 'FE', label: 'First Year' },
 ];
 
-
 const columns = [
   { uid: "_id", name: "Class ID", sortable: true },
   { uid: "teacher", name: "Class Coordinator" },
   { uid: "students", name: "Students" },
   { uid: "passOutYear", name: "Pass Out Year" },
-  { uid: "year", name: "Acadmic Year" },
+  { uid: "year", name: "Academic Year" },
   { uid: "department", name: "Department" },
   { uid: "actions", name: "Actions" },
 ];
@@ -65,6 +65,7 @@ export default function ClassTable() {
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
+
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -74,8 +75,8 @@ export default function ClassTable() {
 
   useEffect(() => {
     if (selectedDepartment) {
-    fetchClasses();
-    fetchTeachers();
+      fetchClasses();
+      fetchTeachers();
     }
   }, [selectedDepartment]);
 
@@ -84,7 +85,8 @@ export default function ClassTable() {
       setSelectedDepartment(profile?.department[0]);
     }
   }, [profile]);
-  const handleSelectChange = ( value) => {
+
+  const handleSelectChange = (value) => {
     setSelectedDepartment(value);
   };
 
@@ -133,7 +135,7 @@ export default function ClassTable() {
     }
   };
 
-  const pages = classes? Math.ceil(classes?.length / rowsPerPage):0;
+  const pages = classes ? Math.ceil(classes?.length / rowsPerPage) : 0;
 
   const hasSearchFilter = Boolean(filterValue);
 
@@ -210,7 +212,7 @@ export default function ClassTable() {
       case "students":
         return (
           <span>
-            {cellValue? cellValue.length :0}
+            {cellValue ? cellValue.length : 0}
           </span>
         );
       default:
@@ -243,23 +245,23 @@ export default function ClassTable() {
   return (
     <>
       <div className="flex justify-between my-4 gap-3 items-end">
-      {profile?.role != "admin" && (
-              <Select              
-                placeholder="Select department"
-                name="department"
-                className=" w-[40%] "
-                selectedKeys={[selectedDepartment]}
-                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
-                variant="bordered"
-                size="sm"
-              >
-                {departmentOptions.map((department) => (
-                  <SelectItem key={department.key} textValue={department.label}>
-                    {department.label}
-                  </SelectItem>
-                ))}
-              </Select>
-            )}
+        {profile?.role != "admin" && (
+          <Select
+            placeholder="Select department"
+            name="department"
+            className=" w-[40%] "
+            selectedKeys={[selectedDepartment]}
+            onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+            variant="bordered"
+            size="sm"
+          >
+            {departmentOptions.map((department) => (
+              <SelectItem key={department.key} textValue={department.label}>
+                {department.label}
+              </SelectItem>
+            ))}
+          </Select>
+        )}
         <Input
           isClearable
           classNames={{
@@ -283,43 +285,51 @@ export default function ClassTable() {
               setModalMode("add");
               setSelectedClass(null);
               setModalOpen(true);
-
             }}>
             <PlusIcon /> Add Class
           </Button>
           <Button
-              color="primary"
-              size="sm"
-              variant="ghost"
-              onClick={downloadExcel}
-              endContent={<FaFileDownload />}
-            >
-              Download
-            </Button>
+            color="primary"
+            size="sm"
+            variant="ghost"
+            onClick={downloadExcel}
+            endContent={<FaFileDownload />}
+          >
+            Download
+          </Button>
         </div>
       </div>
-      <Table
-        aria-label="Class Table"
-        sortDescriptor={sortDescriptor}
-        onSortChange={setSortDescriptor}
-      >
-        <TableHeader columns={headerColumns}>
-          {(column) => (
-            <TableColumn key={column.uid}>
-              {renderHeader(column)}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody items={sortedItems}>
-          {(item) => (
-            <TableRow key={item._id}>
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey)}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      {sortedItems.length > 0 ? (
+        <Table
+          aria-label="Class Table"
+          sortDescriptor={sortDescriptor}
+          onSortChange={setSortDescriptor}
+        >
+          <TableHeader columns={headerColumns}>
+            {(column) => (
+              <TableColumn key={column.uid}>
+                {renderHeader(column)}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody items={sortedItems}>
+            {(item) => (
+              <TableRow key={item._id}>
+                {(columnKey) => (
+                  <TableCell>{renderCell(item, columnKey)}</TableCell>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="flex flex-col items-center justify-center mt-4">
+      <div className="mb-6"> {/* Add margin-bottom to this div */}
+      <Image src="/class.svg" alt="No subjects found" width={800} height={800} />
+    </div>
+          <p className="mt-2 text-gray-500">No classes found</p>
+        </div>
+      )}
       <Pagination
         total={pages}
         initialPage={1}
