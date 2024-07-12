@@ -21,6 +21,7 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import SubjectModal from './subjectModal';
 import * as XLSX from 'xlsx';
+import Image from 'next/image';
 
 const columns = [
   { uid: "_id", name: "ID", sortable: true },
@@ -28,11 +29,10 @@ const columns = [
   { uid: "class", name: "Class" },
   { uid: "teacher", name: "Teacher" },
   { uid: "department", name: "Department" },
-
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id","name", "class", "teacher","actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "name", "class", "teacher", "actions"];
 
 export default function SubjectTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -198,18 +198,25 @@ export default function SubjectTable() {
           </Button>
         </div>
       </div>
-      <Table aria-label="Subject Table" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
-        <TableHeader columns={headerColumns}>
-          {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
-        </TableHeader>
-        <TableBody items={sortedItems}>
-          {(item) => (
-            <TableRow key={item._id}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      {sortedItems.length > 0 ? (
+        <Table aria-label="Subject Table" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+          <TableHeader columns={headerColumns}>
+            {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
+          </TableHeader>
+          <TableBody items={sortedItems}>
+            {(item) => (
+              <TableRow key={item._id}>
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="flex flex-col items-center justify-center mt-4">
+          <Image src="/subject.svg" alt="No subjects found" width={450} height={450} />
+          <p className="mt-2 text-gray-500">No subjects found</p>
+        </div>
+      )}
       <Pagination total={pages} initialPage={1} onChange={(page) => setPage(page)} className="mt-4" />
       <SubjectModal
         isOpen={modalOpen}
