@@ -15,41 +15,43 @@ export const authOptions = {
           const userId = credentials.userId;
           const password = credentials.password;
           const faculty = await Faculty.findOne({ _id: userId });
-          const student = await Student.findOne({ _id: userId })
+          const student = await Student.findOne({ _id: userId });
           let userRole;
           let id;
           let departmentName;
+
+          if (!faculty && !student) {
+            throw new Error('Invalid username');
+          }
+
           if (faculty && faculty._id.startsWith("S")) {
             id = faculty._id;
             userRole = "superadmin";
-          }  else
-            if (faculty) {
-              id = faculty._id;
-              departmentName = faculty.department;
-              userRole = faculty.isAdmin ? "admin" : "faculty";
-            }
-            else if (student) {
-              id = student._id;
-              departmentName = student.department;
-              userRole = "student";
-            } else {
-              return null;
-            }
+          } else if (faculty) {
+            id = faculty._id;
+            departmentName = faculty.department;
+            userRole = faculty.isAdmin ? "admin" : "faculty";
+          } else if (student) {
+            id = student._id;
+            departmentName = student.department;
+            userRole = "student";
+          }
 
           const isVerified = (faculty && faculty.password === password) || (student && student.password === password);
-          if (isVerified) {
-            const userWithRole = {
-              id,
-              role: userRole,
-              department: departmentName,
-            };
-            return userWithRole;
-          } else {
-            return null;
+
+          if (!isVerified) {
+            throw new Error('Invalid password');
           }
+
+          const userWithRole = {
+            id,
+            role: userRole,
+            department: departmentName,
+          };
+          return userWithRole;
         } catch (error) {
           console.error('Error during authorization:', error);
-          return null;
+          throw new Error(error.message);
         }
       }
     }),
