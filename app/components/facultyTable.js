@@ -54,17 +54,21 @@ export default function FacultyTable() {
   const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [faculty, setFaculty] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchFaculty();
   }, []);
 
   const fetchFaculty = async () => {
+    setLoading(true); // Set loading to true before starting data fetching
     try {
       const response = await axios.get('/api/faculty');
       setFaculty(response.data);
     } catch (error) {
       console.error('Error fetching faculty:', error);
+    } finally {
+      setLoading(false); // Set loading to false after data fetching is complete
     }
   };
 
@@ -317,51 +321,57 @@ export default function FacultyTable() {
 
   return (
     <>
-      <Table
-        isCompact
-        removeWrapper
-        aria-label="Faculty table with custom cells, pagination and sorting"
-        bottomContent={bottomContent}
-        bottomContentPlacement="outside"
-        checkboxesProps={{
-          classNames: {
-            wrapper: "after:bg-foreground after:text-background text-background ",
-          },
-        }}
-        classNames={classNames}
-        selectedKeys={selectedKeys}
-        sortDescriptor={sortDescriptor}
-        topContent={topContent}
-        topContentPlacement="outside"
-        onSelectionChange={setSelectedKeys}
-        onSortChange={setSortDescriptor}
-      >
-        <TableHeader columns={headerColumns}>
-          {(column) => (
-            <TableColumn
-              key={column.uid}
-              align={column.uid === "actions" ? "center" : "start"}
-              allowsSorting={column.sortable}
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          emptyContent={
-            <div className="flex justify-center items-center w-full h-full">
-              <Image src="/faculty.svg" alt="No Content" width={800} height={800} />
-            </div>
-          }
-          items={sortedItems}
+      {loading ? (
+        <div className="flex justify-center items-center w-full h-full">
+          <div className="loader"></div>
+        </div>
+      ) : (
+        <Table
+          isCompact
+          removeWrapper
+          aria-label="Faculty table with custom cells, pagination and sorting"
+          bottomContent={bottomContent}
+          bottomContentPlacement="outside"
+          checkboxesProps={{
+            classNames: {
+              wrapper: "after:bg-foreground after:text-background text-background ",
+            },
+          }}
+          classNames={classNames}
+          selectedKeys={selectedKeys}
+          sortDescriptor={sortDescriptor}
+          topContent={topContent}
+          topContentPlacement="outside"
+          onSelectionChange={setSelectedKeys}
+          onSortChange={setSortDescriptor}
         >
-          {(facultyMember) => (
-            <TableRow key={facultyMember?._id}>
-              {(columnKey) => <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          <TableHeader columns={headerColumns}>
+            {(column) => (
+              <TableColumn
+                key={column.uid}
+                align={column.uid === "actions" ? "center" : "start"}
+                allowsSorting={column.sortable}
+              >
+                {column.name}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody
+            emptyContent={
+              <div className="flex justify-center items-center w-full h-full">
+                <Image src="/faculty.svg" alt="No Content" width={800} height={800} />
+              </div>
+            }
+            items={sortedItems}
+          >
+            {(facultyMember) => (
+              <TableRow key={facultyMember?._id}>
+                {(columnKey) => <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
       <FacultyModal
         isOpen={modalOpen}
         onClose={handleModalClose}
