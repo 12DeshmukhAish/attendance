@@ -27,6 +27,7 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import StudentModal from "./studentModal";
 import * as XLSX from "xlsx";
+import Image from "next/image"; // Import Image from next/image
 
 const columns = [
   { uid: "_id", name: "ID", sortable: true },
@@ -434,7 +435,17 @@ export default function StudentTable() {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={"No students found"} items={sortedItems}>
+        <TableBody emptyContent={
+            <div className="flex flex-col items-center justify-center">
+              <Image
+                src="/student.svg"
+                alt="No students found"
+                width={850}
+                height={850}
+              />
+              <p>No students found</p>
+            </div>
+          } items={sortedItems}>
           {(student) => (
             <TableRow key={student._id}>
               {(columnKey) => <TableCell>{renderCell(student, columnKey)}</TableCell>}
@@ -452,4 +463,3 @@ export default function StudentTable() {
     </>
   );
 }
-

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
+import Image from "next/image";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 import { toast } from 'sonner';
@@ -133,7 +134,7 @@ export default function FacultyTable() {
     switch (columnKey) {
       case "actions":
         return (
-          <div className="relative flex items-center justify-items-center  justify-center gap-2">
+          <div className="relative flex items-center justify-items-center justify-center gap-2">
             <Tooltip content="Edit" >
               <span
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
@@ -160,7 +161,7 @@ export default function FacultyTable() {
         return cellValue;
     }
   }, []);
-  
+
   const onRowsPerPageChange = useCallback((e) => {
     setRowsPerPage(Number(e.target.value));
     setPage(1);
@@ -184,7 +185,7 @@ export default function FacultyTable() {
     handleModalClose();
     fetchFaculty();
   };
-  
+
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
@@ -263,6 +264,7 @@ export default function FacultyTable() {
               <option value="5">5</option>
               <option value="10">10</option>
               <option value="15">15</option>
+              <option value="20">20</option>
             </select>
           </label>
         </div>
@@ -345,10 +347,17 @@ export default function FacultyTable() {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={"No faculty members found"} items={sortedItems}>
-          { (facultyMember) => (
+        <TableBody
+          emptyContent={
+            <div className="flex justify-center items-center w-full h-full">
+              <Image src="/faculty.svg" alt="No Content" width={800} height={800} />
+            </div>
+          }
+          items={sortedItems}
+        >
+          {(facultyMember) => (
             <TableRow key={facultyMember?._id}>
-              {(columnKey) => <TableCell >{renderCell(facultyMember, columnKey)}</TableCell>}
+              {(columnKey) => <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>}
             </TableRow>
           )}
         </TableBody>

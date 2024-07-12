@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, CheckboxGroup, Checkbox } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
+import Image from 'next/image';
 
 export default function App() {
   const [selectedDepartment, setSelectedDepartment] = useState("Department");
@@ -268,6 +269,10 @@ export default function App() {
           </Button>
         </div>
       )}
+
+      <div className="flex justify-center mt-4">
+        <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
+      </div>
     </div>
   );
 }

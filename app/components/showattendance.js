@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Image from "next/image";
 import {
   Table,
   TableHeader,
@@ -57,6 +58,7 @@ const AttendanceDisplay = () => {
       }
     }
   }, []);
+
   const handleSelectChange = (value) => {
     setSelectedDepartment(value);
   };
@@ -66,6 +68,7 @@ const AttendanceDisplay = () => {
       fetchClasses();
     }
   }, [selectedDepartment, userProfile]);
+
   const fetchAttendance = async () => {
     setLoading(true);
     setError(null);
@@ -96,12 +99,15 @@ const AttendanceDisplay = () => {
     }
   };
 
-
   useEffect(() => {
     if (userProfile) {
-      if (userProfile.role === "student" ||
+      if (
+        userProfile.role === "student" ||
         (userProfile.role === "faculty" && selectedSubject) ||
-        ((userProfile.role === "admin" || userProfile.role === "superadmin") && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
+        ((userProfile.role === "admin" || userProfile.role === "superadmin") &&
+          selectedClass &&
+          (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))
+      ) {
         fetchAttendance();
       }
     }
@@ -251,7 +257,6 @@ const AttendanceDisplay = () => {
           <p className="text-gray-600">User: {userProfile.name} ({userProfile.role})</p>
         </div>
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-
           {userProfile?.role === "superadmin" && (
             <Select
               placeholder="Select department"
@@ -296,7 +301,7 @@ const AttendanceDisplay = () => {
                 <Dropdown>
                   <DropdownTrigger>
                     <Button variant="bordered">
-                      {selectedSubject ? selectedSubject: "Select Subject"}
+                      {selectedSubject ? selectedSubject : "Select Subject"}
                     </Button>
                   </DropdownTrigger>
                   <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
@@ -306,7 +311,6 @@ const AttendanceDisplay = () => {
                   </DropdownMenu>
                 </Dropdown>
               )}
-
             </>
           )}
           {userProfile?.role === "faculty" && (
@@ -350,6 +354,11 @@ const AttendanceDisplay = () => {
       ) : (
         <div>No attendance data available</div>
       )}
+
+<div className="flex justify-center mt-8">
+  <Image src="/report.svg" alt="Report Image" width={800} height={500} />
+</div>
+
     </div>
   );
 };
