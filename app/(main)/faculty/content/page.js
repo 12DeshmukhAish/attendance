@@ -90,7 +90,7 @@ const TeachingPlanPage = () => {
     }
 
     try {
-      const response = await axios.put(`/api/subject?_id=${subjectId}`, {
+      const response = await axios.put(`/api/contents?_id=${subjectId}`, {
         content: validContent,
       });
       if (response.status === 200) {

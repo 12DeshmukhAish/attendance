@@ -10,7 +10,7 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, name, class: classId, teacher, department, subType, content } = data;
+        const { _id, name, class: classId, teacher, department, subType } = data;
 
         const newSubject = new Subject({
             _id,
@@ -19,10 +19,7 @@ export async function POST(req) {
             teacher,
             department,
             subType,
-            content: content.map(item => ({
-                name: item.name,
-                status: item.status || 'not_covered'
-            }))
+           
         });
 
         await newSubject.save();

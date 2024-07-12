@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Attendance from "@/models/attendance";
-import Subject from "@/models/subject";
-import Student from "@/models/student";
-import Faculty from "@/models/faculty";
 
 export async function GET(req) {
     try {
@@ -311,3 +308,4 @@ export async function GET(req) {
         return NextResponse.json({ error: "Failed to Fetch Attendance Report" }, { status: 500 });
     }
 }
+

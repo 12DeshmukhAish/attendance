@@ -64,48 +64,48 @@ export async function POST(req) {
 }
 
 
-// export async function PUT(req) {
-//     try {
-//         await connectMongoDB();
-//         const data = await req.json();
-//         const { _id, date, subject, records, coveredContents } = data; // Include coveredContents in the request data
+export async function PUT(req) {
+    try {
+        await connectMongoDB();
+        const data = await req.json();
+        const { _id, date, subject, records, coveredContents } = data; // Include coveredContents in the request data
 
-//         // Validate and update each record if needed
-//         const validatedRecords = records.map(record => ({
-//             student: record.student,
-//             status: record.status || 'absent' // Assuming default status if not provided
-//         }));
+        // Validate and update each record if needed
+        const validatedRecords = records.map(record => ({
+            student: record.student,
+            status: record.status || 'absent' // Assuming default status if not provided
+        }));
 
-//         const existingAttendance = await Attendance.findByIdAndUpdate(_id, {
-//             date,
-//             subject,
-//             records: validatedRecords
-//         }, { new: true });
+        const existingAttendance = await Attendance.findByIdAndUpdate(_id, {
+            date,
+            subject,
+            records: validatedRecords
+        }, { new: true });
 
-//         if (!existingAttendance) {
-//             return NextResponse.json({ error: "Attendance record not found" });
-//         }
+        if (!existingAttendance) {
+            return NextResponse.json({ error: "Attendance record not found" });
+        }
 
-//         // Update content status to covered
-//         if (coveredContents && coveredContents.length > 0) {
-//             await Subject.updateOne(
-//                 { _id: subject },
-//                 { 
-//                     $set: { "content.$[elem].status": "covered" }
-//                 },
-//                 {
-//                     arrayFilters: [{ "elem.name": { $in: coveredContents } }]
-//                 }
-//             );
-//         }
+        // Update content status to covered
+        if (coveredContents && coveredContents.length > 0) {
+            await Subject.updateOne(
+                { _id: subject },
+                { 
+                    $set: { "content.$[elem].status": "covered" }
+                },
+                {
+                    arrayFilters: [{ "elem.name": { $in: coveredContents } }]
+                }
+            );
+        }
 
-//         console.log("Attendance Updated Successfully", existingAttendance);
-//         return NextResponse.json({ message: "Attendance Updated Successfully", attendance: existingAttendance });
-//     } catch (error) {
-//         console.error("Error updating attendance:", error);
-//         return NextResponse.json({ error: "Failed to Update Attendance" });
-//     }
-// }
+        console.log("Attendance Updated Successfully", existingAttendance);
+        return NextResponse.json({ message: "Attendance Updated Successfully", attendance: existingAttendance });
+    } catch (error) {
+        console.error("Error updating attendance:", error);
+        return NextResponse.json({ error: "Failed to Update Attendance" });
+    }
+}
 
 export async function DELETE(req) {
     try {
@@ -243,102 +243,102 @@ export async function DELETE(req) {
 //         return NextResponse.json({ error: "Failed to Fetch Aggregated Attendance Report" }, { status: 500 });
 //     }
 // }
-export async function PUT(req, res) {
-    try {
-        await connectMongoDB();
-        const data = await req.json();
-        const { _id, date, subject, records, coveredContents } = data; // Include coveredContents in the request data
+// export async function PUT(req, res) {
+//     try {
+//         await connectMongoDB();
+//         const data = await req.json();
+//         const { _id, date, subject, records, coveredContents } = data; // Include coveredContents in the request data
 
-        // Validate and update each record if needed
-        const validatedRecords = records.map(record => ({
-            student: record.student,
-            status: record.status || 'absent' // Assuming default status if not provided
-        }));
-        const existingAttendance = await Attendance.findByIdAndUpdate(_id, {
-            date : date ? new Date(date) : new Date(),
-            subject,
-            records: validatedRecords
-        }, { new: true });
+//         // Validate and update each record if needed
+//         const validatedRecords = records.map(record => ({
+//             student: record.student,
+//             status: record.status || 'absent' // Assuming default status if not provided
+//         }));
+//         const existingAttendance = await Attendance.findByIdAndUpdate(_id, {
+//             date : date ? new Date(date) : new Date(),
+//             subject,
+//             records: validatedRecords
+//         }, { new: true });
 
-        if (!existingAttendance) {
-            return res.status(404).json({ error: "Attendance record not found" });
-        }
+//         if (!existingAttendance) {
+//             return res.status(404).json({ error: "Attendance record not found" });
+//         }
 
-        // Update content status to covered
-        if (coveredContents && coveredContents.length > 0) {
-            await Subject.updateOne(
-                { _id: subject },
-                { 
-                    $set: { "content.$[elem].status": "covered" }
-                },
-                {
-                    arrayFilters: [{ "elem.name": { $in: coveredContents } }]
-                }
-            );
-        }
+//         // Update content status to covered
+//         if (coveredContents && coveredContents.length > 0) {
+//             await Subject.updateOne(
+//                 { _id: subject },
+//                 { 
+//                     $set: { "content.$[elem].status": "covered" }
+//                 },
+//                 {
+//                     arrayFilters: [{ "elem.name": { $in: coveredContents } }]
+//                 }
+//             );
+//         }
 
-        console.log("Attendance Updated Successfully", existingAttendance);
-        return res.status(200).json({ message: "Attendance Updated Successfully", attendance: existingAttendance });
-    } catch (error) {
-        console.error("Error updating attendance:", error);
-        return res.status(500).json({ error: "Failed to Update Attendance" });
-    }
-}
+//         console.log("Attendance Updated Successfully", existingAttendance);
+//         return res.status(200).json({ message: "Attendance Updated Successfully", attendance: existingAttendance });
+//     } catch (error) {
+//         console.error("Error updating attendance:", error);
+//         return res.status(500).json({ error: "Failed to Update Attendance" });
+//     }
+// }
 
 
-export async function GET(req, res) {
-    try {
-        await connectMongoDB();
-        const { searchParams } = new URL(req.url, `http://localhost:${process.env.PORT || 3000}/`);
-        const subjectId = searchParams.get("subjectId");
-        const startDate = new Date(searchParams.get("startDate"));
-        const endDate = new Date(searchParams.get("endDate"));
+// export async function GET(req, res) {
+//     try {
+//         await connectMongoDB();
+//         const { searchParams } = new URL(req.url, `http://localhost:${process.env.PORT || 3000}/`);
+//         const subjectId = searchParams.get("subjectId");
+//         const startDate = new Date(searchParams.get("startDate"));
+//         const endDate = new Date(searchParams.get("endDate"));
 
-        // Query attendance records within the specified date range for the subject
-        const query = {
-            subject: subjectId,
-            // date: {
-            //     $gte: startDate,
-            //     $lte: endDate
-            // }
-        };
+//         // Query attendance records within the specified date range for the subject
+//         const query = {
+//             subject: subjectId,
+//             // date: {
+//             //     $gte: startDate,
+//             //     $lte: endDate
+//             // }
+//         };
 
-        const attendances = await Attendance.find(query)
-            .populate({
-                path: 'subject',
-                model: 'Subject',
-                select: 'name teacher',
-                populate: {
-                    path: 'teacher',
-                    model: 'Faculty',
-                    select: 'name'
-                }
-            })
-            .populate({
-                path: 'records.student',
-                model: 'Student',
-                select: 'name'
-            })
-            .exec();
+//         const attendances = await Attendance.find(query)
+//             .populate({
+//                 path: 'subject',
+//                 model: 'Subject',
+//                 select: 'name teacher',
+//                 populate: {
+//                     path: 'teacher',
+//                     model: 'Faculty',
+//                     select: 'name'
+//                 }
+//             })
+//             .populate({
+//                 path: 'records.student',
+//                 model: 'Student',
+//                 select: 'name'
+//             })
+//             .exec();
 
-        if (attendances.length === 0) {
-            return NextResponse.json({ error: "No attendance records found" },{status:404});
-        }
+//         if (attendances.length === 0) {
+//             return NextResponse.json({ error: "No attendance records found" },{status:404});
+//         }
 
-        const formattedAttendances = attendances.map(attendance => ({
-            date: attendance.date,
-            subject: attendance.subject.name,
-            teacher: attendance.subject.teacher.name,
-            records: attendance.records.map(record => ({
-                student: record.student.name,
-                status: record.status
-            }))
-        }));
+//         const formattedAttendances = attendances.map(attendance => ({
+//             date: attendance.date,
+//             subject: attendance.subject.name,
+//             teacher: attendance.subject.teacher.name,
+//             records: attendance.records.map(record => ({
+//                 student: record.student.name,
+//                 status: record.status
+//             }))
+//         }));
 
-        console.log("Attendance Reports Fetched Successfully", formattedAttendances);
-        return NextResponse.json(formattedAttendances,{status:200});
-    } catch (error) {
-        console.error("Error fetching attendance reports:", error);
-        return NextResponse.json({ error: "Failed to fetch attendance reports" },{status:500});
-    }
-}
+//         console.log("Attendance Reports Fetched Successfully", formattedAttendances);
+//         return NextResponse.json(formattedAttendances,{status:200});
+//     } catch (error) {
+//         console.error("Error fetching attendance reports:", error);
+//         return NextResponse.json({ error: "Failed to fetch attendance reports" },{status:500});
+//     }
+// }
