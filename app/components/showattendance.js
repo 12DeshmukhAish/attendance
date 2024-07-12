@@ -30,7 +30,6 @@ const AttendanceDisplay = () => {
   const [viewType, setViewType] = useState("individual");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [userProfile, setUserProfile] = useState(null);
-  
   const [classes, setClasses] = useState([]);
   const [dateRange, setDateRange] = useState({
     start: today(getLocalTimeZone()).subtract({ weeks: 2 }),
@@ -58,7 +57,7 @@ const AttendanceDisplay = () => {
       }
     }
   }, []);
-  const handleSelectChange = ( value) => {
+  const handleSelectChange = (value) => {
     setSelectedDepartment(value);
   };
 
@@ -77,7 +76,7 @@ const AttendanceDisplay = () => {
         url += `studentId=${userProfile._id}`;
       } else if (userProfile.role === "faculty") {
         url += `subjectId=${selectedSubject}`;
-      } else if (userProfile.role === "admin" ||userProfile.role === "superadmin") {
+      } else if (userProfile.role === "admin" || userProfile.role === "superadmin") {
         url += `classId=${selectedClass}`;
         if (viewType === "individual" && selectedSubject) {
           url += `&subjectId=${selectedSubject}`;
@@ -95,13 +94,13 @@ const AttendanceDisplay = () => {
       setLoading(false);
     }
   };
-  
+
 
   useEffect(() => {
     if (userProfile) {
       if (userProfile.role === "student" ||
-          (userProfile.role === "faculty" && selectedSubject) ||
-          ((userProfile.role === "admin" || userProfile.role === "superadmin") && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
+        (userProfile.role === "faculty" && selectedSubject) ||
+        ((userProfile.role === "admin" || userProfile.role === "superadmin") && selectedClass && (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))) {
         fetchAttendance();
       }
     }
@@ -251,30 +250,30 @@ const AttendanceDisplay = () => {
           <p className="text-gray-600">User: {userProfile.name} ({userProfile.role})</p>
         </div>
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-          
-        {userProfile?.role === "superadmin" && (
-              <Select            
-                placeholder="Select department"
-                name="department"
-                className=" w-[40%] "
-                selectedKeys={[selectedDepartment]}
-                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
-                variant="bordered"
-                size="sm"
-              >
-                {departmentOptions.map((department) => (
-                  <SelectItem key={department.key} textValue={department.label}>
-                    {department.label}
-                  </SelectItem>
-                ))}
-              </Select>
-            )}
-          {(userProfile.role === "admin" ||userProfile.role === "superadmin") && (
+
+          {userProfile?.role === "superadmin" && (
+            <Select
+              placeholder="Select department"
+              name="department"
+              className=" w-[40%] "
+              selectedKeys={[selectedDepartment]}
+              onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+              variant="bordered"
+              size="sm"
+            >
+              {departmentOptions.map((department) => (
+                <SelectItem key={department.key} textValue={department.label}>
+                  {department.label}
+                </SelectItem>
+              ))}
+            </Select>
+          )}
+          {(userProfile.role === "admin" || userProfile.role === "superadmin") && (
             <>
               <Dropdown>
                 <DropdownTrigger>
                   <Button variant="bordered">
-                    {selectedClass ? userProfile.classes.find((c) => c === selectedClass) : "Select Class"}
+                    {selectedClass ? selectedClass : "Select Class"}
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
@@ -296,16 +295,17 @@ const AttendanceDisplay = () => {
                 <Dropdown>
                   <DropdownTrigger>
                     <Button variant="bordered">
-                      {selectedSubject ? userProfile.subjects.find((s) => s === selectedSubject) : "Select Subject"}
+                      {selectedSubject ? selectedSubject: "Select Subject"}
                     </Button>
                   </DropdownTrigger>
                   <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
-                    {userProfile.subjects.map((subject) => (
+                    {classes.find((c) => c._id === selectedClass)?.subjects.map((subject) => (
                       <DropdownItem key={subject}>{subject}</DropdownItem>
                     ))}
                   </DropdownMenu>
                 </Dropdown>
               )}
+
             </>
           )}
           {userProfile?.role === "faculty" && (
@@ -344,7 +344,7 @@ const AttendanceDisplay = () => {
         <div>
           {userProfile.role === "student" && renderStudentAttendance()}
           {userProfile.role === "faculty" && renderFacultyAttendance()}
-          {userProfile.role === "admin" && renderAdminAttendance()}
+          {(userProfile.role === "admin" || userProfile.role === "superadmin") && renderAdminAttendance()}
         </div>
       ) : (
         <div>No attendance data available</div>
