@@ -86,8 +86,8 @@ const AttendanceDisplay = () => {
       url += `&startDate=${dateRange.start.toString()}&endDate=${dateRange.end.toString()}`;
 
       const response = await axios.get(url);
-      setAttendanceData(response.data.subjects);
-      console.log(response.data);
+      setAttendanceData(response.data);
+      
     } catch (err) {
       setError("Failed to fetch attendance data");
       console.error(err);
