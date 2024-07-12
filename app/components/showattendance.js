@@ -86,7 +86,8 @@ const AttendanceDisplay = () => {
       url += `&startDate=${dateRange.start.toString()}&endDate=${dateRange.end.toString()}`;
 
       const response = await axios.get(url);
-      setAttendanceData(response.data);
+      setAttendanceData(response.data.subjects);
+      console.log(response.data);
     } catch (err) {
       setError("Failed to fetch attendance data");
       console.error(err);
@@ -107,8 +108,8 @@ const AttendanceDisplay = () => {
   }, [userProfile, selectedSubject, selectedClass, viewType, dateRange]);
 
   const renderStudentAttendance = () => {
-    const totalLectures = attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0);
-    const totalPresent = attendanceData.reduce((sum, subject) => sum + subject.presentCount, 0);
+    const totalLectures = attendanceData?.reduce((sum, subject) => sum + subject.totalLectures, 0);
+    const totalPresent = attendanceData?.reduce((sum, subject) => sum + subject.presentCount, 0);
 
     return (
       <Table aria-label="Student Attendance Table">
@@ -119,7 +120,7 @@ const AttendanceDisplay = () => {
           <TableColumn>Attendance %</TableColumn>
         </TableHeader>
         <TableBody>
-          {attendanceData.map((subject) => (
+          {attendanceData?.map((subject) => (
             <TableRow key={subject._id}>
               <TableCell>{subject.name}</TableCell>
               <TableCell>{subject.totalLectures}</TableCell>
