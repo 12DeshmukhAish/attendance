@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
@@ -16,12 +16,13 @@ const Profile = () => {
     email: '',
     role: '', 
   });
+  const [loading, setLoading] = useState(false); // State for loading indicator
+
   useEffect(() => {
     const fetchUserProfile = async () => {
+      setLoading(true); // Set loading to true before fetching data
       if (session?.user && !userProfile) {
-        console.log(session.user);
         const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
-         console.log(role);
         const { id } = session.user;
         const storedProfile = sessionStorage.getItem('userProfile');
 
@@ -30,7 +31,6 @@ const Profile = () => {
           setUpdatedProfile(JSON.parse(storedProfile));
         } else {
           try {
-         console.log(role);
             const res = await axios.get(`/api/${role}?_id=${id}`);
             const profileData = Array.isArray(res.data) ? res.data[0] : res.data; // Ensure userProfile is an object
             profileData.role = session?.user?.role; // Add role to profile data
@@ -42,6 +42,7 @@ const Profile = () => {
           }
         }
       }
+      setLoading(false); // Set loading to false after fetching data
     };
     fetchUserProfile();
   }, [session, userProfile]);
@@ -55,9 +56,10 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    setLoading(true); // Set loading to true before saving data
     if (session?.user) {
       const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
-        const { id } = session.user;
+      const { id } = session.user;
       try {
         await axios.put(`/api/${role}?_id=${id}`, updatedProfile);
         setUserProfile(updatedProfile);
@@ -67,6 +69,7 @@ const Profile = () => {
         console.error("Error updating user profile:", error);
       }
     }
+    setLoading(false); // Set loading to false after saving data
   };
 
   if (!session) {
@@ -93,7 +96,7 @@ const Profile = () => {
           </div>
           <div className="flex items-center space-x-4 mt-4">
             <h4 className="text-2xl font-semibold text-gray-800">
-              {session.user.role === 'admin' ? 'Admin Profile' : session.user.role === 'faculty' ? 'Faculty Profile' :session.user.role === 'superadmin' ? "Superadmin Profile" :'Student Profile'}
+              {session.user.role === 'admin' ? 'Admin Profile' : session.user.role === 'faculty' ? 'Faculty Profile' : session.user.role === 'superadmin' ? "Superadmin Profile" : 'Student Profile'}
             </h4>
             <Button auto size="sm" variant='ghost' color='primary' onClick={() => setIsEditing(!isEditing)}>
               {isEditing ? 'Cancel' : 'Edit'}
@@ -101,50 +104,56 @@ const Profile = () => {
           </div>
         </CardHeader>
         <CardBody className="space-y-4">
-          {isEditing ? (
-            <>
-              <Input
-                fullWidth
-                label="ID"
-                name="_id"
-                value={updatedProfile._id}
-                onChange={handleInputChange}
-                disabled 
-              />
-              <Input
-                fullWidth
-                label="Name"
-                name="name"
-                value={updatedProfile.name}
-                onChange={handleInputChange}
-              />
-              <Input
-                fullWidth
-                label="Department"
-                name="department"
-                value={updatedProfile.department}
-                onChange={handleInputChange}
-              />
-              <Input
-                fullWidth
-                label="Email"
-                name="email"
-                value={updatedProfile.email}
-                onChange={handleInputChange}
-              />
-              <Button auto size='sm' onClick={handleSave} variant='ghost' color="primary">
-                Save
-              </Button>
-            </>
+          {loading ? ( // Display loader if loading is true
+            <div className="flex justify-center items-center">
+              <Spinner type="points" />
+            </div>
           ) : (
-            userProfile && (
+            isEditing ? (
               <>
-                <h6 className="text-lg font-medium">ID: {session?.user?.id}</h6>
-                <h6 className="text-lg font-medium">Role: {userProfile.role}</h6>
-                <p className="text-gray-600">Name: {userProfile.name}</p>
-                <p className="text-gray-600">Department: {userProfile.department}</p>
-                <p className="text-gray-600">Email: {userProfile.email}</p>
+                <Input
+                  fullWidth
+                  label="ID"
+                  name="_id"
+                  value={updatedProfile._id}
+                  onChange={handleInputChange}
+                  disabled 
+                />
+                <Input
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={updatedProfile.name}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  fullWidth
+                  label="Department"
+                  name="department"
+                  value={updatedProfile.department}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  value={updatedProfile.email}
+                  onChange={handleInputChange}
+                />
+                <Button auto size='sm' onClick={handleSave} variant='ghost' color="primary">
+                  Save
+                </Button>
               </>
+            ) : (
+              userProfile && (
+                <>
+                  <h6 className="text-lg font-medium">ID: {session?.user?.id}</h6>
+                  <h6 className="text-lg font-medium">Role: {userProfile.role}</h6>
+                  <p className="text-gray-600">Name: {userProfile.name}</p>
+                  <p className="text-gray-600">Department: {userProfile.department}</p>
+                  <p className="text-gray-600">Email: {userProfile.email}</p>
+                </>
+              )
             )
           )}
         </CardBody>
