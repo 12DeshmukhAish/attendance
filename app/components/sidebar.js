@@ -187,9 +187,9 @@ const Sidebar = () => {
               </li>
             );
           })}
-          <button onClick={handleSignOut} color="se" width="30">
+          <button onClick={handleSignOut} color="primary" className="text-primary" width="30">
             <Tooltip content="Log Out">
-              <RxExit className="w-5 h-5 ml-3 my-2" />
+              <RxExit className="w-5 h-5 ml-3 my-2 " />
             </Tooltip>
           </button>
         </ul>

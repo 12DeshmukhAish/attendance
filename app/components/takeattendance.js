@@ -19,11 +19,6 @@ export default function App() {
   const [profile, setProfile] = useState(null); // State to store user profile
   const [subjectDetails, setSubjectDetails] = useState(null); // State to store subject details
 
-  // const typeOptions = [
-  //   { key: "Theory", label: "Theory" },
-  //   { key: "Practical", label: "Practical" },
-  // ];
-
   // Fetch profile data from session storage on component mount
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -119,70 +114,17 @@ export default function App() {
     }
   };
 
+  const isDropdownSelected = selectedSubject !== "Subject";
+
   return (
     <div className="flex flex-col gap-4 p-4">
+      {!isDropdownSelected && !isTableVisible && (
+        <div className="flex justify-center mt-4">
+          <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
+        </div>
+      )}
+
       <div className="flex space-x-4 mb-4 items-center">
-
-        {/* <Dropdown>
-          {/* <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedType}
-            </Button>
-          </DropdownTrigger> */}
-          {/* <DropdownMenu
-            aria-label="Type selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedType])}
-            onSelectionChange={(keys) => setSelectedType(Array.from(keys)[0])}
-          >
-            {typeOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown> */} 
-
-        {/* <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedDepartment}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Department selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedDepartment])}
-            onSelectionChange={(keys) => setSelectedDepartment(Array.from(keys)[0])}
-          >
-            {departmentOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown> */}
-
-        {/* <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedClass}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Class selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedClass])}
-            onSelectionChange={(keys) => setSelectedClass(Array.from(keys)[0])}
-          >
-            {classOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown> */}
-
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
@@ -220,8 +162,7 @@ export default function App() {
         </Button>
       </div>
 
-
-      {selectedSubject !== "Subject" && subjectDetails && (
+      {isDropdownSelected && subjectDetails && (
         <div className="mb-4">
           <h2>Subject Content</h2>
           <CheckboxGroup
@@ -238,7 +179,6 @@ export default function App() {
           </CheckboxGroup>
         </div>
       )}
-
 
       {isTableVisible && (
         <div className="flex flex-col gap-3 mt-4">
@@ -269,10 +209,6 @@ export default function App() {
           </Button>
         </div>
       )}
-
-      <div className="flex justify-center mt-4">
-        <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
-      </div>
     </div>
   );
 }

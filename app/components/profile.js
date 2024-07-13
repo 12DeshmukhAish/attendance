@@ -15,7 +15,6 @@ const Profile = () => {
     email: '',
     role: '',
   });
-
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -24,6 +23,7 @@ const Profile = () => {
       setUpdatedProfile(profile);
     }
   }, []);
+  const [loading, setLoading] = useState(false); // State for loading indicator
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -34,9 +34,13 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+
     if (userProfile) {
       const role = userProfile.role === "admin" || userProfile.role === "superadmin" ? "faculty" : userProfile.role;
       const { id } = userProfile;
+
+    setLoading(true); // Set loading to true before saving data
+
       try {
         await axios.put(`/api/${role}?_id=${id}`, updatedProfile);
         setUserProfile(updatedProfile);
@@ -46,6 +50,7 @@ const Profile = () => {
         console.error("Error updating user profile:", error);
       }
     }
+    setLoading(false); // Set loading to false after saving data
   };
 
   if (!userProfile) {
@@ -72,6 +77,7 @@ const Profile = () => {
           
           <div className="flex items-center space-x-4 ">
             <h4 className="text-2xl font-semibold text-gray-800">
+
               {userProfile.role === 'admin' ? 'Admin Profile' : userProfile.role === 'faculty' ? 'Faculty Profile' : userProfile.role === 'superadmin' ? "Superadmin Profile" : 'Student Profile'}
             </h4>
             <Button auto size="sm" variant='ghost' color='primary' onClick={() => setIsEditing(!isEditing)}>
@@ -80,6 +86,7 @@ const Profile = () => {
           </div>
           </div>
         </CardHeader>
+
         <CardBody className="space-y-4 p-4 flex flex-row justify-normal">
           <div className='w-[50%] m-auto'>
         <Image src="/profile.svg" alt="Profile Illustration" width={400} height={400} className="" />

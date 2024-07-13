@@ -40,10 +40,14 @@ const AttendanceDisplay = () => {
   const fetchClasses = async () => {
     if (userProfile?.role === "admin" || userProfile?.role === "superadmin") {
       try {
+        setLoading(true); // Start loading
         const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
         setClasses(response.data);
       } catch (error) {
+        setError('Error fetching classes');
         console.error('Error fetching classes:', error);
+      } finally {
+        setLoading(false); // Stop loading
       }
     }
   };
@@ -355,10 +359,9 @@ const AttendanceDisplay = () => {
         <div>No attendance data available</div>
       )}
 
-<div className="flex justify-center mt-8">
-  <Image src="/report.svg" alt="Report Image" width={800} height={500} />
-</div>
-
+      <div className="flex justify-center mt-8">
+        <Image src="/report.svg" alt="Report Image" width={800} height={500} />
+      </div>
     </div>
   );
 };

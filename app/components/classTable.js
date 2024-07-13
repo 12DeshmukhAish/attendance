@@ -1,4 +1,3 @@
-"use client"
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
@@ -16,6 +15,7 @@ import {
   Pagination,
   SelectItem,
   Select,
+  Spinner,
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -65,6 +65,9 @@ export default function ClassTable() {
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(false);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -92,28 +95,37 @@ export default function ClassTable() {
 
   const fetchClasses = async () => {
     try {
+      setLoadingClasses(true);
       const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
       setClasses(response.data);
     } catch (error) {
       console.error('Error fetching classes:', error);
+    } finally {
+      setLoadingClasses(false);
     }
   };
 
   const fetchTeachers = async () => {
     try {
+      setLoadingTeachers(true);
       const response = await axios.get('/api/faculty');
       setTeachers(response.data);
     } catch (error) {
       console.error('Error fetching teachers:', error);
+    } finally {
+      setLoadingTeachers(false);
     }
   };
 
   const fetchStudents = async () => {
     try {
+      setLoadingStudents(true);
       const response = await axios.get('/api/students');
       setStudents(response.data);
     } catch (error) {
       console.error('Error fetching students:', error);
+    } finally {
+      setLoadingStudents(false);
     }
   };
 
@@ -299,7 +311,11 @@ export default function ClassTable() {
           </Button>
         </div>
       </div>
-      {sortedItems.length > 0 ? (
+      {loadingClasses || loadingTeachers || loadingStudents ? (
+        <div className="flex justify-center items-center">
+          <Spinner size="large" />
+        </div>
+      ) : sortedItems.length > 0 ? (
         <Table
           aria-label="Class Table"
           sortDescriptor={sortDescriptor}
@@ -324,9 +340,9 @@ export default function ClassTable() {
         </Table>
       ) : (
         <div className="flex flex-col items-center justify-center mt-4">
-      <div className="mb-6"> {/* Add margin-bottom to this div */}
-      <Image src="/class.svg" alt="No subjects found" width={800} height={800} />
-    </div>
+          <div className="mb-6">
+            <Image src="/class.svg" alt="No subjects found" width={800} height={800} />
+          </div>
           <p className="mt-2 text-gray-500">No classes found</p>
         </div>
       )}

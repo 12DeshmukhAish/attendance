@@ -1,10 +1,11 @@
 "use client";
 
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { Button, Input, Checkbox } from '@nextui-org/react';
+import { Button, Input, Checkbox, Card, CardHeader, CardBody } from '@nextui-org/react';
+import { FaPlus, FaTrashAlt } from 'react-icons/fa';
+import Image from 'next/image';
 
 const TeachingPlanPage = () => {
   const [subjectId, setSubjectId] = useState('');
@@ -23,7 +24,6 @@ const TeachingPlanPage = () => {
       setSubjectIds(userSubjectIds);
 
       if (userSubjectIds.length === 1) {
-        // Fetch the single subject's information directly
         setSubjectId(userSubjectIds[0]);
         fetchSubjectInfo(userSubjectIds[0]);
       }
@@ -36,7 +36,6 @@ const TeachingPlanPage = () => {
     try {
       const response = await axios.get(`/api/subject?_id=${subjectId}`);
       setSubject(response.data.subject);
-      console.log(response.data);
       setContent(response.data.subject.content || [{ name: '', status: 'not_covered' }]);
     } catch (error) {
       console.error('Error fetching subject info:', error);
@@ -107,21 +106,28 @@ const TeachingPlanPage = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Manage Teaching Plan</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">Manage Teaching Plan</h1>
       {subjectId && (
-        <div className="mt-4">
-          <h2 className="text-lg font-bold mb-2">Subject Information</h2>
-          <h3>Subject Department - {subject.department}</h3>
-          <h3>Subject Name - {subject.name}</h3>
-          <h3>Subject Code - {subject._id}</h3>
-          <h3>Subject Faculty Name - {subject.teacher}</h3>
-          <h3>Subject class - {subject.class}</h3>
-
-        </div>
+        <Card className="mt-4">
+          <CardBody className='flex flex-row justify-between'> 
+            <div className='space-y-4 w-[50%] content-start m-auto'>             
+            <h2 className="text-lg font-bold mb-2">Subject Information</h2>
+            <p><strong>Subject Department:</strong> {subject.department}</p>
+            <p><strong>Subject Name:</strong> {subject.name}</p>
+            <p><strong>Subject Code:</strong> {subject._id}</p>
+            <p><strong>Subject Faculty Name:</strong> {subject.teacher}</p>
+            <p><strong>Subject Class:</strong> {subject.class}</p>
+            </div>
+            <div>
+            <Image src="/report.svg" alt="Report Image" width={500} height={500} />
+     
+            </div>
+          </CardBody>
+        </Card>
       )}
       {subjectIds.length > 1 && (
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Subject</label>
+          <label className="block text-sm font-medium text-gray-700">Select Subject</label>
           <select
             value={subjectId}
             onChange={handleSubjectChange}
@@ -136,11 +142,11 @@ const TeachingPlanPage = () => {
           </select>
         </div>
       )}
-      <form onSubmit={handleSubmit} className="w-full bg-white p-2 grid grid-cols-1 gap-4">
+      <form onSubmit={handleSubmit} className="w-full bg-white p-4 grid grid-cols-1 gap-4 rounded-lg shadow-lg">
         <div className="col-span-1">
           <h3 className="text-lg font-bold mb-2">Content</h3>
           {content.map((item, index) => (
-            <div key={index} className="flex gap-4 mb-2">
+            <div key={index} className="flex gap-4 mb-2 items-center">
               <Input
                 type="text"
                 label="Title"
@@ -164,6 +170,7 @@ const TeachingPlanPage = () => {
                 size='sm'
                 auto
                 onClick={() => handleRemoveContent(index)}
+                icon={<FaTrashAlt />}
               >
                 Remove
               </Button>
@@ -175,6 +182,7 @@ const TeachingPlanPage = () => {
             size='sm'
             auto
             onClick={handleAddContent}
+            icon={<FaPlus />}
           >
             Add Content
           </Button>
@@ -198,7 +206,6 @@ const TeachingPlanPage = () => {
           </Button>
         </div>
       </form>
-
     </div>
   );
 };
