@@ -1,50 +1,29 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useSession } from 'next-auth/react';
 import { Card, CardBody, CardHeader, Spinner, Button, Input } from '@nextui-org/react';
-import { Avatar, AvatarIcon } from "@nextui-org/react";
+import { Avatar } from "@nextui-org/react";
+import Image from 'next/image';
+import axios from 'axios';
 
 const Profile = () => {
-  const { data: session } = useSession();
-  const [userProfile, setUserProfile] = useState(null); 
+  const [userProfile, setUserProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [updatedProfile, setUpdatedProfile] = useState({
     _id: '',
     name: '',
     department: '',
     email: '',
-    role: '', 
+    role: '',
   });
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (session?.user && !userProfile) {
-        console.log(session.user);
-        const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
-         console.log(role);
-        const { id } = session.user;
-        const storedProfile = sessionStorage.getItem('userProfile');
 
-        if (storedProfile) {
-          setUserProfile(JSON.parse(storedProfile));
-          setUpdatedProfile(JSON.parse(storedProfile));
-        } else {
-          try {
-         console.log(role);
-            const res = await axios.get(`/api/${role}?_id=${id}`);
-            const profileData = Array.isArray(res.data) ? res.data[0] : res.data; // Ensure userProfile is an object
-            profileData.role = session?.user?.role; // Add role to profile data
-            setUserProfile(profileData);
-            setUpdatedProfile(profileData);
-            sessionStorage.setItem('userProfile', JSON.stringify(profileData));
-          } catch (error) {
-            console.error("Error fetching user profile:", error);
-          }
-        }
-      }
-    };
-    fetchUserProfile();
-  }, [session, userProfile]);
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      const profile = JSON.parse(storedProfile);
+      setUserProfile(profile);
+      setUpdatedProfile(profile);
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,9 +34,9 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
-    if (session?.user) {
-      const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
-        const { id } = session.user;
+    if (userProfile) {
+      const role = userProfile.role === "admin" || userProfile.role === "superadmin" ? "faculty" : userProfile.role;
+      const { id } = userProfile;
       try {
         await axios.put(`/api/${role}?_id=${id}`, updatedProfile);
         setUserProfile(updatedProfile);
@@ -69,7 +48,7 @@ const Profile = () => {
     }
   };
 
-  if (!session) {
+  if (!userProfile) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <Spinner type="points" />
@@ -78,43 +57,51 @@ const Profile = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-50 to-blue-100">
-      <Card className="w-full max-w-md p-6 shadow-lg rounded-lg bg-white">
-        <CardHeader className="border-b border-gray-200 pb-4 mb-4 flex flex-col items-center">
-          <div className="mb-4">
+    <div className="flex justify-center h-full items-center mt-auto bg-gradient-to-r from-blue-50 to-blue-100">
+      <Card className="w-full h-full shadow-lg rounded-lg bg-white">
+        <CardHeader className="border-b   border-gray-200 pb-4 mb-4  ">
+          <div className="mb-4 flex content-center m-auto space-x-4 ">
             <Avatar
-              icon={<AvatarIcon />}
-              size="xxl" // Increase avatar size
+              src="/avatar.svg"
+              size="xl"
               classNames={{
                 base: "bg-gradient-to-br from-[#FFB457] to-[#FF705B]",
                 icon: "text-black/120",
               }}
             />
-          </div>
-          <div className="flex items-center space-x-4 mt-4">
+          
+          <div className="flex items-center space-x-4 ">
             <h4 className="text-2xl font-semibold text-gray-800">
-              {session.user.role === 'admin' ? 'Admin Profile' : session.user.role === 'faculty' ? 'Faculty Profile' :session.user.role === 'superadmin' ? "Superadmin Profile" :'Student Profile'}
+              {userProfile.role === 'admin' ? 'Admin Profile' : userProfile.role === 'faculty' ? 'Faculty Profile' : userProfile.role === 'superadmin' ? "Superadmin Profile" : 'Student Profile'}
             </h4>
             <Button auto size="sm" variant='ghost' color='primary' onClick={() => setIsEditing(!isEditing)}>
               {isEditing ? 'Cancel' : 'Edit'}
             </Button>
           </div>
+          </div>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardBody className="space-y-4 p-4 flex flex-row justify-normal">
+          <div className='w-[50%] m-auto'>
+        <Image src="/profile.svg" alt="Profile Illustration" width={400} height={400} className="" />
+        </div>
           {isEditing ? (
-            <>
+            <div className="space-y-4 p-4 w-[50%] m-auto">
               <Input
                 fullWidth
                 label="ID"
                 name="_id"
+                size='sm'
+                variant='bordered'
                 value={updatedProfile._id}
                 onChange={handleInputChange}
-                disabled 
+                disabled
               />
               <Input
                 fullWidth
                 label="Name"
                 name="name"
+                size='sm'
+                variant='bordered'
                 value={updatedProfile.name}
                 onChange={handleInputChange}
               />
@@ -122,6 +109,8 @@ const Profile = () => {
                 fullWidth
                 label="Department"
                 name="department"
+                size='sm'
+                variant='bordered'
                 value={updatedProfile.department}
                 onChange={handleInputChange}
               />
@@ -129,22 +118,24 @@ const Profile = () => {
                 fullWidth
                 label="Email"
                 name="email"
+                size='sm'
+                variant='bordered'
                 value={updatedProfile.email}
                 onChange={handleInputChange}
               />
               <Button auto size='sm' onClick={handleSave} variant='ghost' color="primary">
                 Save
               </Button>
-            </>
+            </div>
           ) : (
             userProfile && (
-              <>
-                <h6 className="text-lg font-medium">ID: {session?.user?.id}</h6>
-                <h6 className="text-lg font-medium">Role: {userProfile.role}</h6>
-                <p className="text-gray-600">Name: {userProfile.name}</p>
-                <p className="text-gray-600">Department: {userProfile.department}</p>
-                <p className="text-gray-600">Email: {userProfile.email}</p>
-              </>
+              <div className="space-y-4 p-4 w-[50%] m-auto">
+                <h5 className="text-lg font-medium">ID: {userProfile._id}</h5>
+                <h5 className="text-lg font-medium">Role: {userProfile.role}</h5>
+                <p className="text-lg  text-gray-600">Name: {userProfile.name}</p>
+                <p className="text-lg  text-gray-600">Department: {userProfile.department}</p>
+                <p className="text-lg text-gray-600">Email: {userProfile.email}</p>
+              </div>
             )
           )}
         </CardBody>

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 import Image from "next/image";
-import { RxDashboard, RxExit } from "react-icons/rx";
+import { RxExit } from "react-icons/rx";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdPortrait } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 import { AiOutlineSchedule } from "react-icons/ai";
@@ -9,7 +9,6 @@ import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Tooltip } from "@nextui-org/react";
 import { SiGoogleclassroom } from "react-icons/si";
 import { PiStudentBold } from "react-icons/pi";
@@ -18,13 +17,17 @@ import { RiCalendarScheduleLine } from "react-icons/ri";
 
 const Sidebar = () => {
   const router = useRouter();
-  const pathname =usePathname();
-  const { data: session } = useSession();
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     setMounted(true);
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setUserProfile(JSON.parse(storedProfile));
+    }
   }, []);
 
   const toggleSidebarCollapse = () => {
@@ -33,6 +36,7 @@ const Sidebar = () => {
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
+    sessionStorage.clear()
     router.replace("/");
   };
 
@@ -42,9 +46,9 @@ const Sidebar = () => {
 
   // Define sidebar items based on roles
   let sidebarItems = [];
-  if (session && session.user) {
-    const { role } = session.user;
-    if (role === "admin" ) {
+  if (userProfile && userProfile.role) {
+    const { role } = userProfile;
+    if (role === "admin") {
       sidebarItems = [
         {
           name: "Profile",
@@ -71,17 +75,13 @@ const Sidebar = () => {
           href: "/admin/subject",
           icon: TbReportAnalytics,
         },
-        
         {
           name: "Manage Reports",
           href: "/admin/showattendance",
           icon: AiOutlineSchedule,
         },
-        
       ];
-    } 
-    else
-    if (role==="superadmin") {
+    } else if (role === "superadmin") {
       sidebarItems = [
         {
           name: "Profile",
@@ -108,18 +108,23 @@ const Sidebar = () => {
           href: "/admin/showattendance",
           icon: AiOutlineSchedule,
         },
-        
       ];
-    }else if (role === "faculty") {
+    } else if (role === "faculty") {
       sidebarItems = [
         {
           name: "Profile",
           href: "/faculty",
           icon: MdPortrait,
-        },{
+        },
+        {
           name: "Take Attendance",
           href: "/faculty/takeattendance",
           icon: RiCalendarScheduleLine,
+        },
+        {
+          name: "Update Attendance",
+          href: "/faculty/attendance",
+          icon: AiOutlineSchedule,
         },
         {
           name: "Manage Reports",
@@ -138,12 +143,12 @@ const Sidebar = () => {
           name: "Profile",
           href: "/student",
           icon: MdPortrait,
-        },{
+        },
+        {
           name: "Check Attendance",
           href: "/student/showattendance",
           icon: AiOutlineSchedule,
-        }
-
+        },
       ];
     }
   }
@@ -182,7 +187,7 @@ const Sidebar = () => {
               </li>
             );
           })}
-          <button onClick={handleSignOut} color="primary" width="30">
+          <button onClick={handleSignOut} color="se" width="30">
             <Tooltip content="Log Out">
               <RxExit className="w-5 h-5 ml-3 my-2" />
             </Tooltip>

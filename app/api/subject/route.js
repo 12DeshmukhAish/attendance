@@ -170,7 +170,6 @@ export async function DELETE(req) {
     }
 }
 
-// GET operation - Get subject details and students
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -181,14 +180,19 @@ export async function GET(req) {
             return NextResponse.json({ error: "Missing subject ID" }, { status: 400 });
         }
 
-        // Find subject by _id
         const subject = await Subject.findById(_id);
         if (!subject) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
         }
 
-        // Fetch students by classId and department from the subject details
-        const students = await Student.find({ class: subject.class, department: subject.department });
+        // Fetch students who have this subject in their subjects array
+        const students = await Student.find({ 
+            subjects: _id,
+            // class: subject.class,
+            // department: subject.department
+        });
+
+        console.log(`Found ${students.length} students for subject ${_id}`);
 
         return NextResponse.json({ subject, students }, { status: 200 });
     } catch (error) {
