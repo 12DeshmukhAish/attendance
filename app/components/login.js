@@ -310,6 +310,7 @@ import { IoIosEye, IoIosEyeOff } from "react-icons/io";
 import { RiShieldUserFill } from "react-icons/ri";
 import { toast } from 'sonner';
 import axios from 'axios';
+import Image from 'next/image';
 
 export default function LoginComponent() {
   const [isVisible, setIsVisible] = useState(false);
@@ -401,9 +402,10 @@ export default function LoginComponent() {
 
   return (
     <div className="flex h-screen">
-      <div className="flex w-1/2 justify-center items-center bg-gray-100">
-        <img src="/20824342_6343839.svg" alt="Login Illustration" className="w-full h-full object-cover"/>
-      </div>
+      <div className="flex flex-col w-2/3 justify-center items-center bg-violet-400 rounded-r-[20%]">
+        <h3 className='text-4xl  text-white'>Hey,Let&#39;s Begin </h3>
+        <Image src={"/login.svg"} width={600} height={600}></Image>
+         </div>
       <div className="flex w-1/2 justify-center items-center">
         <form onSubmit={handleSubmit} className="w-full max-w-md">
           <div className="w-full p-9 bg-white rounded-lg shadow-lg text-center">
