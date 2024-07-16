@@ -61,8 +61,6 @@ export default function StudentTable() {
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
-
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -73,6 +71,7 @@ export default function StudentTable() {
   useEffect(() => {
     fetchStudents(selectedDepartment);
   }, [selectedDepartment]);
+
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -101,27 +100,25 @@ export default function StudentTable() {
     }
   };
 
+  
+
   useEffect(() => {
     if (profile?.role !== "superadmin") {
       setSelectedDepartment(profile?.department[0]);
     }
   }, [profile]);
-
   const handleSelectChange = ( value) => {
     setSelectedDepartment(value);
   };
-
   const fetchStudents = async (selectedDepartment) => {
-    setLoading(true); // Set loading to true
     try {
       if (selectedDepartment) {
         const response = await axios.get(`/api/student?department=${selectedDepartment}`);
         setStudents(response.data);
       }
+
     } catch (error) {
       console.error('Error fetching students:', error);
-    } finally {
-      setLoading(false); // Set loading to false
     }
   };
 
@@ -191,25 +188,24 @@ export default function StudentTable() {
       case "actions":
         return (
           <div className="relative flex items-center justify-items-center  justify-center gap-2">
-            <Tooltip content="Edit student">
+            <Tooltip content="Edit">
               <span
-                className="cursor-pointer text-lg text-default-400"
+                className="text-lg text-default-400 cursor-pointer active:opacity-50"
                 onClick={() => {
-                  setSelectedStudent(student);
                   setModalMode("edit");
+                  setSelectedStudent(student);
                   setModalOpen(true);
                 }}
               >
-                <EditIcon className="text-default-400" />
+                <EditIcon />
               </span>
             </Tooltip>
-            <Tooltip
-              color="danger"
-              content="Delete student"
-              onClick={() => deleteStudent(student._id)}
-            >
-              <span className="cursor-pointer text-lg text-danger">
-                <DeleteIcon className="text-danger" />
+            <Tooltip color="danger" content="Delete">
+              <span
+                className="text-lg text-default-400 cursor-pointer active:opacity-50"
+                onClick={() => deleteStudent(student._id)}
+              >
+                <DeleteIcon />
               </span>
             </Tooltip>
           </div>
@@ -219,43 +215,70 @@ export default function StudentTable() {
     }
   }, []);
 
-  const handleClear = () => {
-    setFilterValue("");
+  const onRowsPerPageChange = useCallback((e) => {
+    setRowsPerPage(Number(e.target.value));
+    setPage(1);
+  }, []);
+
+  const onSearchChange = useCallback((value) => {
+    if (value) {
+      setFilterValue(value);
+      setPage(1);
+    } else {
+      setFilterValue("");
+    }
+  }, []);
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedStudent(null);
   };
 
-  const handleSearchChange = (e) => {
-    setFilterValue(e.target.value);
-  };
-
-  return (
-    <div className="w-full flex justify-center items-center p-3 md:p-6">
-      <div className="w-full">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
-          <div className="flex w-full flex-col gap-3 md:flex-row md:items-center">
-            <div className="w-full md:w-1/2">
-              <Input
-                isClearable
-                placeholder="Search by name or roll number"
-                startContent={<SearchIcon />}
-                value={filterValue}
-                onClear={handleClear}
-                onChange={handleSearchChange}
-              />
-            </div>
-            {profile?.role === "superadmin" && (
-              <Select
-                className="capitalize"
-                placeholder="Select a Department"
-                onChange={(e)=>handleSelectChange(e.target.value)}
-                selectedKeys={selectedDepartment}
+  const handleModalSubmit = async (formData) => {
+    fetchStudents();
+  }
+  const openFileDialog = useCallback(() => {
+    const fileInput = document.getElementById('upload-input');
+    fileInput.click();
+  }, []);
+  const topContent = useMemo(() => {
+    return (
+      <div className="flex flex-col gap-4">
+        {profile?.role != "admin" && (
+              <Select              
+                placeholder="Select department"
+                name="department"
+                className=" w-[40%] "
+                selectedKeys={[selectedDepartment]}
+                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+                variant="bordered"
+                size="sm"
               >
-                {departmentOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {capitalize(option)}
+
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+
                   </SelectItem>
                 ))}
               </Select>
             )}
+        <div className="flex justify-between gap-3 items-end">
+          <Input
+            isClearable
+            classNames={{
+              base: "w-full sm:max-w-[44%]",
+              inputWrapper: "border-1",
+            }}
+            placeholder="Search by name or roll number..."
+            size="sm"
+            startContent={<SearchIcon className="text-default-300" />}
+            value={filterValue}
+            variant="bordered"
+            onClear={() => setFilterValue("")}
+            onValueChange={onSearchChange}
+          />
+          <div className="flex gap-3">
             
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex">
@@ -282,106 +305,163 @@ export default function StudentTable() {
                 ))}
               </DropdownMenu>
             </Dropdown>
-            <div className="flex w-full items-center gap-3 md:w-auto">
-              <Button
-                color="primary"
-                onClick={() => {
-                  setModalMode("add");
-                  setModalOpen(true);
-                }}
-                startContent={<PlusIcon />}
-              >
-                Add Student
-              </Button>
-              <Button
-                
-                color="primary"
-                size="sm"
+            <Button
+              color="primary"
+              startContent="Add New"
+              endContent={<PlusIcon />}
+              size="sm"
+              onClick={() => {
+                setModalMode("add");
+                setModalOpen(true);
+              }}
+            >
+              Add New
+            </Button>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              id="upload-input"
+              className="hidden"
+            />
+            <Button
+              color="primary"
               variant="ghost"
-                onClick={downloadExcel}
-                startContent={<FaFileDownload />}
-              >
-                Excel
-              </Button>
-            
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={handleFileUpload}
-                style={{ display: "none" }}
-                id="file-upload"
-              />
-              <label htmlFor="file-upload">
-                <Button
-                  as="span"
-                  
-                  color="primary"
-                  size="sm"
+              size="sm"
+              onClick={openFileDialog}
+              endContent={<FaFileUpload />}
+            >
+              Upload File
+            </Button>
+            <Button
+              color="primary"
+              size="sm"
               variant="ghost"
-                  startContent={<FaFileUpload />}
-                >
-                  Upload
-                </Button>
-              </label>
-            </div>
+              onClick={downloadExcel}
+              endContent={<FaFileDownload />}
+            >
+              Download
+            </Button>
           </div>
         </div>
-        {loading ? ( // Display loader if loading is true
-          <div className="flex justify-center items-center mt-6">
-            <div className="loader"></div>
-          </div>
-        ) : (
-          <div className="w-full mt-6">
-            <Table
-              aria-label="Student table with pagination, sorting and filtering"
-              sortDescriptor={sortDescriptor}
-              onSortChange={setSortDescriptor}
-              selectedKeys={selectedKeys}
-              onSelectionChange={setSelectedKeys}
-              className="w-full min-w-[800px] max-w-full"
+        <div className="flex justify-between items-center">
+          <span className="text-default-400 text-small">Total {students.length} students</span>
+          <label className="flex items-center text-default-400 text-small">
+            Rows per page:
+            <select
+              className="bg-transparent outline-none text-default-400 text-small"
+              onChange={onRowsPerPageChange}
             >
-              <TableHeader columns={headerColumns}>
-                {(column) => (
-                  <TableColumn
-                    key={column.uid}
-                    allowsSorting={column.sortable}
-                    className="bg-gray-200"
-                  >
-                    {column.name}
-                  </TableColumn>
-                )}
-              </TableHeader>
-              <TableBody items={sortedItems}>
-                {(item) => (
-                  <TableRow key={item._id}>
-                    {(columnKey) => (
-                      <TableCell className="py-2">
-                        {renderCell(item, columnKey)}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            <div className="flex justify-center items-center mt-4">
-              <Pagination
-                page={page}
-                onPageChange={setPage}
-                total={pages}
-                className="mt-4"
-              />
-            </div>
-          </div>
-        )}
+              <option value="10">
+                10</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+        </div>
       </div>
+    );
+  }, [
+    filterValue,
+    visibleColumns,
+    onSearchChange,
+    onRowsPerPageChange,
+    students.length,
+  ]);
+
+  const bottomContent = useMemo(() => {
+    const selectedKeysText = selectedKeys === "all" ?
+      "All items selected" :
+      `${selectedKeys.size} of ${items.length} selected`;
+
+    return (
+      <div className="py-2 px-2 flex justify-between items-center">
+        <Pagination
+          showControls
+          classNames={{
+            cursor: "bg-foreground text-background",
+          }}
+          color="default"
+          page={page}
+          total={pages}
+          variant="light"
+          onChange={setPage}
+        />
+        <span className="text-small text-default-400">
+          {selectedKeysText}
+        </span>
+      </div>
+    );
+  }, [selectedKeys, items.length, page, pages]);
+
+  const classNames = {
+    wrapper: ["max-h-[382px]", "max-w-3xl"],
+    th: ["bg-transparent", "text-default-500", "border-b", "border-divider"],
+    td: [
+      "group-data-[first=true]:first:before:rounded-none",
+      "group-data-[first=true]:last:before:rounded-none",
+      "group-data-[middle=true]:before:rounded-none",
+      "group-data-[last=true]:first:before:rounded-none",
+      "group-data-[last=true]:last:before:rounded-none",
+    ],
+  };
+
+  return (
+    <>
+      <Table
+        isCompact
+        removeWrapper
+        aria-label="Student table with custom cells, pagination and sorting"
+        bottomContent={bottomContent}
+        bottomContentPlacement="outside"
+        checkboxesProps={{
+          classNames: {
+            wrapper: "after:bg-foreground after:text-background text-background ",
+          },
+        }}
+        classNames={classNames}
+        selectedKeys={selectedKeys}
+        sortDescriptor={sortDescriptor}
+        topContent={topContent}
+        topContentPlacement="outside"
+        onSelectionChange={setSelectedKeys}
+        onSortChange={setSortDescriptor}
+      >
+        <TableHeader columns={headerColumns}>
+          {(column) => (
+            <TableColumn
+              key={column.uid}
+              align={column.uid === "actions" ? "center" : "start"}
+              allowsSorting={column.sortable}
+            >
+              {column.name}
+            </TableColumn>
+          )}
+        </TableHeader>
+        <TableBody emptyContent={
+            <div className="flex flex-col items-center justify-center">
+              <Image
+                src="/student.svg"
+                alt="No students found"
+                width={850}
+                height={850}
+              />
+              <p>No students found</p>
+            </div>
+          } items={sortedItems}>
+          {(student) => (
+            <TableRow key={student._id}>
+              {(columnKey) => <TableCell>{renderCell(student, columnKey)}</TableCell>}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
       <StudentModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleModalClose}
         mode={modalMode}
         student={selectedStudent}
-        fetchStudents={fetchStudents}
-        selectedDepartment={selectedDepartment}
+        onSubmit={handleModalSubmit}
       />
-    </div>
+    </>
   );
 }

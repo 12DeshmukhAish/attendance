@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -45,23 +45,18 @@ export default function SubjectTable() {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(false); // State for loading indicator
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
-    setLoading(true); // Set loading to true before fetching data
     try {
       const response = await axios.get('/api/subjectData');
       setSubjects(response.data.subjects || []);
       setTeachers(response.data.teachers || []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Error fetching subjects');
-    } finally {
-      setLoading(false); // Set loading to false after fetching data
     }
   };
 
@@ -203,30 +198,24 @@ export default function SubjectTable() {
           </Button>
         </div>
       </div>
-      {loading ? ( // Display loader if loading is true
-        <div className="flex justify-center items-center">
-          <div className="loader"></div> {/* Replace with your loader component or animation */}
-        </div>
+      {sortedItems.length > 0 ? (
+        <Table aria-label="Subject Table" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
+          <TableHeader columns={headerColumns}>
+            {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
+          </TableHeader>
+          <TableBody items={sortedItems}>
+            {(item) => (
+              <TableRow key={item._id}>
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       ) : (
-        sortedItems.length > 0 ? (
-          <Table aria-label="Subject Table" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
-            <TableHeader columns={headerColumns}>
-              {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
-            </TableHeader>
-            <TableBody items={sortedItems}>
-              {(item) => (
-                <TableRow key={item._id}>
-                  {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="flex flex-col items-center justify-center mt-4">
-            <Image src="/subject.svg" alt="No subjects found" width={450} height={450} />
-            <p className="mt-2 text-gray-500">No subjects found</p>
-          </div>
-        )
+        <div className="flex flex-col items-center justify-center mt-4">
+          <Image src="/subject.svg" alt="No subjects found" width={450} height={450} />
+          <p className="mt-2 text-gray-500">No subjects found</p>
+        </div>
       )}
       <Pagination total={pages} initialPage={1} onChange={(page) => setPage(page)} className="mt-4" />
       <SubjectModal
