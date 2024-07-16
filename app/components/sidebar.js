@@ -179,7 +179,7 @@ const Sidebar = () => {
                 >
                   <Tooltip content={name}>
                     <span className="sidebar__icon">
-                      <Icon className="inline-block mx-auto" />
+                      <Icon className="inline-block mx-auto " />
                     </span>
                   </Tooltip>
                   <span className="sidebar__name">{name}</span>
@@ -187,12 +187,11 @@ const Sidebar = () => {
               </li>
             );
           })}
-
-          <button onClick={handleSignOut} color="se" width="30">
-            <Tooltip content="Log Out">
-              <RxExit className="w-5 h-5 ml-3 my-2 text-primery" />
-            </Tooltip>
-          </button>
+          <Tooltip content="Log Out">
+            <button onClick={handleSignOut} color="se" width="30">
+              <RxExit className="w-5 h-5 ml-3 my-2 text-violet-900" />
+            </button>
+          </Tooltip>
         </ul>
       </aside>
     </div>

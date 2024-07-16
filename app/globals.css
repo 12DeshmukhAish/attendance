@@ -63,12 +63,16 @@
   
   .sidebar__link--active {
     color: #fff;
-    background-color: #212121;
+    background-color: #7c3aed;
   }
-  
+  .sidebar__link--active .sidebar__icon{
+    color: #fff;
+    background-color: #7c3aed;
+  }
   .sidebar__icon {
     display: inline-block;
     font-size: 1.2rem;
+    color:#4c1d95;
   }
   
   .sidebar__name {

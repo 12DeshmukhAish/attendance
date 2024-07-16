@@ -18,7 +18,8 @@ import {
   Dropdown,
   DropdownMenu,
   DropdownItem,
-  Pagination, Select, SelectItem
+  Pagination, Select, SelectItem,
+  Spinner
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -60,6 +61,7 @@ export default function StudentTable() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -100,21 +102,24 @@ export default function StudentTable() {
     }
   };
 
-  
+
 
   useEffect(() => {
     if (profile?.role !== "superadmin") {
       setSelectedDepartment(profile?.department[0]);
     }
   }, [profile]);
-  const handleSelectChange = ( value) => {
+  const handleSelectChange = (value) => {
     setSelectedDepartment(value);
   };
   const fetchStudents = async (selectedDepartment) => {
     try {
       if (selectedDepartment) {
+        // console.log(selectedDepartment);
+        setIsLoading(true)
         const response = await axios.get(`/api/student?department=${selectedDepartment}`);
         setStudents(response.data);
+        setIsLoading(false)
       }
 
     } catch (error) {
@@ -245,24 +250,24 @@ export default function StudentTable() {
     return (
       <div className="flex flex-col gap-4">
         {profile?.role != "admin" && (
-              <Select              
-                placeholder="Select department"
-                name="department"
-                className=" w-[40%] "
-                selectedKeys={[selectedDepartment]}
-                onSelectionChange={(value) => handleSelectChange(value.currentKey)}
-                variant="bordered"
-                size="sm"
-              >
+          <Select
+            placeholder="Select department"
+            name="department"
+            className=" w-[40%] "
+            selectedKeys={[selectedDepartment]}
+            onSelectionChange={(value) => handleSelectChange(value.currentKey)}
+            variant="bordered"
+            size="sm"
+          >
 
-                {departmentOptions.map((department) => (
-                  <SelectItem key={department.key} textValue={department.label}>
-                    {department.label}
+            {departmentOptions.map((department) => (
+              <SelectItem key={department.key} textValue={department.label}>
+                {department.label}
 
-                  </SelectItem>
-                ))}
-              </Select>
-            )}
+              </SelectItem>
+            ))}
+          </Select>
+        )}
         <div className="flex justify-between gap-3 items-end">
           <Input
             isClearable
@@ -279,7 +284,7 @@ export default function StudentTable() {
             onValueChange={onSearchChange}
           />
           <div className="flex gap-3">
-            
+
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex">
                 <Button
@@ -437,7 +442,10 @@ export default function StudentTable() {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={
+        <TableBody
+          isLoading={isLoading}
+          loadingContent={<Spinner label="Loading..." />}
+          emptyContent={
             <div className="flex flex-col items-center justify-center">
               <Image
                 src="/student.svg"

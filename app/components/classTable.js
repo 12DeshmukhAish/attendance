@@ -26,7 +26,7 @@ import ClassModal from "./classModal";
 import * as XLSX from "xlsx";
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 import Image from "next/image";
-
+import { Spinner } from "@nextui-org/react";
 const departmentOptions = [
   { key: 'CSE', label: 'CSE' },
   { key: 'ENTC', label: 'ENTC' },
@@ -46,7 +46,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher","students", "passOutYear","year", "department","actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "passOutYear", "year", "department", "actions"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -58,13 +58,14 @@ export default function ClassTable() {
   });
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
+  const [modalMode, setModalMode] = useState("add");
   const [selectedClass, setSelectedClass] = useState(null);
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -93,7 +94,13 @@ export default function ClassTable() {
   const fetchClasses = async () => {
     try {
       const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
+      if (response.status==200) {
       setClasses(response.data);
+      }
+      else{
+        setClasses(null)
+      }
+      console.log(response.data);
     } catch (error) {
       console.error('Error fetching classes:', error);
     }
@@ -101,8 +108,10 @@ export default function ClassTable() {
 
   const fetchTeachers = async () => {
     try {
+      setIsLoading(true)
       const response = await axios.get('/api/faculty');
       setTeachers(response.data);
+      setIsLoading(false)
     } catch (error) {
       console.error('Error fetching teachers:', error);
     }
@@ -312,7 +321,10 @@ export default function ClassTable() {
               </TableColumn>
             )}
           </TableHeader>
-          <TableBody items={sortedItems}>
+          <TableBody
+            isLoading={isLoading}
+            loadingContent={<Spinner label="Loading..." />}
+            items={sortedItems}>
             {(item) => (
               <TableRow key={item._id}>
                 {(columnKey) => (
@@ -323,10 +335,10 @@ export default function ClassTable() {
           </TableBody>
         </Table>
       ) : (
-        <div className="flex flex-col items-center justify-center mt-4">
-      <div className="mb-6"> {/* Add margin-bottom to this div */}
-      <Image src="/class.svg" alt="No subjects found" width={800} height={800} />
-    </div>
+        <div className="flex flex-col items-center justify-center ">
+          <div className=" my-auto mt-32">
+            <Image src="/class.svg" alt="No subjects found" width={800} height={800} />
+          </div>
           <p className="mt-2 text-gray-500">No classes found</p>
         </div>
       )}

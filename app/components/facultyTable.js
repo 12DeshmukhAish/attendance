@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownItem,
   Pagination,
+  Spinner,
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -54,15 +55,17 @@ export default function FacultyTable() {
   const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [faculty, setFaculty] = useState([]);
-
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     fetchFaculty();
   }, []);
 
   const fetchFaculty = async () => {
     try {
+      setIsLoading(true)
       const response = await axios.get('/api/faculty');
       setFaculty(response.data);
+      setIsLoading(false)
     } catch (error) {
       console.error('Error fetching faculty:', error);
     }
@@ -314,8 +317,8 @@ export default function FacultyTable() {
       "group-data-[last=true]:last:before:rounded-none",
     ],
   };
-
   return (
+   
     <>
       <Table
         isCompact
@@ -348,6 +351,8 @@ export default function FacultyTable() {
           )}
         </TableHeader>
         <TableBody
+        isLoading={isLoading}
+        loadingContent={<Spinner label="Loading..." />}
           emptyContent={
             <div className="flex justify-center items-center w-full h-full">
               <Image src="/faculty.svg" alt="No Content" width={800} height={800} />
