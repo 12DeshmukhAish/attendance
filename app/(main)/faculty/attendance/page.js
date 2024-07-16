@@ -4,6 +4,7 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Checkbox
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
 import { DatePicker } from "@nextui-org/date-picker";
+import Image from "next/image";
 
 export default function App() {
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -191,6 +192,11 @@ export default function App() {
           </Button>
         </div>
       )}
+      {!students  && 
+      <div>
+<Image src="/update.svg"></Image>
+      </div>
+}
     </div>
   );
 }
