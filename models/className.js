@@ -19,7 +19,7 @@ const classSchema = new mongoose.Schema({
     },
     students: [{
         type: String,
-        ref: 'Student',  // Ensure correct reference to Student model
+        ref: 'Student',  // Ensure correct referen
     }],
     teacher: {
         type: String,

@@ -39,29 +39,46 @@ export async function GET(req) {
             console.log("Subject IDs:", subjectIds);
     
             pipeline = [
+                // Match lectures for the given date range and subjects
                 {
                     $match: {
                         subject: { $in: subjectIds },
                         date: { $gte: startDate, $lte: endDate }
                     }
                 },
-                {
-                    $unwind: "$records"
-                },
-                {
-                    $match: {
-                        "records.student": studentId
-                    }
-                },
+                // Group by subject to get total lecture count
                 {
                     $group: {
                         _id: "$subject",
                         totalLectures: { $sum: 1 },
+                        attendanceRecords: { $push: "$$ROOT" }
+                    }
+                },
+                // Unwind attendance records
+                {
+                    $unwind: "$attendanceRecords"
+                },
+                // Unwind student records within each attendance record
+                {
+                    $unwind: "$attendanceRecords.records"
+                },
+                // Match only the records for the specific student
+                {
+                    $match: {
+                        "attendanceRecords.records.student": studentId
+                    }
+                },
+                // Group again to count present lectures
+                {
+                    $group: {
+                        _id: "$_id",
+                        totalLectures: { $first: "$totalLectures" },
                         presentCount: {
-                            $sum: { $cond: [{ $eq: ["$records.status", "present"] }, 1, 0] }
+                            $sum: { $cond: [{ $eq: ["$attendanceRecords.records.status", "present"] }, 1, 0] }
                         }
                     }
                 },
+                // Look up subject information
                 {
                     $lookup: {
                         from: "subjects",
@@ -73,6 +90,7 @@ export async function GET(req) {
                 {
                     $unwind: "$subjectInfo"
                 },
+                // Final projection
                 {
                     $project: {
                         _id: 1,
@@ -80,10 +98,15 @@ export async function GET(req) {
                         totalLectures: 1,
                         presentCount: 1,
                         attendancePercentage: {
-                            $multiply: [
-                                { $cond: [{ $eq: ["$totalLectures", 0] }, 0, 
-                                    { $divide: ["$presentCount", "$totalLectures"] }] },
-                                100
+                            $cond: [
+                                { $eq: ["$totalLectures", 0] },
+                                0,
+                                {
+                                    $multiply: [
+                                        { $divide: ["$presentCount", "$totalLectures"] },
+                                        100
+                                    ]
+                                }
                             ]
                         }
                     }

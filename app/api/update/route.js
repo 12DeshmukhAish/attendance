@@ -3,8 +3,9 @@ import { connectMongoDB } from "@/lib/connectDb";
 import Subject from "@/models/subject";
 import Student from "@/models/student";
 import Attendance from "@/models/attendance";
-
+import Classes from "@/models/className"; 
 export async function GET(req) {
+  
   try {
     await connectMongoDB();
     const { searchParams } = new URL(req.url);
