@@ -61,12 +61,12 @@ export default function App() {
       alert("Please select subject, date, and session");
       return;
     }
-  
+
     const attendanceData = students.map(student => ({
       studentId: student._id,
       status: selectedKeys.has(student._id) ? 'present' : 'absent'
     }));
-  
+
     try {
       const response = await axios.put(`/api/update`, {
         subjectId: selectedSubject,
@@ -74,7 +74,7 @@ export default function App() {
         session: selectedSession,
         attendanceData
       });
-  
+
       console.log('Attendance updated successfully:', response.data);
       alert("Attendance updated successfully");
       fetchSubjectAttendance(); // Refresh the data
@@ -83,66 +83,66 @@ export default function App() {
       alert("Failed to update attendance");
     }
   };
-  
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex gap-4">
-      {profile && profile.subjects.length > 1 && (
-        <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedSubject ? profile.subjects.find(s => s._id === selectedSubject)?.name : "Select Subject"}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Subject selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={selectedSubject ? new Set([selectedSubject]) : new Set()}
-            onSelectionChange={(keys) => setSelectedSubject(Array.from(keys)[0])}
-          >
-            {profile.subjects.map((subject) => (
-              <DropdownItem key={subject._id}>{subject.name}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-      )}
-<div className="max-w-[60%]">
-      <DatePicker
-        selected={selectedDate}
-        onChange={date => {
-          console.log('Date changed:', date);
-          setSelectedDate(date);
-        }}
-        dateFormat="yyyy-MM-dd"
-      />
-      </div>
-<div className="max-w-[60%]">
-      <Dropdown >
-        <DropdownTrigger>
-          <Button variant="bordered" className="capitalize">
-            {selectedSession ? `Session ${selectedSession}` : "Select Session"}
-          </Button>
-        </DropdownTrigger>
-        <DropdownMenu
-          aria-label="Session selection"
-          variant="flat"
-          disallowEmptySelection
-          selectionMode="single"
-          selectedKeys={selectedSession ? new Set([selectedSession.toString()]) : new Set()}
-          onSelectionChange={(keys) => {
-            const session = parseInt(Array.from(keys)[0]);
-            console.log('Session changed:', session);
-            setSelectedSession(session);
-          }}
-        >
-          {sessions.map((session) => (
-            <DropdownItem key={session.toString()}>Session {session}</DropdownItem>
-          ))}
-        </DropdownMenu>
-      </Dropdown>
-      </div>
+        {profile && profile.subjects.length > 1 && (
+          <Dropdown>
+            <DropdownTrigger>
+              <Button variant="bordered" className="capitalize">
+                {selectedSubject ? selectedSubject : "Select Subject"}
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="Subject selection"
+              variant="flat"
+              disallowEmptySelection
+              selectionMode="single"
+              selectedKeys={selectedSubject ? new Set([selectedSubject]) : new Set()}
+              onSelectionChange={(keys) => setSelectedSubject(Array.from(keys)[0])}
+            >
+              {profile.subjects.map((subject) => (
+                <DropdownItem key={subject}>{subject}</DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+        )}
+        <div className="max-w-[60%]">
+          <DatePicker
+            selected={selectedDate}
+            onChange={date => {
+              console.log('Date changed:', date);
+              setSelectedDate(date);
+            }}
+            dateFormat="yyyy-MM-dd"
+          />
+        </div>
+        <div className="max-w-[60%]">
+          <Dropdown >
+            <DropdownTrigger>
+              <Button variant="bordered" className="capitalize">
+                {selectedSession ? `Session ${selectedSession}` : "Select Session"}
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="Session selection"
+              variant="flat"
+              disallowEmptySelection
+              selectionMode="single"
+              selectedKeys={selectedSession ? new Set([selectedSession.toString()]) : new Set()}
+              onSelectionChange={(keys) => {
+                const session = parseInt(Array.from(keys)[0]);
+                console.log('Session changed:', session);
+                setSelectedSession(session);
+              }}
+            >
+              {sessions.map((session) => (
+                <DropdownItem key={session.toString()}>Session {session}</DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+        </div>
       </div>
       {subjectDetails && (
         <div className="mb-4">
@@ -186,7 +186,7 @@ export default function App() {
             </TableBody>
           </Table>
 
-          <Button color="primary" variant="shadow" onClick={updateAttendance}>
+          <Button className="max-w-[50%] mx-auto" color="primary" variant="shadow" onClick={updateAttendance}>
             Update Attendance
           </Button>
         </div>

@@ -122,67 +122,6 @@ export default function App() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex space-x-4 mb-4 items-center">
-
-        {/* <Dropdown>
-          {/* <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedType}
-            </Button>
-          </DropdownTrigger> */}
-          {/* <DropdownMenu
-            aria-label="Type selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedType])}
-            onSelectionChange={(keys) => setSelectedType(Array.from(keys)[0])}
-          >
-            {typeOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown> */} 
-
-        {/* <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedDepartment}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Department selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedDepartment])}
-            onSelectionChange={(keys) => setSelectedDepartment(Array.from(keys)[0])}
-          >
-            {departmentOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown> */}
-
-        {/* <Dropdown>
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedClass}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Class selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={new Set([selectedClass])}
-            onSelectionChange={(keys) => setSelectedClass(Array.from(keys)[0])}
-          >
-            {classOptions.map((option) => (
-              <DropdownItem key={option.key}>{option.label}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown> */}
-
         <Dropdown>
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
@@ -269,10 +208,11 @@ export default function App() {
           </Button>
         </div>
       )}
-
-      <div className="flex justify-center mt-4">
-        <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
-      </div>
+      {!students &&
+        <div className="flex justify-center mt-4">
+          <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
+        </div>
+      }
     </div>
   );
 }
