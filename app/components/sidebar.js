@@ -1,19 +1,22 @@
 "use client";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { RxExit } from "react-icons/rx";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdPortrait } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 import { AiOutlineSchedule } from "react-icons/ai";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { Tooltip } from "@nextui-org/react";
-import { SiGoogleclassroom } from "react-icons/si";
-import { PiStudentBold } from "react-icons/pi";
-import { GiTeacher } from "react-icons/gi";
-import { RiCalendarScheduleLine } from "react-icons/ri";
+
+// Dynamic imports for icons to reduce initial load time
+const SiGoogleclassroom = dynamic(() => import("react-icons/si").then((mod) => mod.SiGoogleclassroom));
+const PiStudentBold = dynamic(() => import("react-icons/pi").then((mod) => mod.PiStudentBold));
+const GiTeacher = dynamic(() => import("react-icons/gi").then((mod) => mod.GiTeacher));
+const RiCalendarScheduleLine = dynamic(() => import("react-icons/ri").then((mod) => mod.RiCalendarScheduleLine));
 
 const Sidebar = () => {
   const router = useRouter();
@@ -40,117 +43,48 @@ const Sidebar = () => {
     router.replace("/");
   };
 
+  const sidebarItems = useMemo(() => {
+    if (!userProfile?.role) return [];
+
+    const { role } = userProfile;
+    switch (role) {
+      case "admin":
+        return [
+          { name: "Profile", href: "/admin", icon: MdPortrait },
+          { name: "Manage Faculty", href: "/admin/faculty", icon: GiTeacher },
+          { name: "Manage Students", href: "/admin/students", icon: PiStudentBold },
+          { name: "Manage Class", href: "/admin/classes", icon: SiGoogleclassroom },
+          { name: "Manage Subjects", href: "/admin/subject", icon: TbReportAnalytics },
+          { name: "Manage Reports", href: "/admin/showattendance", icon: AiOutlineSchedule },
+        ];
+      case "superadmin":
+        return [
+          { name: "Profile", href: "/admin", icon: MdPortrait },
+          { name: "Manage Faculty", href: "/admin/faculty", icon: GiTeacher },
+          { name: "Manage Students", href: "/admin/students", icon: PiStudentBold },
+          { name: "Manage Class", href: "/admin/classes", icon: SiGoogleclassroom },
+          { name: "Manage Reports", href: "/admin/showattendance", icon: AiOutlineSchedule },
+        ];
+      case "faculty":
+        return [
+          { name: "Profile", href: "/faculty", icon: MdPortrait },
+          { name: "Take Attendance", href: "/faculty/takeattendance", icon: RiCalendarScheduleLine },
+          { name: "Update Attendance", href: "/faculty/attendance", icon: AiOutlineSchedule },
+          { name: "Manage Reports", href: "/faculty/showattendance", icon: AiOutlineSchedule },
+          { name: "Add Teaching Plan", href: "/faculty/content", icon: AiOutlineSchedule },
+        ];
+      case "student":
+        return [
+          { name: "Profile", href: "/student", icon: MdPortrait },
+          { name: "Check Attendance", href: "/student/showattendance", icon: AiOutlineSchedule },
+        ];
+      default:
+        return [];
+    }
+  }, [userProfile]);
+
   if (!mounted) {
     return null;
-  }
-
-  // Define sidebar items based on roles
-  let sidebarItems = [];
-  if (userProfile && userProfile.role) {
-    const { role } = userProfile;
-    if (role === "admin") {
-      sidebarItems = [
-        {
-          name: "Profile",
-          href: "/admin",
-          icon: MdPortrait,
-        },
-        {
-          name: "Manage Faculty",
-          href: "/admin/faculty",
-          icon: GiTeacher,
-        },
-        {
-          name: "Manage Students",
-          href: "/admin/students",
-          icon: PiStudentBold,
-        },
-        {
-          name: "Manage Class",
-          href: "/admin/classes",
-          icon: SiGoogleclassroom,
-        },
-        {
-          name: "Manage Subjects",
-          href: "/admin/subject",
-          icon: TbReportAnalytics,
-        },
-        {
-          name: "Manage Reports",
-          href: "/admin/showattendance",
-          icon: AiOutlineSchedule,
-        },
-      ];
-    } else if (role === "superadmin") {
-      sidebarItems = [
-        {
-          name: "Profile",
-          href: "/admin",
-          icon: MdPortrait,
-        },
-        {
-          name: "Manage Faculty",
-          href: "/admin/faculty",
-          icon: GiTeacher,
-        },
-        {
-          name: "Manage Students",
-          href: "/admin/students",
-          icon: PiStudentBold,
-        },
-        {
-          name: "Manage Class",
-          href: "/admin/classes",
-          icon: SiGoogleclassroom,
-        },
-        {
-          name: "Manage Reports",
-          href: "/admin/showattendance",
-          icon: AiOutlineSchedule,
-        },
-      ];
-    } else if (role === "faculty") {
-      sidebarItems = [
-        {
-          name: "Profile",
-          href: "/faculty",
-          icon: MdPortrait,
-        },
-        {
-          name: "Take Attendance",
-          href: "/faculty/takeattendance",
-          icon: RiCalendarScheduleLine,
-        },
-        {
-          name: "Update Attendance",
-          href: "/faculty/attendance",
-          icon: AiOutlineSchedule,
-        },
-        {
-          name: "Manage Reports",
-          href: "/faculty/showattendance",
-          icon: AiOutlineSchedule,
-        },
-        {
-          name: "Add Teaching plan",
-          href: "/faculty/content",
-          icon: AiOutlineSchedule,
-        },
-      ];
-    } else if (role === "student") {
-      sidebarItems = [
-        {
-          name: "Profile",
-          href: "/student",
-          icon: MdPortrait,
-        },
-        {
-          name: "Check Attendance",
-          href: "/student/showattendance",
-          icon: AiOutlineSchedule,
-        },
-      ];
-    }
   }
 
   return (
@@ -170,23 +104,21 @@ const Sidebar = () => {
           <p className="sidebar__logo-name">Attendance System</p>
         </div>
         <ul className="sidebar__list text-slate-900 dark:text-slate-50">
-          {sidebarItems.map(({ name, href, icon: Icon }) => {
-            return (
-              <li className="sidebar__item items-center" key={name}>
-                <Link
-                  className={`sidebar__link ${pathname == href ? "sidebar__link--active" : ""}`}
-                  href={href}
-                >
-                  <Tooltip content={name}>
-                    <span className="sidebar__icon">
-                      <Icon className="inline-block mx-auto " />
-                    </span>
-                  </Tooltip>
-                  <span className="sidebar__name">{name}</span>
-                </Link>
-              </li>
-            );
-          })}
+          {sidebarItems.map(({ name, href, icon: Icon }) => (
+            <li className="sidebar__item items-center" key={name}>
+              <Link
+                className={`sidebar__link ${pathname === href ? "sidebar__link--active" : ""}`}
+                href={href}
+              >
+                <Tooltip content={name}>
+                  <span className="sidebar__icon">
+                    <Icon className="inline-block mx-auto " />
+                  </span>
+                </Tooltip>
+                <span className="sidebar__name">{name}</span>
+              </Link>
+            </li>
+          ))}
           <Tooltip content="Log Out">
             <button onClick={handleSignOut} color="se" width="30">
               <RxExit className="w-5 h-5 ml-3 my-2 text-violet-900" />

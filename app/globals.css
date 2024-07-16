@@ -67,7 +67,6 @@
   }
   .sidebar__link--active .sidebar__icon{
     color: #fff;
-    background-color: #7c3aed;
   }
   .sidebar__icon {
     display: inline-block;

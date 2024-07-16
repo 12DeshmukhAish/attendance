@@ -12,7 +12,7 @@ export default async function RootLayout({ children }) {
    }
   return (
   <div className="flex h-screen">
-    <Sidebar/>
+    <Sidebar />
     <div className="w-full h-screen overflow-y-auto " >
         {children}
       </div> 
