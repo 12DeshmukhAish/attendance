@@ -1,5 +1,4 @@
 export const departmentOptions = [
-    
     { key: 'CSE', label: 'CSE' },
     { key: 'ENTC', label: 'ENTC' },
     { key: 'Civil', label: 'Civil' },

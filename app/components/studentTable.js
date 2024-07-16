@@ -250,8 +250,8 @@ export default function StudentTable() {
                 selectedKeys={selectedDepartment}
               >
                 {departmentOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {capitalize(option)}
+                  <SelectItem key={option.key} value={option.key}>
+                    {capitalize(option.label)}
                   </SelectItem>
                 ))}
               </Select>
