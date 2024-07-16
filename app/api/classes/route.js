@@ -114,7 +114,7 @@ export async function GET(req) {
 
         if (classes.length === 0) {
             console.log("No classes found for criteria:", filter);
-            return NextResponse.json({ error: "No classes found" }, { status: 404 });
+            return NextResponse.json({ status: 404 });
         }
 
         console.log("Fetched Classes Successfully", classes);

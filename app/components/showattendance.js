@@ -90,7 +90,7 @@ const AttendanceDisplay = () => {
 
       const response = await axios.get(url);
       setAttendanceData(response.data);
-      
+
     } catch (err) {
       setError("Failed to fetch attendance data");
       console.error(err);
@@ -168,7 +168,7 @@ const AttendanceDisplay = () => {
 
   const renderAdminAttendance = () => {
     const totalLectures = attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0);
-
+  
     if (viewType === "cumulative") {
       return (
         <div className="overflow-x-auto">
@@ -187,34 +187,37 @@ const AttendanceDisplay = () => {
               </tr>
             </thead>
             <tbody>
-              {attendanceData[0].students.map((student) => (
-                <tr key={student.rollNumber}>
-                  <td className="border px-4 py-2">{student.rollNumber}</td>
-                  <td className="border px-4 py-2">{student.name}</td>
-                  {attendanceData.map((subject) => {
-                    const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-                    return (
-                      <td key={subject._id} className="border px-4 py-2">
-                        <div>Present: {studentData ? studentData.presentCount : 0}</div>
-                        <div>Total: {subject.totalLectures}</div>
-                        <div>{studentData ? ((studentData.presentCount / subject.totalLectures) * 100).toFixed(2) : "NaN"}%</div>
-                      </td>
-                    );
-                  })}
-                  <td className="border px-4 py-2">
-                    {attendanceData.reduce((sum, subject) => {
+              {attendanceData[0].students
+                .slice()
+                .sort((a, b) => a.rollNumber.localeCompare(b.rollNumber))
+                .map((student) => (
+                  <tr key={student.rollNumber}>
+                    <td className="border px-4 py-2">{student.rollNumber}</td>
+                    <td className="border px-4 py-2">{student.name}</td>
+                    {attendanceData.map((subject) => {
                       const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-                      return sum + (studentData ? studentData.presentCount : 0);
-                    }, 0)}
-                    /
-                    {totalLectures}
-                    ({((attendanceData.reduce((sum, subject) => {
-                      const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-                      return sum + (studentData ? studentData.presentCount : 0);
-                    }, 0) / totalLectures) * 100).toFixed(2)}%)
-                  </td>
-                </tr>
-              ))}
+                      return (
+                        <td key={subject._id} className="border px-4 py-2">
+                          <div>Present: {studentData ? studentData.presentCount : 0}</div>
+                          <div>Total: {subject.totalLectures}</div>
+                          <div>{studentData ? ((studentData.presentCount / subject.totalLectures) * 100).toFixed(2) : "NaN"}%</div>
+                        </td>
+                      );
+                    })}
+                    <td className="border px-4 py-2">
+                      {attendanceData.reduce((sum, subject) => {
+                        const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                        return sum + (studentData ? studentData.presentCount : 0);
+                      }, 0)}
+                      /
+                      {totalLectures}
+                      ({((attendanceData.reduce((sum, subject) => {
+                        const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                        return sum + (studentData ? studentData.presentCount : 0);
+                      }, 0) / totalLectures) * 100).toFixed(2)}%)
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -230,20 +233,24 @@ const AttendanceDisplay = () => {
             <TableColumn>Total Percentage</TableColumn>
           </TableHeader>
           <TableBody>
-            {attendanceData[0].students.map((student) => (
-              <TableRow key={student._id}>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell>{attendanceData[0].totalLectures}</TableCell>
-                <TableCell>{student.presentCount}</TableCell>
-                <TableCell>{((student.presentCount / attendanceData[0].totalLectures) * 100).toFixed(2)}%</TableCell>
-              </TableRow>
-            ))}
+            {attendanceData[0].students
+              .slice()
+              .sort((a, b) => a.rollNumber.localeCompare(b.rollNumber))
+              .map((student) => (
+                <TableRow key={student._id}>
+                  <TableCell>{student.name}</TableCell>
+                  <TableCell>{student.rollNumber}</TableCell>
+                  <TableCell>{attendanceData[0].totalLectures}</TableCell>
+                  <TableCell>{student.presentCount}</TableCell>
+                  <TableCell>{((student.presentCount / attendanceData[0].totalLectures) * 100).toFixed(2)}%</TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       );
     }
   };
+  
 
   if (!userProfile) {
     return <div>Loading please wait...</div>;
@@ -354,11 +361,11 @@ const AttendanceDisplay = () => {
       ) : (
         <div>No attendance data available</div>
       )}
-
-<div className="flex justify-center mt-8">
-  <Image src="/report.svg" alt="Report Image" width={800} height={500} />
-</div>
-
+{!attendanceData &&
+      <div className="flex justify-center mt-8">
+        <Image src="/report.svg" alt="Report Image" width={800} height={500} />
+      </div>
+}
     </div>
   );
 };
