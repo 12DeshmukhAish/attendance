@@ -58,7 +58,7 @@ export default function SubjectTable() {
     } catch (error) {
       console.error('Error fetching data:', error);
     }
-  };
+  }
 
   const deleteSubject = async (_id) => {
     try {

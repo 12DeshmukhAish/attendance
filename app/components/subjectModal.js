@@ -18,9 +18,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const [classId, setClassId] = useState('');
   const [teacherId, setTeacherId] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [subjectType, setSubjectType] = useState('');
   const [profile, setProfile] = useState(null);
   const [classes, setClasses] = useState([]);
 
+  console.log(subjectData);
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -28,13 +30,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, []);
 
-
   useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
       setSelectedDepartment(profile?.department[0]);
     }
   }, [profile]);
-
 
   useEffect(() => {
     if (subjectData) {
@@ -42,9 +42,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       setName(subjectData.name);
       setClassId(subjectData.class);
       setTeacherId(subjectData.teacher);
-      // setContent(subjectData.content);
       setSelectedDepartment(subjectData.department);
-      // setSubjectType(subjectData.subType);
+      setSubjectType(subjectData.subType);
     } else {
       resetForm();
     }
@@ -70,35 +69,17 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     setName('');
     setClassId('');
     setTeacherId('');
-    // setContent([{ name: '', status: 'not_covered' }]);
     setSelectedDepartment('');
-    // setSubjectType('');
+    setSubjectType('');
   };
 
   const handleSelectChange = (value) => {
-    setSelectedDepartment( value );
+    setSelectedDepartment(value);
   };
-
 
   const handleCancel = () => {
     onClose();
   };
-
-  // const handleContentChange = (index, event) => {
-  //   const newContent = [...content];
-  //   newContent[index] = { ...newContent[index], name: event.target.value };
-  //   setContent(newContent);
-  // };
-
-  // const handleAddContent = () => {
-  //   setContent([...content, { name: '', status: 'not_covered' }]);
-  // };
-
-  // const handleRemoveContent = (index) => {
-  //   const newContent = [...content];
-  //   newContent.splice(index, 1);
-  //   setContent(newContent);
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -107,9 +88,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       name,
       class: classId,
       teacher: teacherId,
-      // content,
       department: selectedDepartment,
-      // subType: subjectType,
+      type: subjectType,
     };
 
     try {
@@ -124,11 +104,13 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       console.error('Error submitting subject:', error);
     }
   };
+
   useEffect(() => {
     if (!isOpen) {
       resetForm();
     }
   }, [isOpen]);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -149,7 +131,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               onChange={(e) => setSubjectId(e.target.value)}
               required
               disabled={mode !== 'add'}
-               placeholder="Course ID-Year"
+              placeholder="Course ID-Year"
               className="col-span-1 w-full"
             />
             <Input
@@ -178,12 +160,12 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                   </SelectItem>
                 ))}
               </Select>
-          )}
+            )}
             <Select
               label="Class"
               placeholder="Select Class"
               className="col-span-1 w-full"
-              value={classId}
+              selectedKeys={[classId]}
               onChange={(e) => setClassId(e.target.value)}
               required
               variant="bordered"
@@ -199,7 +181,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               label="Subject Teacher"
               placeholder="Select Subject Teacher"
               className="col-span-1 w-full"
-              value={teacherId}
+              selectedKeys={[teacherId]}
               onChange={(e) => setTeacherId(e.target.value)}
               required
               variant="bordered"
@@ -211,9 +193,20 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
                 </SelectItem>
               ))}
             </Select>
-
+            <Select
+              label="Subject Type"
+              placeholder="Select Subject Type"
+              className="col-span-1 w-full"
+              selectedKeys={[subjectType]}
+              onChange={(e) => setSubjectType(e.target.value)}
+              required
+              variant="bordered"
+              size='sm'
+            >
+              <SelectItem key="theory" textValue='theory'>Theory</SelectItem>
+              <SelectItem key="practical" value="practical">Practical</SelectItem>
+            </Select>
             <div className="col-span-2 flex justify-end gap-4">
-
               <Button
                 variant="ghost"
                 size='sm'

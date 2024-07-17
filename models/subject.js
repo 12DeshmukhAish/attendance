@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
+
 const ContentSchema = new mongoose.Schema({
     name: {
         type: String
@@ -19,6 +20,11 @@ const SubjectSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    subType: {
+        type: String,
+        enum: ['theory', 'practical'],
+        required: true
+    },
     class: {
         type: String,
         ref: 'Classes'  // Ensure correct reference to Class model
@@ -30,11 +36,10 @@ const SubjectSchema = new mongoose.Schema({
     department: {
         type: String
     },
-    reports:{
-        type:[ObjectId],
-        ref:'Attendance'
+    reports: {
+        type: [ObjectId],
+        ref: 'Attendance'
     },
-    
     content: [ContentSchema]
 }, {
     timestamps: true,
