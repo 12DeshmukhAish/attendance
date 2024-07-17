@@ -2,8 +2,20 @@ import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 
 const ContentSchema = new mongoose.Schema({
-    name: {
-        type: String
+    title: {
+        type: String,
+    },
+    description: {
+        type: String,
+    },
+    proposedDate: {
+        type: String,
+    },
+    completedDate: {
+        type: String,
+    },
+    references: {
+        type: String,
     },
     status: {
         type: String,

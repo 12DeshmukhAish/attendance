@@ -41,7 +41,7 @@ const columns = [
   { uid: "teacher", name: "Class Coordinator" },
   { uid: "students", name: "Students" },
   { uid: "passOutYear", name: "Pass Out Year" },
-  { uid: "year", name: "Academic Year" },
+  { uid: "year", name: "Admission Year" },
   { uid: "department", name: "Department" },
   { uid: "actions", name: "Actions" },
 ];
