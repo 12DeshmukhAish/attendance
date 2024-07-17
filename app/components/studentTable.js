@@ -124,6 +124,8 @@ export default function StudentTable() {
 
     } catch (error) {
       console.error('Error fetching students:', error);
+    }finally{
+      setIsLoading(false)
     }
   };
 

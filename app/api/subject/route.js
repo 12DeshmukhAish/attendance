@@ -4,13 +4,16 @@ import Subject from "@/models/subject";
 import Classes from "@/models/className";
 import Student from "@/models/student";
 import Faculty from "@/models/faculty";
-
-// POST operation - Create new subject
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, name, class: classId, teacher, department, subType } = data;
+        const { _id, name, class: classId, teacher, department, type, content } = data;
+        console.log(data);
+        const newContent = content ? content.map(item => ({
+            name: item.name,
+            status: item.status || 'not_covered'
+        })) : [];
 
         const newSubject = new Subject({
             _id,
@@ -18,13 +21,12 @@ export async function POST(req) {
             class: classId,
             teacher,
             department,
-            subType,
-           
+            subType: type,
+            content: newContent
         });
 
         await newSubject.save();
-
-        // Update the Class document
+        // Update Class document
         const classUpdateResult = await Classes.findByIdAndUpdate(classId, {
             $addToSet: { subjects: _id }
         });
@@ -34,12 +36,12 @@ export async function POST(req) {
         }
 
         // Update Student documents
-        const studentUpdateResult = await Student.updateMany(
+        await Student.updateMany(
             { class: classId },
             { $addToSet: { subjects: _id } }
         );
 
-        // Update the Faculty document
+        // Update Faculty document
         const facultyUpdateResult = await Faculty.findByIdAndUpdate(teacher, {
             $addToSet: { subjects: _id }
         });
@@ -65,22 +67,22 @@ export async function PUT(req) {
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
         const data = await req.json();
-        const { name, class: classId, teacher, department, subType, content } = data;
+        const { name, class: classId, teacher, department, type, content } = data;
 
         let updatedContent
-         
-        if(updatedContent){
+
+        if (updatedContent) {
             updatedContent = content.map(item => ({
-            name: item.name,
-            status: item.status || 'not_covered'
-        }));
-    }
+                name: item.name,
+                status: item.status || 'not_covered'
+            }));
+        }
         const existingSubject = await Subject.findByIdAndUpdate(_id, {
             name,
             class: classId,
             teacher,
             department,
-            subType,
+            subType:type,
             content: updatedContent
         }, { new: true });
 
@@ -96,14 +98,11 @@ export async function PUT(req) {
         if (!classUpdateResult) {
             throw new Error("Class not found");
         }
-
-        // Update Student documents
         const studentUpdateResult = await Student.updateMany(
             { class: classId },
             { $addToSet: { subjects: _id } }
         );
 
-        // Update Faculty document
         const facultyUpdateResult = await Faculty.findByIdAndUpdate(teacher, {
             $addToSet: { subjects: _id }
         });
@@ -186,7 +185,7 @@ export async function GET(req) {
         }
 
         // Fetch students who have this subject in their subjects array
-        const students = await Student.find({ 
+        const students = await Student.find({
             subjects: _id,
             // class: subject.class,
             // department: subject.department

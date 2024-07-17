@@ -68,6 +68,8 @@ export default function FacultyTable() {
       setIsLoading(false)
     } catch (error) {
       console.error('Error fetching faculty:', error);
+    }finally{
+      setIsLoading(false)
     }
   };
 

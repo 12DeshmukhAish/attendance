@@ -11,11 +11,12 @@ export async function GET(req) {
         const department = searchParams.get("department");
 
         let filter = {};
-        if (passOutYear) filter.passOutYear = passOutYear;
+        // if (passOutYear) filter.passOutYear = passOutYear;
         if (year) filter.year = year;
         if (department && department !== "FE") filter.department = department;
 
         const students = await Student.find(filter).select("_id name").lean();
+        console.log(students);
         return NextResponse.json(students, { status: 200 });
     } catch (error) {
         console.error("Error fetching students:", error);

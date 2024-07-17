@@ -46,7 +46,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "passOutYear", "year", "department", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "year", "department", "actions"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -111,9 +111,12 @@ export default function ClassTable() {
       setIsLoading(true)
       const response = await axios.get('/api/faculty');
       setTeachers(response.data);
-      setIsLoading(false)
+      
     } catch (error) {
       console.error('Error fetching teachers:', error);
+    }
+    finally{
+      setIsLoading(false)
     }
   };
 
@@ -216,7 +219,8 @@ export default function ClassTable() {
         );
       case "teacher":
         return (
-          <span>{teachers.find(teacher => teacher._id === cellValue)?.name}</span>
+          // <span>{teachers.find(teacher => teacher._id === cellValue)?.name}</span>
+          cellValue
         );
       case "students":
         return (

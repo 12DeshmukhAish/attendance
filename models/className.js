@@ -1,31 +1,50 @@
 import mongoose from 'mongoose';
 
+const BatchSchema = new mongoose.Schema({
+    _id: {
+        type: String,
+        required: true,
+    },
+    type: {
+        type: String,
+        enum: ['practical', 'TG'],
+        required: true,
+    },
+    students: [{
+        type: String,
+        ref: 'Student',
+    }],
+}, { _id: false });
+
 const classSchema = new mongoose.Schema({
     _id: {
         type: String,
         required: true,
     },
     passOutYear: {
-        type: String
+        type: String,
     },
     year: {
-        type: String
+        type: String,
     },
     department: {
-        type: String
+        type: String,
     },
-    subjects:{
-        type:[String]
+    subjects: {
+        type: [String],
     },
     students: [{
         type: String,
-        ref: 'Student',  // Ensure correct referen
+        ref: 'Student',
     }],
     teacher: {
         type: String,
-        ref: 'Faculty',  // Ensure correct reference to Faculty model
+        ref: 'Faculty',
         required: true,
-    }
+    },
+    batches: {
+        type: [BatchSchema],
+    },
 }, { timestamps: true });
 
 const Classes = mongoose.models.Classes || mongoose.model('Classes', classSchema);

@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Checkbox, Input, Select, SelectItem, ModalBody, ModalContent, ModalHeader, ModalFooter } from "@nextui-org/react";
+import {
+  Modal,
+  Button,
+  Checkbox,
+  Input,
+  Select,
+  SelectItem,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  ModalFooter
+} from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
 import { departmentOptions } from "../utils/department";
@@ -17,6 +28,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   const [selectedStudents, setSelectedStudents] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [batches, setBatches] = useState([]);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -34,6 +46,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     }
   }, [profile]);
 
+  
   useEffect(() => {
     if (mode === "edit" && classData) {
       setFormData({
@@ -44,6 +57,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
         department: classData.department,
         year: classData.year
       });
+      setBatches(classData.batches || []);
       fetchStudents(classData.passOutYear, classData.year, classData.department);
     } else {
       resetForm();
@@ -55,8 +69,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       try {
         const response = await axios.get(`/api/fetchstudentsByid?passOutYear=${passOutYear}&year=${year}&department=${department}`);
         setAllStudents(response.data);
-        setSelectedStudents(new Set());
-        setSelectAll(false);
+        setSelectedStudents(new Set(response.data.filter(student => student.classId === formData._id).map(student => student._id)));
+        setSelectAll(response.data.length === selectedStudents.size);
       } catch (error) {
         console.error("Error fetching students:", error);
       }
@@ -68,11 +82,21 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     const updatedFormData = { ...formData, [name]: value };
     setFormData(updatedFormData);
 
-    const { passOutYear, year, department } = updatedFormData;
-    if (passOutYear && year && department) {
-      fetchStudents(passOutYear, year, department);
+    if (name === 'admissionYear') {
+      const passOutYear = (parseInt(value) + 4).toString();
+      updatedFormData.passOutYear = passOutYear;
+      setFormData(updatedFormData);
     }
+
+  
   };
+  const { passOutYear, admissionYear, department } = formData;
+    useEffect(() => {
+      if (passOutYear && admissionYear && department) {
+        fetchStudents(passOutYear, admissionYear, department);
+      }
+    }, [passOutYear,admissionYear,department]);
+   
 
   const handleSelectAll = () => {
     if (selectAll) {
@@ -87,8 +111,23 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     setFormData({ ...formData, [key]: value });
   };
 
-  const handleSelectionChange = (e) => {
-    setSelectedStudents(new Set(e.target.value.split(",")));
+  const handleSelectionChange = (keys) => {
+    setSelectedStudents(new Set(keys));
+  };
+
+  const handleBatchChange = (index, key, value) => {
+    const updatedBatches = [...batches];
+    updatedBatches[index][key] = value;
+    setBatches(updatedBatches);
+  };
+
+  const addBatch = () => {
+    setBatches([...batches, { _id: "", type: "", students: [] }]);
+  };
+
+  const removeBatch = (index) => {
+    const updatedBatches = batches.filter((_, i) => i !== index);
+    setBatches(updatedBatches);
   };
 
   const handleSubmit = async () => {
@@ -96,7 +135,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       let response;
       const sanitizedFormData = {
         ...formData,
-        students: Array.from(selectedStudents)
+        students: Array.from(selectedStudents),
+        batches
       };
       if (mode === "add") {
         response = await axios.post("/api/classes", sanitizedFormData);
@@ -125,6 +165,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     setAllStudents([]);
     setSelectedStudents(new Set());
     setSelectAll(false);
+    setBatches([]);
   };
 
   const handleCancel = () => {
@@ -133,109 +174,170 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel}>
-      <ModalContent>
+    <Modal isOpen={isOpen} onClose={handleCancel} size="3xl">
+      <ModalContent className="max-h-[90vh] overflow-y-auto">
         <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>
         <ModalBody>
-          <Input
-            label="Class ID"
-            name="_id"
-            value={formData._id}
-            onChange={handleChange}
-            required
-            disabled={mode !== "add"}
-            variant="bordered"
-            size="sm"
-          />
-          <Select
-            label="Class Coordinator"
-            placeholder="Select Coordinator"
-            name="classCoordinator"
-            selectedKeys={[formData.classCoordinator]}
-            onChange={handleChange}
-            variant="bordered"
-            size="sm"
-          >
-            {teachers.map((teacher) => (
-              <SelectItem key={teacher._id} textValue={teacher.name}>
-                {teacher.name}
-              </SelectItem>
-            ))}
-          </Select>
-          <Input
-            label="Admission Year"
-            name="year"
-            value={formData.year}
-            onChange={handleChange}
-            required
-            variant="bordered"
-            size="sm"
-          />
-          <Input
-            label="Pass-out Year"
-            name="passOutYear"
-            value={formData.passOutYear}
-            onChange={handleChange}
-            variant="bordered"
-            size="sm"
-          />
-          {profile?.role === "superadmin" ? (
-            <Select
-              label="Department"
-              placeholder="Select department"
-              name="department"
-              selectedKeys={new Set([formData.department])}
-              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
-              variant="bordered"
-              size="sm"
-            >
-              {departmentOptions.map((department) => (
-                <SelectItem key={department.key} textValue={department.label}>
-                  {department.label}
-                </SelectItem>
-              ))}
-            </Select>
-          ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Input
-              label="Department"
-              name="department"
-              value={profile?.department[0]}
-              disabled
+              label="Class ID"
+              name="_id"
+              value={formData._id}
+              onChange={handleChange}
+              required
+              disabled={mode !== "add"}
               variant="bordered"
               size="sm"
             />
-          )}
-          <div>
+            <Input
+              label="Class Name"
+              name="className"
+              value={formData.className}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Select
+              label="Class Coordinator"
+              placeholder="Select Coordinator"
+              name="classCoordinator"
+              selectedKeys={[formData.classCoordinator]}
+              onSelectionChange={(value) => handleSelectChange("classCoordinator", value.currentKey)}
+              variant="bordered"
+              size="sm"
+            >
+              {teachers.map((teacher) => (
+                <SelectItem key={teacher._id} textValue={teacher.name}>
+                  {teacher.name}
+                </SelectItem>
+              ))}
+            </Select>
+            <Input
+              label="Admission Year"
+              name="admissionYear"
+              value={formData.admissionYear}
+              onChange={handleChange}
+              required
+              variant="bordered"
+              size="sm"
+            />
+            <Input
+              label="Pass-out Year"
+              name="passOutYear"
+              value={formData.passOutYear}
+              onChange={handleChange}
+              variant="bordered"
+              size="sm"
+            />
+            {profile?.role === "superadmin" ? (
+              <Select
+                label="Department"
+                placeholder="Select department"
+                name="department"
+                selectedKeys={new Set([formData.department])}
+                onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+                variant="bordered"
+                size="sm"
+              >
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department.key} textValue={department.label}>
+                    {department.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                label="Department"
+                name="department"
+                value={profile?.department[0]}
+                disabled
+                variant="bordered"
+                size="sm"
+              />
+            )}
+          </div>
+          <div className="mt-4">
             <Checkbox
               isSelected={selectAll}
               onChange={handleSelectAll}
             >
-              Select All
+              Select All Students
             </Checkbox>
             <Select
               selectionMode="multiple"
               label="Students"
               name="students"
               selectedKeys={Array.from(selectedStudents)}
-              onChange={handleSelectionChange}
+              onSelectionChange={handleSelectionChange}
               variant="bordered"
               size="sm"
+              className="mt-2"
             >
               {allStudents.map((student) => (
                 <SelectItem key={student._id} textValue={student.name}>
-                  {student.name}
+                  {student._id} {student.name}
                 </SelectItem>
               ))}
             </Select>
           </div>
+          <div className="mt-4">
+            <h4>Batches</h4>
+            {batches.map((batch, index) => (
+              <div key={index} className="border p-4 mb-4 rounded-md">
+                <Input
+                  label="Batch ID"
+                  name={`batch-${index}-id`}
+                  value={batch._id}
+                  onChange={(e) => handleBatchChange(index, '_id', e.target.value)}
+                  required
+                  variant="bordered"
+                  size="sm"
+                />
+                <Input
+                  label="Batch Type"
+                  name={`batch-${index}-type`}
+                  value={batch.type}
+                  onChange={(e) => handleBatchChange(index, 'type', e.target.value)}
+                  required
+                  className="my-2"
+                  variant="bordered"
+                  size="sm"
+                />
+                <Select
+                  selectionMode="multiple"
+                  label="Batch Students"
+                  name={`batch-${index}-students`}
+                  selectedKeys={new Set(batch.students)}
+                  onSelectionChange={(keys) => handleBatchChange(index, 'students', Array.from(keys))}
+                  variant="bordered"
+                  size="sm"
+                  className="my-2"
+                >
+                  {allStudents
+                    .filter((student) => selectedStudents.has(student._id))
+                    .map((student) => (
+                    <SelectItem key={student._id} textValue={student.name}>
+                      {student._id} {student.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <Button
+                  color="danger"
+                  onClick={() => removeBatch(index)}
+                  className="mt-2"
+                  size="sm" 
+                >
+                  Remove Batch
+                </Button>
+              </div>
+            ))}
+            <Button onClick={addBatch} size="sm" >Add Batch</Button>
+          </div>
         </ModalBody>
         <ModalFooter>
-          <Button auto flat color="error" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button auto onClick={handleSubmit}>
-            {mode === "add" ? "Add" : "Update"}
-          </Button>
+          <Button size="md"  onClick={handleCancel}>Cancel</Button>
+          <Button color="primary" size="md" onClick={handleSubmit}>{mode === "add" ? "Add Class" : "Save Changes"}</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

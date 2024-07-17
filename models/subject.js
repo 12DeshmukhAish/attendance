@@ -32,6 +32,11 @@ const SubjectSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    subType: {
+        type: String,
+        enum: ['theory', 'practical'],
+        required: true
+    },
     class: {
         type: String,
         ref: 'Classes'  // Ensure correct reference to Class model

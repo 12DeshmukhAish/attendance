@@ -192,11 +192,11 @@ export default function App() {
           </Button>
         </div>
       )}
-      {!students  && 
-      <div>
-<Image src="/update.svg"></Image>
-      </div>
-}
+      {!students &&
+        <div>
+          <Image src="/update.svg"></Image>
+        </div>
+      }
     </div>
   );
 }
