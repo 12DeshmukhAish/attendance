@@ -38,7 +38,7 @@ const columns = [
   { uid: "department", name: "Department", sortable: true },
   { uid: "phoneNo", name: "Phone No", sortable: true },
   { uid: "email", name: "Email ID", sortable: true },
-  { uid: "year", name: "Acadmic Year", sortable: true },
+  { uid: "year", name: "Admission Year", sortable: true },
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];

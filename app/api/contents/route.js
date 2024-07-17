@@ -7,7 +7,16 @@ export async function PUT(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
+
+        if (!_id) {
+            return NextResponse.json({ error: "Subject ID is required" }, { status: 400 });
+        }
+
         const data = await req.json();
+
+        if (!data.content) {
+            return NextResponse.json({ error: "Content data is required" }, { status: 400 });
+        }
 
         const existingSubject = await Subject.findByIdAndUpdate(_id, {
             content: data.content
@@ -17,10 +26,10 @@ export async function PUT(req) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ message: "Subject Updated Successfully", subject: existingSubject }, { status: 200 });
+        return NextResponse.json({ message: "Subject updated successfully", subject: existingSubject }, { status: 200 });
     } catch (error) {
         console.error("Error updating subject:", error);
-        return NextResponse.json({ error: "Failed to Update", details: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to update subject", details: error.message }, { status: 500 });
     }
 }
 
@@ -30,15 +39,19 @@ export async function GET(req) {
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
 
+        if (!_id) {
+            return NextResponse.json({ error: "Subject ID is required" }, { status: 400 });
+        }
+
         const existingSubject = await Subject.findById(_id).populate('class teacher', 'name');
 
         if (!existingSubject) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ message: "Subject fetched Successfully", subject: existingSubject }, { status: 200 });
+        return NextResponse.json({ message: "Subject fetched successfully", subject: existingSubject }, { status: 200 });
     } catch (error) {
-        console.error("Error to find subject:", error);
-        return NextResponse.json({ error: "Failed to fetch", details: error.message }, { status: 500 });
+        console.error("Error fetching subject:", error);
+        return NextResponse.json({ error: "Failed to fetch subject", details: error.message }, { status: 500 });
     }
 }

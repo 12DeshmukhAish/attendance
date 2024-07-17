@@ -1,8 +1,21 @@
 import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
+
 const ContentSchema = new mongoose.Schema({
-    name: {
-        type: String
+    title: {
+        type: String,
+    },
+    description: {
+        type: String,
+    },
+    proposedDate: {
+        type: String,
+    },
+    completedDate: {
+        type: String,
+    },
+    references: {
+        type: String,
     },
     status: {
         type: String,
@@ -30,11 +43,10 @@ const SubjectSchema = new mongoose.Schema({
     department: {
         type: String
     },
-    reports:{
-        type:[ObjectId],
-        ref:'Attendance'
+    reports: {
+        type: [ObjectId],
+        ref: 'Attendance'
     },
-    
     content: [ContentSchema]
 }, {
     timestamps: true,

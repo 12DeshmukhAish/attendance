@@ -1,16 +1,18 @@
 "use client";
 
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Button, Input, Checkbox } from '@nextui-org/react';
+import * as XLSX from 'xlsx';
 
 const TeachingPlanPage = () => {
   const [subjectId, setSubjectId] = useState('');
   const [subjectIds, setSubjectIds] = useState([]);
   const [subject, setSubject] = useState([]);
-  const [content, setContent] = useState([{ name: '', status: 'not_covered' }]);
+  const [content, setContent] = useState([{
+    title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+  }]);
 
   useEffect(() => {
     fetchSubjects();
@@ -23,7 +25,6 @@ const TeachingPlanPage = () => {
       setSubjectIds(userSubjectIds);
 
       if (userSubjectIds.length === 1) {
-        // Fetch the single subject's information directly
         setSubjectId(userSubjectIds[0]);
         fetchSubjectInfo(userSubjectIds[0]);
       }
@@ -36,8 +37,9 @@ const TeachingPlanPage = () => {
     try {
       const response = await axios.get(`/api/subject?_id=${subjectId}`);
       setSubject(response.data.subject);
-      console.log(response.data);
-      setContent(response.data.subject.content || [{ name: '', status: 'not_covered' }]);
+      setContent(response.data.subject.content || [{
+        title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+      }]);
     } catch (error) {
       console.error('Error fetching subject info:', error);
     }
@@ -50,12 +52,14 @@ const TeachingPlanPage = () => {
   };
 
   const handleAddContent = () => {
-    setContent([...content, { name: '', status: 'not_covered' }]);
+    setContent([...content, {
+      title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+    }]);
   };
 
   const handleContentChange = (index, event) => {
     const newContent = [...content];
-    newContent[index].name = event.target.value;
+    newContent[index][event.target.name] = event.target.value;
     setContent(newContent);
   };
 
@@ -73,7 +77,9 @@ const TeachingPlanPage = () => {
 
   const handleCancel = () => {
     setSubjectId('');
-    setContent([{ name: '', status: 'not_covered' }]);
+    setContent([{
+      title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+    }]);
   };
 
   const handleSubmit = async (event) => {
@@ -83,7 +89,7 @@ const TeachingPlanPage = () => {
       return;
     }
 
-    const validContent = content.filter(item => item.name.trim() !== '');
+    const validContent = content.filter(item => item.title.trim() !== '');
     if (validContent.length === 0) {
       toast.error('Please add at least one content item');
       return;
@@ -105,6 +111,36 @@ const TeachingPlanPage = () => {
     }
   };
 
+  const handleDownloadExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(content);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Teaching Plan');
+    XLSX.writeFile(workbook, 'TeachingPlan.xlsx');
+  };
+
+  const handleUploadExcel = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      const parsedContent = jsonData.slice(1).map(row => ({
+        title: row[0] || '',
+        description: row[1] || '',
+        proposedDate: row[2] || '',
+        completedDate: row[3] || '',
+        references: row[4] || '',
+        status: row[5] || 'not_covered',
+      }));
+
+      setContent(parsedContent);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Manage Teaching Plan</h1>
@@ -116,7 +152,6 @@ const TeachingPlanPage = () => {
           <h3>Subject Code - {subject._id}</h3>
           <h3>Subject Faculty Name - {subject.teacher}</h3>
           <h3>Subject class - {subject.class}</h3>
-
         </div>
       )}
       {subjectIds.length > 1 && (
@@ -143,25 +178,70 @@ const TeachingPlanPage = () => {
             <div key={index} className="flex gap-4 mb-2">
               <Input
                 type="text"
+                name="title"
                 label="Title"
-                value={item.name}
+                value={item.title}
                 onChange={(e) => handleContentChange(index, e)}
                 required
                 className="w-full"
                 variant="bordered"
-                size='sm'
+                size="sm"
+              />
+              <Input
+                type="text"
+                name="description"
+                label="Description"
+                value={item.description}
+                onChange={(e) => handleContentChange(index, e)}
+                required
+                className="w-full"
+                variant="bordered"
+                size="sm"
+              />
+              <Input
+                type="text"
+                name="proposedDate"
+                label="Proposed Date"
+                value={item.proposedDate}
+                onChange={(e) => handleContentChange(index, e)}
+                required
+                className="w-full"
+                variant="bordered"
+                size="sm"
+              />
+              <Input
+                type="text"
+                name="completedDate"
+                label="Completed Date"
+                value={item.completedDate}
+                onChange={(e) => handleContentChange(index, e)}
+                required
+                className="w-full"
+                variant="bordered"
+                size="sm"
+              />
+              <Input
+                type="text"
+                name="references"
+                label="References"
+                value={item.references}
+                onChange={(e) => handleContentChange(index, e)}
+                required
+                className="w-full"
+                variant="bordered"
+                size="sm"
               />
               <Checkbox
                 isSelected={item.status === 'covered'}
                 onChange={() => handleStatusChange(index)}
-                size='sm'
+                size="sm"
               >
                 Covered
               </Checkbox>
               <Button
                 color="error"
                 variant="bordered"
-                size='sm'
+                size="sm"
                 auto
                 onClick={() => handleRemoveContent(index)}
               >
@@ -172,7 +252,7 @@ const TeachingPlanPage = () => {
           <Button
             color="default"
             variant="bordered"
-            size='sm'
+            size="sm"
             auto
             onClick={handleAddContent}
           >
@@ -182,7 +262,7 @@ const TeachingPlanPage = () => {
         <div className="col-span-1 flex justify-end gap-4">
           <Button
             variant="ghost"
-            size='sm'
+            size="sm"
             color="default"
             onClick={handleCancel}
           >
@@ -190,15 +270,39 @@ const TeachingPlanPage = () => {
           </Button>
           <Button
             variant="ghost"
-            size='sm'
+            size="sm"
             color="primary"
             type="submit"
           >
             Update Teaching Plan
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            color="secondary"
+            onClick={handleDownloadExcel}
+          >
+            Download Excel
+          </Button>
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={handleUploadExcel}
+            className="hidden"
+            
+            
+            id="uploadExcel"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            color="secondary"
+            onClick={() => document.getElementById('uploadExcel').click()}
+          >
+            Upload Excel
+          </Button>
         </div>
       </form>
-
     </div>
   );
 };

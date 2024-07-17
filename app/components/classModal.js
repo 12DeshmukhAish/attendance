@@ -163,7 +163,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             ))}
           </Select>
           <Input
-            label="Academic Year"
+            label="Admission Year"
             name="year"
             value={formData.year}
             onChange={handleChange}

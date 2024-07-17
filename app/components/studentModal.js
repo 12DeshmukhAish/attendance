@@ -146,7 +146,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
               size="sm"
             />
             <Input
-              label="Academic Year"
+              label="Admission Year"
               name="year"
               value={formData.year}
               onChange={handleChange}
