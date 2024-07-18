@@ -82,7 +82,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     const updatedFormData = { ...formData, [name]: value };
     setFormData(updatedFormData);
 
-    if (name === 'admissionYear') {
+    if (name === 'year') {
       const passOutYear = (parseInt(value) + 4).toString();
       updatedFormData.passOutYear = passOutYear;
       setFormData(updatedFormData);
@@ -90,12 +90,12 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
 
   
   };
-  const { passOutYear, admissionYear, department } = formData;
+  const { passOutYear, year, department } = formData;
     useEffect(() => {
-      if (passOutYear && admissionYear && department) {
-        fetchStudents(passOutYear, admissionYear, department);
+      if (passOutYear && year && department) {
+        fetchStudents(passOutYear, year, department);
       }
-    }, [passOutYear,admissionYear,department]);
+    }, [passOutYear,year,department]);
    
 
   const handleSelectAll = () => {
@@ -215,8 +215,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             </Select>
             <Input
               label="Admission Year"
-              name="admissionYear"
-              value={formData.admissionYear}
+              name="year"
+              value={formData.year}
               onChange={handleChange}
               required
               variant="bordered"
@@ -294,16 +294,22 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
                   variant="bordered"
                   size="sm"
                 />
-                <Input
+                 <Select
                   label="Batch Type"
-                  name={`batch-${index}-type`}
-                  value={batch.type}
-                  onChange={(e) => handleBatchChange(index, 'type', e.target.value)}
-                  required
-                  className="my-2"
+                  placeholder="Select Batch Type"
+                  selectedKeys={[batch.type]}
+                  onSelectionChange={(value) => handleBatchChange(index, 'type', value.currentKey)}
                   variant="bordered"
                   size="sm"
-                />
+                  className="mb-2"
+                >
+                  <SelectItem key="practical" textValue="Practical">
+                    Practical
+                  </SelectItem>
+                  <SelectItem key="TG" textValue="TG">
+                    TG
+                  </SelectItem>
+                </Select>
                 <Select
                   selectionMode="multiple"
                   label="Batch Students"

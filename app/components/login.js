@@ -402,7 +402,7 @@ export default function LoginComponent() {
 
   return (
     <div className="flex h-screen">
-      <div className="flex flex-col w-2/3 justify-center items-center bg-violet-400 rounded-r-[20%]">
+      <div className="flex flex-col w-2/3 justify-center items-center bg-violet-500 rounded-r-[20%]">
         <h3 className='text-4xl  text-white'>Hey,Let&#39;s Begin </h3>
         <Image src={"/login.svg"} width={600} height={600}></Image>
          </div>

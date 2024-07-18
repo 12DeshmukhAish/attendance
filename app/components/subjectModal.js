@@ -31,8 +31,8 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   }, []);
 
   useEffect(() => {
-    if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
-      setSelectedDepartment(profile?.department[0]);
+    if (profile?.role !== "superadmin") {
+      setSelectedDepartment(profile?.department);
     }
   }, [profile]);
 
@@ -171,11 +171,15 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               variant="bordered"
               size='sm'
             >
-              {classes.map((classItem) => (
-                <SelectItem key={classItem._id} value={classItem._id}>
-                  {classItem._id}
-                </SelectItem>
-              ))}
+             {Array.isArray(classes) && classes.length > 0 ? (
+  classes.map((classItem) => (
+    <SelectItem key={classItem._id} value={classItem._id}>
+      {classItem._id}
+    </SelectItem>
+  ))
+) : (
+  <SelectItem value="no-classes">No classes available</SelectItem>
+)}
             </Select>
             <Select
               label="Subject Teacher"

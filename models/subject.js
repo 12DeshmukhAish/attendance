@@ -39,7 +39,7 @@ const SubjectSchema = new mongoose.Schema({
     },
     class: {
         type: String,
-        ref: 'Classes'  // Ensure correct reference to Class model
+        ref: 'Classes'  
     },
     teacher: {
         type: String,
