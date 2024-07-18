@@ -16,6 +16,7 @@ import {
   Pagination,
   SelectItem,
   Select,
+ 
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -65,7 +66,7 @@ export default function ClassTable() {
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -93,8 +94,10 @@ export default function ClassTable() {
 
   const fetchClasses = async () => {
     try {
+      setIsLoading(true)
       const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
       if (response.status==200) {
+        
       setClasses(response.data);
       }
       else{
@@ -116,7 +119,7 @@ export default function ClassTable() {
       console.error('Error fetching teachers:', error);
     }
     finally{
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
