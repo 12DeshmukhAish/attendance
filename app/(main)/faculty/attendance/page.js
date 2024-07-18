@@ -69,6 +69,7 @@ export default function App() {
     }));
 
     try {
+      console.log(attendanceData);
       const response = await axios.put(`/api/update`, {
         subjectId: selectedSubject,
         // date: selectedDate.toISOString().split('T')[0],

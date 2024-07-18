@@ -13,7 +13,7 @@ export async function PUT(req) {
         }
 
         const data = await req.json();
-
+console.log(data);
         if (!data.content) {
             return NextResponse.json({ error: "Content data is required" }, { status: 400 });
         }
@@ -21,7 +21,7 @@ export async function PUT(req) {
         const existingSubject = await Subject.findByIdAndUpdate(_id, {
             content: data.content
         }, { new: true });
-
+console.log(existingSubject);
         if (!existingSubject) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
         }

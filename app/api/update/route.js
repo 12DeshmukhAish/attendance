@@ -68,7 +68,7 @@ export async function PUT(req) {
   try {
     await connectMongoDB();
     const { subjectId, session, attendanceData } = await req.json();
-
+console.log(attendanceData);
     if (!subjectId  || !session || !attendanceData) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
@@ -92,7 +92,7 @@ export async function PUT(req) {
       },
       { upsert: true, new: true }
     );
-
+console.log(result);
     return NextResponse.json({ message: "Attendance updated successfully", result }, { status: 200 });
 
   } catch (error) {

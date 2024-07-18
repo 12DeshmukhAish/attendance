@@ -34,7 +34,7 @@ const columns = [
   { uid: "_id", name: "ID", sortable: true },
   { uid: "rollNumber", name: "Roll Number", sortable: true },
   { uid: "name", name: "Name", sortable: true },
-  { uid: "passOutYear", name: "Pass Out Year", sortable: true },
+  { uid: "class", name: "Class", sortable: true },
   { uid: "department", name: "Department", sortable: true },
   { uid: "phoneNo", name: "Phone No", sortable: true },
   { uid: "email", name: "Email ID", sortable: true },
@@ -265,7 +265,6 @@ export default function StudentTable() {
             {departmentOptions.map((department) => (
               <SelectItem key={department.key} textValue={department.label}>
                 {department.label}
-
               </SelectItem>
             ))}
           </Select>

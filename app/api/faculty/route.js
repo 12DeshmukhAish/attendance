@@ -7,7 +7,7 @@ export async function POST(req) {
         await connectMongoDB();
         const data = await req.json();
         const { facultyId, name, department, email, password, isAdmin } = data;
-
+        console.log(data);
         const newFaculty = new Faculty({
             _id: facultyId,
             name,
@@ -18,6 +18,7 @@ export async function POST(req) {
         });
 
         await newFaculty.save();
+        console.log(newFaculty);
         console.log("Faculty Registered Successfully", newFaculty);
         return NextResponse.json({ message: "Faculty Registered Successfully", faculty: newFaculty }, { status: 201 });
     } catch (error) {

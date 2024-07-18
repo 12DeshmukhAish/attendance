@@ -64,15 +64,15 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       isAdmin: false,
     });
   };
-
   useEffect(() => {
     if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
       setFormData((prev) => ({
         ...prev,
-        department: profile?.department[0],
+        department: profile?.department,
       }));
     }
   }, [profile]);
+
 
   const handleSubmit = async () => {
     try {
@@ -145,7 +145,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             <Input
               label="Department"
               name="department"
-              value={profile?.department[0]}
+              value={profile?.department}
               disabled
               variant="bordered"
               size="sm"

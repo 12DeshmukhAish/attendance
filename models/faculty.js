@@ -19,7 +19,7 @@ const FacultySchema = new mongoose.Schema({
         ref: 'Classes'  // Ensure correct reference to Class model
     }],
     department: {
-        type: [String]
+        type: String
     },
     password: {
         type: String
