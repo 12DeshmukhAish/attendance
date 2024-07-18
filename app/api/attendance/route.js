@@ -1,59 +1,49 @@
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Attendance from "@/models/attendance";
-import Subject from "@/models/subject"; // Import the Subject model
+import Subject from "@/models/subject";
 
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { date, subject, sessions, records, contents } = data; // Include coveredContents in the request data
+        const { subject, session, presentStudents, contents } = data;
 
-        console.log(data);
         if (data) {
-            const validatedRecords = records.map(record => ({
-                student: record.student,
-                status: record.status || 'absent' // Assuming default status if not provided
-            }));
-
-            // Save attendance for each session
-            const attendancePromises = sessions.map(session => {
-                return Attendance.findOneAndUpdate(
-                    { date: new Date(date), subject, session },
-                    { 
-                        $setOnInsert: { date: new Date(date), subject, session },
-                        $set: { records: validatedRecords }
-                    },
-                    { upsert: true, new: true, runValidators: true }
-                );
-            });
-
-            const savedAttendances = await Promise.all(attendancePromises);
-
-            // Get the IDs of the saved attendance reports
-            const attendanceIds = savedAttendances.map(att => att._id);
-
-            // Update the subject's reports array with the new attendance report references
-            await Subject.findByIdAndUpdate(
-                subject,
-                { $addToSet: { reports: { $each: attendanceIds } } }
+            const date = new Date();
+            const attendanceRecord = await Attendance.findOneAndUpdate(
+                { date, subject, session },
+                { 
+                    $setOnInsert: { date, subject, session },
+                    $set: { records: presentStudents.map(student => ({ student, status: 'present' })) }
+                },
+                { upsert: true, new: true, runValidators: true }
             );
 
-            // Update content status to covered
+            // Update the subject's reports array with the new attendance report reference
+            await Subject.findByIdAndUpdate(
+                subject,
+                { $addToSet: { reports: attendanceRecord._id } }
+            );
+
+            // Update content status to covered and set completed date
             if (contents && contents.length > 0) {
                 await Subject.updateOne(
                     { _id: subject },
                     { 
-                        $set: { "content.$[elem].status": "covered" }
+                        $set: { 
+                            "content.$[elem].status": "covered",
+                            "content.$[elem].completedDate": date
+                        }
                     },
                     {
-                        arrayFilters: [{ "elem.name": { $in: contents } }]
+                        arrayFilters: [{ "elem.title": { $in: contents }, "elem.status": { $ne: "covered" } }]
                     }
                 );
             }
 
-            console.log("Attendance Recorded Successfully", savedAttendances);
-            return NextResponse.json({ message: "Attendance Recorded Successfully", attendances: savedAttendances }, { status: 200 });
+            console.log("Attendance Recorded Successfully", attendanceRecord);
+            return NextResponse.json({ message: "Attendance Recorded Successfully", attendance: attendanceRecord }, { status: 200 });
         } else {
             return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
         }
@@ -62,8 +52,6 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Record Attendance" }, { status: 500 });
     }
 }
-
-
 export async function PUT(req) {
     try {
         await connectMongoDB();
