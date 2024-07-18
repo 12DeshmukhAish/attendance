@@ -88,7 +88,6 @@ useEffect(() => {
         response = await axios.put(`/api/faculty`, formData);
         toast.success('Faculty updated successfully');
         handleClear()
-
       }
       onClose();
       handleClear()

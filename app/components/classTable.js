@@ -84,7 +84,7 @@ export default function ClassTable() {
 
   useEffect(() => {
     if (profile?.role !== "superadmin") {
-      setSelectedDepartment(profile?.department[0]);
+      setSelectedDepartment(profile?.department);
     }
   }, [profile]);
 
