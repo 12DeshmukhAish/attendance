@@ -184,10 +184,14 @@ export default function StudentTable() {
     return [...items].sort((a, b) => {
       const first = a[sortDescriptor.column];
       const second = b[sortDescriptor.column];
-      const cmp = first < second ? -1 : first > second ? 1 : 0;
-      return sortDescriptor.direction === "descending" ? -cmp : cmp;
+      if (sortDescriptor.column === "rollNumber") {
+        return parseInt(first) - parseInt(second);
+      }
+
+      // Default sort for other fields
+      return first < second ? -1 : first > second ? 1 : 0;
     });
-  }, [sortDescriptor, items]);
+  }, [students, sortDescriptor]);
 
   const renderCell = useCallback((student, columnKey) => {
     const cellValue = student[columnKey];
