@@ -13,6 +13,7 @@ import {
   Button,
   Input,
   Pagination,
+  Spinner,
 } from '@nextui-org/react';
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -45,6 +46,7 @@ export default function SubjectTable() {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -52,13 +54,18 @@ export default function SubjectTable() {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true)
       const response = await axios.get('/api/subjectData');
       setSubjects(response.data.subjects || []);
       setTeachers(response.data.teachers || []);
+      // setIsLoading(false)
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  }
+    }finally{
+        setIsLoading(false);
+      }
+    };
+  
 
   const deleteSubject = async (_id) => {
     try {
@@ -203,7 +210,8 @@ export default function SubjectTable() {
           <TableHeader columns={headerColumns}>
             {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
           </TableHeader>
-          <TableBody items={sortedItems}>
+          <TableBody   isLoading={isLoading}
+          loadingContent={<Spinner label="Loading..." />} items={sortedItems}>
             {(item) => (
               <TableRow key={item._id}>
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

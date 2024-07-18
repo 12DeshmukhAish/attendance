@@ -9,6 +9,7 @@ const BatchSchema = new mongoose.Schema({
         type: String,
         enum: ['practical', 'TG'],
         required: true,
+        
     },
     students: [{
         type: String,

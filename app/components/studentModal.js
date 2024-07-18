@@ -69,9 +69,17 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   }, [isOpen]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updatedFormData = { ...formData, [name]: value };
+
+    if (name === 'year') {
+      const passOutYear = (parseInt(value) + 4).toString();
+      updatedFormData.passOutYear = passOutYear;
+    }
+
+    setFormData(updatedFormData);
   };
-  
+
   const handleSelectChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
   };
