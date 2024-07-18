@@ -26,7 +26,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
   }, []);
 
   useEffect(() => {
-    if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
+    if (profile?.role !== "superadmin") {
       setFormData((prev) => ({
         ...prev,
         department: profile?.department,

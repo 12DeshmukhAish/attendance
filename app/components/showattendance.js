@@ -396,11 +396,12 @@ const AttendanceDisplay = () => {
           value={dateRange}
           onChange={setDateRange}
         />
-      </div>
-
-      <Button onClick={generateExcelReport} className="mb-8">
+         <Button variant="ghost" color="primary" size="sm" onClick={generateExcelReport} className="mb-8">
         Download Report
       </Button>
+      </div>
+
+     
 
       {loading ? (
         <div className="flex justify-center items-center">

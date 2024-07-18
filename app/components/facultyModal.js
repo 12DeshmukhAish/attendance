@@ -17,90 +17,83 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    if (mode === "edit" && faculty) {
-      setFormData({
-        facultyId: faculty.facultyId,
-        name: faculty.name,
-        department: faculty.department,
-        email: faculty.email,
-        password: faculty.password,
-        isAdmin: faculty.isAdmin,
-        _id: faculty._id,
-      });
-    } else {
-      setFormData({
-        facultyId: "",
-        name: "",
-        department: "",
-        email: "",
-        password: "",
-        isAdmin: false,
-      });
-    }
-  }, [mode, faculty]);
-
-  useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile));
     }
   }, []);
 
+  useEffect(() => {
+    if (mode === "edit" && faculty) {
+      setFormData({
+        ...faculty,
+        department: profile?.role === "superadmin" ? faculty.department : profile?.department,
+      });
+    } else {
+      setFormData({
+        facultyId: "",
+        name: "",
+        department: profile?.role === "superadmin" ? "" : profile?.department,
+        email: "",
+        password: "",
+        isAdmin: false,
+      });
+    }
+  }, [mode, faculty, profile]);
+
   const handleSelectChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updatedFormData = { ...formData, [name]: value };
+    if (profile?.role !== "superadmin" && name === "department") {
+      updatedFormData.department = profile?.department;
+    }
+    setFormData(updatedFormData);
   };
 
-  const handleClear = (e) => {
+  const handleClear = () => {
     setFormData({
       facultyId: "",
       name: "",
-      department: "",
+      department: profile?.role === "superadmin" ? "" : profile?.department,
       email: "",
       password: "",
       isAdmin: false,
     });
   };
-  // Remove this useEffect
-useEffect(() => {
-  if (profile?.role !== "superadmin") {
-    console.log(profile);
-    setFormData((prev) => ({
-      ...prev,
-      department: profile?.department,
-    }));
-  }
-}, [profile]);
 
   const handleSubmit = async () => {
     try {
+      const dataToSubmit = {
+        ...formData,
+        department: profile?.role === "superadmin" ? formData.department : profile?.department,
+      };
       let response;
       if (mode === "add") {
-        response = await axios.post("/api/faculty", formData);
+        response = await axios.post("/api/faculty", dataToSubmit);
         toast.success('Faculty added successfully');
         onSubmit();
-        handleClear()
-
       } else if (mode === "edit") {
-        response = await axios.put(`/api/faculty`, formData);
+        response = await axios.put(`/api/faculty`, dataToSubmit);
         toast.success('Faculty updated successfully');
-        handleClear()
       }
       onClose();
-      handleClear()
+      handleClear();
     } catch (error) {
       console.error("Error:", error);
       toast.error('Error occurred while saving faculty data');
     }
   };
+
   useEffect(() => {
     if (!isOpen) {
       handleClear();
     }
   }, [isOpen]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalContent>
@@ -145,7 +138,7 @@ useEffect(() => {
             <Input
               label="Department"
               name="department"
-              value={formData.department || profile?.department || ""}
+              value={profile?.department}
               disabled
               variant="bordered"
               size="sm"
