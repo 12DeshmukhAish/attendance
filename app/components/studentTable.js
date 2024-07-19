@@ -432,7 +432,7 @@ export default function StudentTable() {
           page={page}
           onChange={(newPage) => setPage(newPage)}
         />
-        {isLoading && <Spinner />}
+        {/* {isLoading && <Spinner />} */}
       </div>
       <StudentModal
         isOpen={modalOpen}
