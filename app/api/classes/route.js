@@ -78,8 +78,7 @@ export async function PUT(req) {
         console.error("Error updating class:", error);
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
     }
-}
-export async function GET(req) {
+}export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
@@ -94,7 +93,7 @@ export async function GET(req) {
 
         console.log("Filter criteria:", filter);
 
-        const classes = await Classes.find(filter);
+        const classes = await Classes.find(filter).populate('students teacher').lean();
 
         if (classes.length === 0) {
             console.log("No classes found for criteria:", filter);

@@ -386,6 +386,7 @@ export default function StudentTable() {
         sortDescriptor={sortDescriptor}
         topContent={topContent}
         topContentPlacement="outside"
+        onSortChange={setSortDescriptor}
       >
         <TableHeader columns={headerColumns}>
           {(column) => (
