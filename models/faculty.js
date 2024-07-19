@@ -14,10 +14,10 @@ const FacultySchema = new mongoose.Schema({
         type: String,
         ref: 'Subject'  // Ensure correct reference to Subject model
     }],
-    classes: [{
+    classes: {
         type: String,
         ref: 'Classes'  // Ensure correct reference to Class model
-    }],
+    },
     department: {
         type: String
     },
