@@ -134,23 +134,25 @@ const AttendanceDisplay = () => {
       }));
     } else if (userProfile.role === "admin" || userProfile.role === "superadmin") {
       if (viewType === "cumulative") {
-        wsData = attendanceData[0].students.map((student) => ({
-          "Roll No": student.rollNumber,
-          "Student Name": student.name,
-          ...attendanceData.reduce((acc, subject) => {
-            const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-            acc[subject.name] = `${studentData ? studentData.presentCount : 0}/${subject.totalLectures} (${studentData ? ((studentData.presentCount / subject.totalLectures) * 100).toFixed(2) : "NaN"}%)`;
-            return acc;
-          }, {}),
-          "Total Attendance": `${attendanceData.reduce((sum, subject) => {
-            const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-            return sum + (studentData ? studentData.presentCount : 0);
-          }, 0)}/${attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0)} (${((attendanceData.reduce((sum, subject) => {
-            const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-            return sum + (studentData ? studentData.presentCount : 0);
-          }, 0) / attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0)) * 100).toFixed(2)}%)`,
-        }));
-      } else if (viewType === "individual") {
+        wsData = attendanceData[0].students
+          .sort((a, b) => a.rollNumber.localeCompare(b.rollNumber))
+          .map((student) => ({
+            "Roll No": student.rollNumber,
+            "Student Name": student.name,
+            ...attendanceData.reduce((acc, subject) => {
+              const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+              acc[`${subject.name}\nFaculty: ${subject.facultyName}`] = `Present: ${studentData ? studentData.presentCount : 0}\nTotal: ${subject.totalLectures}\n${studentData ? ((studentData.presentCount / subject.totalLectures) * 100).toFixed(2) : "NaN"}%`;
+              return acc;
+            }, {}),
+            "Total Attendance": `${attendanceData.reduce((sum, subject) => {
+              const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+              return sum + (studentData ? studentData.presentCount : 0);
+            }, 0)}/${attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0)} (${((attendanceData.reduce((sum, subject) => {
+              const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+              return sum + (studentData ? studentData.presentCount : 0);
+            }, 0) / attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0)) * 100).toFixed(2)}%)`,
+          }));
+      }else if (viewType === "individual") {
         wsData = attendanceData[0].students.map((student) => ({
           "Student Name": student.name,
           "Roll Number": student.rollNumber,
@@ -226,55 +228,55 @@ const AttendanceDisplay = () => {
       <div>
         {viewType === "cumulative" ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse block md:table">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border px-4 py-2">Roll No</th>
-                  <th className="border px-4 py-2">Student Name</th>
-                  {attendanceData.map((subject) => (
-                    <th key={subject._id} className="border px-4 py-2">
-                      {subject.name}<br />
-                      Faculty: {subject.facultyName}
-                    </th>
-                  ))}
-                  <th className="border px-4 py-2">Total Attendance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendanceData[0].students
-                  .slice()
-                  .sort((a, b) => a.rollNumber.localeCompare(b.rollNumber))
-                  .map((student) => (
-                    <tr key={student.rollNumber}>
-                      <td className="border px-4 py-2">{student.rollNumber}</td>
-                      <td className="border px-4 py-2">{student.name}</td>
-                      {attendanceData.map((subject) => {
-                        const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-                        return (
-                          <td key={subject._id} className="border px-4 py-2">
-                            <div>Present: {studentData ? studentData.presentCount : 0}</div>
-                            <div>Total: {subject.totalLectures}</div>
-                            <div>{studentData ? ((studentData.presentCount / subject.totalLectures) * 100).toFixed(2) : "NaN"}%</div>
-                          </td>
-                        );
-                      })}
-                      <td className="border px-4 py-2">
-                        {attendanceData.reduce((sum, subject) => {
-                          const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-                          return sum + (studentData ? studentData.presentCount : 0);
-                        }, 0)}
-                        /
-                        {totalLectures}
-                        ({((attendanceData.reduce((sum, subject) => {
-                          const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
-                          return sum + (studentData ? studentData.presentCount : 0);
-                        }, 0) / totalLectures) * 100).toFixed(2)}%)
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+             <table className="min-w-full border-collapse block md:table">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border px-4 py-2">Roll No</th>
+            <th className="border px-4 py-2">Student Name</th>
+            {attendanceData.map((subject) => (
+              <th key={subject._id} className="border px-4 py-2">
+                {subject.name}<br />
+                Faculty: {subject.facultyName}
+              </th>
+            ))}
+            <th className="border px-4 py-2">Total Attendance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {attendanceData[0].students
+            .slice()
+            .sort((a, b) => a.rollNumber.localeCompare(b.rollNumber))
+            .map((student) => (
+              <tr key={student.rollNumber}>
+                <td className="border px-4 py-2">{student.rollNumber}</td>
+                <td className="border px-4 py-2">{student.name}</td>
+                {attendanceData.map((subject) => {
+                  const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                  return (
+                    <td key={subject._id} className="border px-4 py-2">
+                      <div>Present: {studentData ? studentData.presentCount : 0}</div>
+                      <div>Total: {subject.totalLectures}</div>
+                      <div>{studentData ? ((studentData.presentCount / subject.totalLectures) * 100).toFixed(2) : "NaN"}%</div>
+                    </td>
+                  );
+                })}
+                <td className="border px-4 py-2">
+                  {attendanceData.reduce((sum, subject) => {
+                    const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                    return sum + (studentData ? studentData.presentCount : 0);
+                  }, 0)}
+                  /
+                  {totalLectures}
+                  ({((attendanceData.reduce((sum, subject) => {
+                    const studentData = subject.students.find((s) => s.rollNumber === student.rollNumber);
+                    return sum + (studentData ? studentData.presentCount : 0);
+                  }, 0) / totalLectures) * 100).toFixed(2)}%)
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
         ) : (
           <Table aria-label="Individual Attendance Table">
             <TableHeader>
@@ -389,19 +391,23 @@ const AttendanceDisplay = () => {
         </div>
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Select Date Range</h2>
-        <DateRangePicker
-          aria-label="Date Range"
-          value={dateRange}
-          onChange={setDateRange}
-        />
-         <Button variant="ghost" color="primary" size="sm" onClick={generateExcelReport} className="mb-8">
-        Download Report
-      </Button>
+      <div className="mb-8 flex items-center gap-10 w-full justify-end ">
+        <div className="w-full">
+          <h2 className="text-xl font-semibold ">Select Date Range</h2>
+          <DateRangePicker
+            aria-label="Date Range"
+            value={dateRange}
+            onChange={setDateRange}
+          // className="w-50"
+          />
+        </div>
+        <div className="w-[10%]">  <Button variant="ghost" color="primary" size="sm" onClick={generateExcelReport} className="mb-8">
+          Download Report
+        </Button>
+        </div>
       </div>
 
-     
+
 
       {loading ? (
         <div className="flex justify-center items-center">
