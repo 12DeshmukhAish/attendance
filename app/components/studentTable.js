@@ -42,13 +42,11 @@ const columns = [
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
-import { departmentOptions } from "../utils/department";
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 
 export default function StudentTable() {
   const [filterValue, setFilterValue] = useState("");
-  const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortDescriptor, setSortDescriptor] = useState({
@@ -63,6 +61,7 @@ export default function StudentTable() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
+
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -71,9 +70,14 @@ export default function StudentTable() {
   }, []);
 
   useEffect(() => {
+    if (profile?.role !== "superadmin") {
+      setSelectedDepartment(profile?.department);
+    }
+  }, [profile]);
+
+  useEffect(() => {
     fetchStudents(selectedDepartment);
   }, [selectedDepartment]);
-
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -102,30 +106,16 @@ export default function StudentTable() {
     }
   };
 
-
-
-  useEffect(() => {
-    if (profile?.role !== "superadmin") {
-      setSelectedDepartment(profile?.department);
-    }
-  }, [profile]);
-  const handleSelectChange = (value) => {
-    setSelectedDepartment(value);
-  };
-  const fetchStudents = async (selectedDepartment) => {
+  const fetchStudents = async () => {
     try {
-      if (selectedDepartment) {
-        // console.log(selectedDepartment);
-        setIsLoading(true)
-        const response = await axios.get(`/api/student?department=${selectedDepartment}`);
-        setStudents(response.data);
-        setIsLoading(false)
-      }
-
+      setIsLoading(true);
+      const response = await axios.get(`/api/student${selectedDepartment ? `?department=${selectedDepartment}` : ''}`);
+      setStudents(response.data);
     } catch (error) {
       console.error('Error fetching students:', error);
-    }finally{
-      setIsLoading(false)
+      toast.error('Error fetching students');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -147,8 +137,6 @@ export default function StudentTable() {
     }
   };
 
-  const pages = Math.ceil(students.length / rowsPerPage);
-
   const hasSearchFilter = Boolean(filterValue);
 
   const headerColumns = useMemo(() => {
@@ -157,9 +145,6 @@ export default function StudentTable() {
   }, [visibleColumns]);
 
   const filteredItems = useMemo(() => {
-    if (!Array.isArray(students)) {
-      return [];
-    }
     let filteredStudents = [...students];
 
     if (hasSearchFilter) {
@@ -174,6 +159,8 @@ export default function StudentTable() {
     return filteredStudents;
   }, [students, filterValue]);
 
+  const pages = Math.ceil(filteredItems.length / rowsPerPage);
+
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
@@ -187,11 +174,9 @@ export default function StudentTable() {
       if (sortDescriptor.column === "rollNumber") {
         return parseInt(first) - parseInt(second);
       }
-
-      // Default sort for other fields
       return first < second ? -1 : first > second ? 1 : 0;
     });
-  }, [students, sortDescriptor]);
+  }, [items, sortDescriptor]);
 
   const renderCell = useCallback((student, columnKey) => {
     const cellValue = student[columnKey];
@@ -245,163 +230,57 @@ export default function StudentTable() {
     setSelectedStudent(null);
   };
 
-  const handleModalSubmit = async (formData) => {
+  const handleModalSubmit = async () => {
     fetchStudents();
-  }
+    setModalOpen(false);
+  };
+
   const openFileDialog = useCallback(() => {
     const fileInput = document.getElementById('upload-input');
     fileInput.click();
   }, []);
+
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
-        {profile?.role != "admin" && (
+        {profile?.role === 'superadmin' && (
           <Select
-            placeholder="Select department"
-            name="department"
-            className=" w-[40%] "
-            selectedKeys={[selectedDepartment]}
-            onSelectionChange={(value) => handleSelectChange(value.currentKey)}
-            variant="bordered"
-            size="sm"
+            label="Select Department"
+            placeholder="Select a department"
+            value={selectedDepartment}
+            onChange={(value) => setSelectedDepartment(value)}
+            className="max-w-xs"
           >
-
             {departmentOptions.map((department) => (
-              <SelectItem key={department.key} textValue={department.label}>
+              <SelectItem key={department.value} value={department.value}>
                 {department.label}
               </SelectItem>
             ))}
           </Select>
         )}
-        <div className="flex justify-between gap-3 items-end">
-          <Input
-            isClearable
-            classNames={{
-              base: "w-full sm:max-w-[44%]",
-              inputWrapper: "border-1",
-            }}
-            placeholder="Search by name or roll number..."
-            size="sm"
-            startContent={<SearchIcon className="text-default-300" />}
-            value={filterValue}
-            variant="bordered"
-            onClear={() => setFilterValue("")}
-            onValueChange={onSearchChange}
-          />
-          <div className="flex gap-3">
-
-            <Dropdown>
-              <DropdownTrigger className="hidden sm:flex">
-                <Button
-                  endContent={<ChevronDownIcon className="text-small" />}
-                  size="sm"
-                  variant="flat"
-                >
-                  Columns
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                disallowEmptySelection
-                aria-label="Table Columns"
-                closeOnSelect={false}
-                selectedKeys={visibleColumns}
-                selectionMode="multiple"
-                onSelectionChange={setVisibleColumns}
-              >
-                {columns.map((column) => (
-                  <DropdownItem key={column.uid} className="capitalize">
-                    {capitalize(column.name)}
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-            <Button
-              color="primary"
-              startContent="Add New"
-              endContent={<PlusIcon />}
-              size="sm"
-              onClick={() => {
-                setModalMode("add");
-                setModalOpen(true);
-              }}
-            >
-              Add New
-            </Button>
-            <input
-              type="file"
-              accept=".xlsx, .xls"
-              onChange={handleFileUpload}
-              id="upload-input"
-              className="hidden"
-            />
-            <Button
-              color="primary"
-              variant="ghost"
-              size="sm"
-              onClick={openFileDialog}
-              endContent={<FaFileUpload />}
-            >
-              Upload File
-            </Button>
-            <Button
-              color="primary"
-              size="sm"
-              variant="ghost"
-              onClick={downloadExcel}
-              endContent={<FaFileDownload />}
-            >
-              Download
-            </Button>
-          </div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-default-400 text-small">Total {students.length} students</span>
-          <label className="flex items-center text-default-400 text-small">
-            Rows per page:
-            <select
-              className="bg-transparent outline-none text-default-400 text-small"
-              onChange={onRowsPerPageChange}
-            >
-              <option value="10">
-                10</option>
-              <option value="15">15</option>
-            </select>
-          </label>
-        </div>
       </div>
     );
-  }, [
-    filterValue,
-    visibleColumns,
-    onSearchChange,
-    onRowsPerPageChange,
-    students.length,
-  ]);
+  }, [profile, selectedDepartment]);
 
-  const bottomContent = useMemo(() => {
-    const selectedKeysText = selectedKeys === "all" ?
-      "All items selected" :
-      `${selectedKeys.size} of ${items.length} selected`;
-
-    return (
-      <div className="py-2 px-2 flex justify-between items-center">
-        <Pagination
-          showControls
-          classNames={{
-            cursor: "bg-foreground text-background",
-          }}
-          color="default"
-          page={page}
-          total={pages}
-          variant="light"
-          onChange={setPage}
-        />
-        <span className="text-small text-default-400">
-          {selectedKeysText}
-        </span>
-      </div>
-    );
-  }, [selectedKeys, items.length, page, pages]);
+  const bottomContent = (
+    <div className="flex justify-between items-center">
+      <span className="text-default-400 text-small">Total {students.length} students</span>
+      <label className="flex items-center text-default-400 text-small">
+        Rows per page:
+        <select
+          className="bg-transparent outline-none text-default-400 text-small"
+          onChange={onRowsPerPageChange}
+          value={rowsPerPage}
+        >
+          {[5, 10, 15].map((rows) => (
+            <option key={rows} value={rows}>
+              {rows}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
 
   const classNames = {
     wrapper: ["max-h-[382px]", "max-w-3xl"],
@@ -416,25 +295,97 @@ export default function StudentTable() {
   };
 
   return (
-    <>
+    <div>
+      <div className="flex justify-between gap-3 items-end">
+        <Input
+          isClearable
+          classNames={{
+            base: "w-full sm:max-w-[44%]",
+            inputWrapper: "border-1",
+          }}
+          placeholder="Search by name or roll number..."
+          size="sm"
+          startContent={<SearchIcon className="text-default-300" />}
+          value={filterValue}
+          variant="bordered"
+          onClear={() => setFilterValue("")}
+          onValueChange={onSearchChange}
+        />
+        <div className="flex gap-3">
+          <Dropdown>
+            <DropdownTrigger className="hidden sm:flex">
+              <Button
+                endContent={<ChevronDownIcon className="text-small" />}
+                size="sm"
+                variant="flat"
+              >
+                Columns
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              disallowEmptySelection
+              aria-label="Table Columns"
+              closeOnSelect={false}
+              selectedKeys={visibleColumns}
+              selectionMode="multiple"
+              onSelectionChange={setVisibleColumns}
+            >
+              {columns.map((column) => (
+                <DropdownItem key={column.uid} className="capitalize">
+                  {capitalize(column.name)}
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+          <Button
+            color="primary"
+            startContent="Add New"
+            endContent={<PlusIcon />}
+            size="sm"
+            onClick={() => {
+              setModalMode("add");
+              setModalOpen(true);
+            }}
+          >
+            Add New
+          </Button>
+          <Button
+            color="primary"
+            variant="ghost"
+            size="sm"
+            onClick={openFileDialog}
+            endContent={<FaFileUpload />}
+          >
+            Upload File
+          </Button>
+          <input
+            id="upload-input"
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
+          <Button
+            color="primary"
+            size="sm"
+            variant="ghost"
+            onClick={downloadExcel}
+            endContent={<FaFileDownload />}
+          >
+            Download
+          </Button>
+        </div>
+      </div>
       <Table
         isCompact
         removeWrapper
         aria-label="Student table with custom cells, pagination and sorting"
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
-        checkboxesProps={{
-          classNames: {
-            wrapper: "after:bg-foreground after:text-background text-background ",
-          },
-        }}
         classNames={classNames}
-        selectedKeys={selectedKeys}
         sortDescriptor={sortDescriptor}
         topContent={topContent}
         topContentPlacement="outside"
-        onSelectionChange={setSelectedKeys}
-        onSortChange={setSortDescriptor}
       >
         <TableHeader columns={headerColumns}>
           {(column) => (
@@ -460,14 +411,28 @@ export default function StudentTable() {
               />
               <p>No students found</p>
             </div>
-          } items={sortedItems}>
+          }
+          items={sortedItems}
+        >
           {(student) => (
             <TableRow key={student._id}>
-              {(columnKey) => <TableCell>{renderCell(student, columnKey)}</TableCell>}
+              {headerColumns.map((column) => (
+                <TableCell key={column.uid}>
+                  {renderCell(student, column.uid)}
+                </TableCell>
+              ))}
             </TableRow>
           )}
         </TableBody>
       </Table>
+      <div className="mt-4 flex justify-between items-center">
+        <Pagination
+          total={pages}
+          page={page}
+          onChange={(newPage) => setPage(newPage)}
+        />
+        {isLoading && <Spinner />}
+      </div>
       <StudentModal
         isOpen={modalOpen}
         onClose={handleModalClose}
@@ -475,6 +440,6 @@ export default function StudentTable() {
         student={selectedStudent}
         onSubmit={handleModalSubmit}
       />
-    </>
+    </div>
   );
 }
