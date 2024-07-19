@@ -63,36 +63,35 @@ export async function GET(req) {
   }
 }
 
-
 export async function PUT(req) {
   try {
     await connectMongoDB();
     const { subjectId, session, attendanceData } = await req.json();
-console.log(attendanceData);
-    if (!subjectId  || !session || !attendanceData) {
+    console.log(attendanceData);
+
+    if (!subjectId || !session || !attendanceData) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
-
-    // Parse date string to Date object (assuming date is in ISO format)
-    // const parsedDate = new Date(date);
 
     const result = await Attendance.findOneAndUpdate(
       {
         subject: subjectId,
-        // date: parsedDate,
         session: parseInt(session)
       },
       {
         $set: {
           subject: subjectId,
-          // date: parsedDate,
           session: parseInt(session),
-          records: attendanceData
+          records: attendanceData.map(record => ({
+            student: record.studentId,
+            status: record.status
+          }))
         }
       },
       { upsert: true, new: true }
     );
-console.log(result);
+    console.log(result);
+
     return NextResponse.json({ message: "Attendance updated successfully", result }, { status: 200 });
 
   } catch (error) {
