@@ -26,6 +26,9 @@ const AttendanceSchema = new mongoose.Schema({
         ref: 'Subject',
         required: true,
     },
+    batch:{
+        type:String,
+    },
     session: {
         type: Number,
         required: true

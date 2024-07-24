@@ -48,37 +48,45 @@ export default function App() {
   const handleTakeAttendance = () => {
     setIsTableVisible(true);
   };
-
   const submitAttendance = async () => {
     if (selectedSubject === "Subject") {
       alert("Please select a subject");
       return;
     }
-
+  
     if (!selectedSession) {
       alert("Please select a session");
       return;
     }
-    let selectedStudents = [];
+  
+  
+    // Create attendance records
+   
+    let presentStudentIds = [];
     if (selectedKeys instanceof Set) {
       if (selectedKeys.has("all")) {
-        selectedStudents = students.map(student => student._id); // Use student._id here
+        presentStudentIds = students.map(student => student._id); // Use student._id here
       } else {
-        selectedStudents = Array.from(selectedKeys);
+        presentStudentIds = Array.from(selectedKeys);
       }
     } else {
-      selectedStudents = selectedKeys.includes("all")
+      presentStudentIds = selectedKeys.includes("all")
         ? students.map(student => student._id) 
         : selectedKeys;
     }
-
+    const attendanceRecords = students.map(student => ({
+      student: student._id,
+      status: presentStudentIds.includes(student._id) ? 'present' : 'absent'
+    }));
+  
     const attendanceData = {
       subject: selectedSubject,
       session: selectedSession,
-      presentStudents: selectedStudents,
-      contents: selectedContents
+      attendanceRecords,
+      contents: selectedContents,
+      batchId: selectedBatch
     };
-
+  
     try {
       const response = await axios.post('/api/attendance', attendanceData);
       console.log('Attendance submitted successfully:', response.data);
@@ -89,7 +97,7 @@ export default function App() {
       alert("Failed to submit attendance");
     }
   };
-
+  
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex space-x-4 mb-4 items-center">
@@ -127,8 +135,8 @@ export default function App() {
             selectedKeys={selectedBatch ? new Set([selectedBatch]) : new Set()}
             onSelectionChange={(keys) => setSelectedBatch(Array.from(keys)[0])}
           >
-            {batches.map((batch) => (
-              <DropdownItem key={batch._id}>{batch._id}</DropdownItem>
+            {batches && batches.map((batch) => (
+              <DropdownItem key={batch}>{batch}</DropdownItem>
             ))}
           </DropdownMenu>
         </Dropdown>
@@ -158,7 +166,7 @@ export default function App() {
         </Button>
       </div>
 
-      {selectedSubject !== "Subject" && subjectDetails && (
+      {selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
         <div className="flex gap-4 mb-4">
           <div className="w-1/2">
             <h2>Course Content</h2>
@@ -230,13 +238,13 @@ export default function App() {
         </div>
       )}
 
-      {students.length && (
-        <Button color="primary" className="w-50" variant="shadow" onClick={submitAttendance}>
+      {isTableVisible && (
+        <Button color="primary" className="max-w-[50%] mx-auto" variant="shadow" onClick={submitAttendance}>
           Submit Attendance
         </Button>
       )}
 
-      {!students.length && (
+      {!students.length && !isTableVisible && (
         <div className="flex justify-center mt-4">
           <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
         </div>

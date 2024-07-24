@@ -9,12 +9,15 @@ const BatchSchema = new mongoose.Schema({
         type: String,
         enum: ['practical', 'TG'],
         required: true,
-        
     },
     students: [{
         type: String,
         ref: 'Student',
     }],
+    subjects: [{
+        type: String,
+        ref: 'Subject',
+    }]
 }, { _id: false });
 
 const classSchema = new mongoose.Schema({

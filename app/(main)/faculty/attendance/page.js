@@ -5,6 +5,7 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from 
 import axios from 'axios';
 import { DatePicker } from "@nextui-org/date-picker";
 import Image from "next/image";
+import { parseAbsoluteToLocal } from "@internationalized/date";
 
 export default function App() {
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -17,6 +18,8 @@ export default function App() {
   const [subjectDetails, setSubjectDetails] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [attendanceRecord, setAttendanceRecord] = useState(null);
+  const [batches, setBatches] = useState([]);
+  const [selectedBatch, setSelectedBatch] = useState(null);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -35,18 +38,27 @@ export default function App() {
       console.log('Fetching attendance for:', { selectedSubject, selectedDate, selectedSession });
       fetchSubjectAttendance();
     }
-  }, [selectedSubject, selectedDate, selectedSession]);
+  }, [selectedSubject, selectedDate, selectedSession, selectedBatch]);
+
+  useEffect(() => {
+    if (selectedSubject) {
+      console.log(selectedBatch);
+      console.log('Fetching attendance for:', { selectedBatch });
+      fetchSubjectAttendance();
+    }
+  }, [selectedSubject,selectedDate]);
 
   const fetchSubjectAttendance = async () => {
     try {
-      const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate}&session=${selectedSession}`);
-      const { subject, students, attendanceRecord } = response.data;
+      const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate.toISOString().split("T")[0]}&session=${selectedSession}&batchId=${selectedBatch}`);
+      const { subject, students, attendanceRecord, batches } = response.data;
       console.log(response.data);
       setSubjectDetails(subject);
+      setBatches(batches);
       setStudents(students);
       setAttendanceRecord(attendanceRecord);
       if (attendanceRecord) {
-        setSelectedKeys(new Set(attendanceRecord.records.map(r => r.student)));
+        setSelectedKeys(new Set(attendanceRecord.records.map(r => r.status == "present" && r.student)));
         setSelectedContents(attendanceRecord.contents || []);
       } else {
         setSelectedKeys(new Set());
@@ -57,29 +69,48 @@ export default function App() {
     }
   };
 
+  const convertToDate = (customDate) => {
+    const { year, month, day } = customDate;
+    return new Date(year, month - 1, day + 1);
+  };
+
   const updateAttendance = async () => {
     if (!selectedSubject || !selectedDate || !selectedSession) {
       alert("Please select subject, date, and session");
       return;
     }
 
+    let presentStudentIds = [];
+    if (selectedKeys instanceof Set) {
+      if (selectedKeys.has("all")) {
+        presentStudentIds = students.map(student => student._id); // Use student._id here
+      } else {
+        presentStudentIds = Array.from(selectedKeys);
+      }
+    } else {
+      presentStudentIds = selectedKeys.includes("all")
+        ? students.map(student => student._id)
+        : selectedKeys;
+    }
     const attendanceData = students.map(student => ({
-      studentId: student._id,
-      status: selectedKeys.has(student._id) ? 'present' : 'absent'
+      student: student._id,
+      status: presentStudentIds.includes(student._id) ? 'present' : 'absent'
     }));
 
     try {
       console.log(attendanceData);
-      const response = await axios.put(`/api/update`, {
-        subjectId: selectedSubject,
-        // date: selectedDate.toISOString().split('T')[0],
+      console.log("date:", new Date(selectedDate));
+      const response = await axios.put(`/api/attendance`, {
+        subject: selectedSubject,
+        date: selectedDate.toISOString().split("T")[0],
         session: selectedSession,
-        attendanceData
+        batchId: selectedBatch,
+        attendanceRecords: attendanceData
       });
 
       console.log('Attendance updated successfully:', response.data);
       alert("Attendance updated successfully");
-      fetchSubjectAttendance(); // Refresh the data
+      fetchSubjectAttendance();
     } catch (error) {
       console.error('Failed to update attendance:', error);
       alert("Failed to update attendance");
@@ -114,14 +145,14 @@ export default function App() {
           <DatePicker
             selected={selectedDate}
             onChange={date => {
-              console.log('Date changed:', date);
-              setSelectedDate(date);
+              console.log(selectedDate);
+              setSelectedDate(convertToDate(date));
             }}
             dateFormat="yyyy-MM-dd"
           />
         </div>
         <div className="max-w-[60%]">
-          <Dropdown >
+          <Dropdown>
             <DropdownTrigger>
               <Button variant="bordered" className="capitalize">
                 {selectedSession ? `Session ${selectedSession}` : "Select Session"}
@@ -145,6 +176,29 @@ export default function App() {
             </DropdownMenu>
           </Dropdown>
         </div>
+        {batches?.length > 0 && (
+          <div className="max-w-[60%]">
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered" className="capitalize">
+                  {selectedBatch ? `Batch ${selectedBatch}` : "Select Batch"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Batch selection"
+                variant="flat"
+                disallowEmptySelection
+                selectionMode="single"
+                selectedKeys={selectedBatch ? new Set([selectedBatch]) : new Set()}
+                onSelectionChange={(keys) => setSelectedBatch(Array.from(keys)[0])}
+              >
+                {batches.map((batch) => (
+                  <DropdownItem key={batch}>{batch}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+        )}
       </div>
       {subjectDetails && (
         <div className="mb-4">
@@ -175,29 +229,36 @@ export default function App() {
             <TableHeader>
               <TableColumn>Roll Number</TableColumn>
               <TableColumn>Name</TableColumn>
-
             </TableHeader>
-            <TableBody>
+            <TableBody
+            className="max-h-[80vh]"
+            >
               {students.map((student) => (
                 <TableRow key={student._id}>
                   <TableCell>{student.rollNumber}</TableCell>
                   <TableCell>{student.name}</TableCell>
-
                 </TableRow>
               ))}
             </TableBody>
           </Table>
 
-          <Button className="max-w-[50%] mx-auto" color="primary" variant="shadow" onClick={updateAttendance}>
-            Update Attendance
+          <Button className="max-w-[50%] mx-auto" color="primary" onPress={updateAttendance}>
+            Submit Attendance
           </Button>
         </div>
       )}
-      {!students &&
-        <div>
-          <Image src="/update.svg"></Image>
+      {students.length === 0 && (
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <Image
+            alt="No data found"
+            src="/no-search-data.png"
+            width={100}
+            height={100}
+            className="object-contain"
+          />
+          <p className="text-2xl">No Students Found</p>
         </div>
-      }
+      )}
     </div>
   );
 }
