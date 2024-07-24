@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Classes from "@/models/className";
 import Student from "@/models/student";
-
+import Faculty from "@/models/faculty";
 
 export async function POST(req) {
     try {
@@ -27,7 +27,11 @@ export async function POST(req) {
             { _id: { $in: students } },
             { $set: { class: newClass._id } }
         );
-
+        await Faculty.findByIdAndUpdate(
+            classCoordinator,
+            { $push: { coordinatedClasses: newClass._id } },
+            { new: true }
+        );
         console.log("Class Registered Successfully", newClass);
         return NextResponse.json({ message: "Class Registered Successfully", class: newClass }, { status: 201 });
     } catch (error) {
