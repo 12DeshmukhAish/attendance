@@ -18,7 +18,6 @@ const FacultySchema = new mongoose.Schema({
         type: String,
         ref: 'Classes'  // Ensure correct reference to Class model
     },
-    // coordinatedClasses: { type: mongoose.Schema.Types.ObjectId, ref: 'Classes' },
     department: {
         type: String
     },

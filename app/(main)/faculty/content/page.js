@@ -562,7 +562,7 @@ const TeachingPlanPage = () => {
                   label="Proposed Date"
                   value={item.proposedDate}
                   onChange={(e) => handleContentChange(index, e)}
-                  required
+                 
                   className="w-full"
                   variant="bordered"
                   size="sm"
@@ -573,7 +573,7 @@ const TeachingPlanPage = () => {
                   label="Completed Date"
                   value={item.completedDate}
                   onChange={(e) => handleContentChange(index, e)}
-                  required
+               
                   className="w-full"
                   variant="bordered"
                   size="sm"
@@ -584,7 +584,7 @@ const TeachingPlanPage = () => {
                   label="References"
                   value={item.references}
                   onChange={(e) => handleContentChange(index, e)}
-                  required
+                  
                   className="w-full"
                   variant="bordered"
                   size="sm"

@@ -98,7 +98,10 @@ export async function GET(req) {
 
         console.log("Filter criteria:", filter);
 
-        const classes = await Classes.find(filter);
+        const classes = await Classes.find(filter)
+            .populate('teacher', 'name')
+            .populate('students', '_id')
+            .lean();
 
         if (classes.length === 0) {
             console.log("No classes found for criteria:", filter);

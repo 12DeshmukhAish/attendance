@@ -19,10 +19,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const [teacherId, setTeacherId] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [subjectType, setSubjectType] = useState('');
+  const [batchIds, setBatchIds] = useState([]);
   const [profile, setProfile] = useState(null);
   const [classes, setClasses] = useState([]);
+  const [batches, setBatches] = useState([]);
 
-  console.log(subjectData);
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -44,6 +45,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       setTeacherId(subjectData.teacher);
       setSelectedDepartment(subjectData.department);
       setSubjectType(subjectData.subType);
+      setBatchIds(subjectData.batchIds || []);
     } else {
       resetForm();
     }
@@ -55,6 +57,15 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, [selectedDepartment]);
 
+  useEffect(() => {
+    if (classId && subjectType === 'practical') {
+      const selectedClass = classes.find(cls => cls._id === classId);
+      setBatches(selectedClass ? selectedClass.batches : []);
+    } else {
+      setBatches([]);
+    }
+  }, [classId, subjectType, classes]);
+
   const fetchClasses = async () => {
     try {
       const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
@@ -64,6 +75,11 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   };
 
+  
+  const handleSelectionChange = (keys) => {
+    setBatchIds(new Set(keys));
+  };
+
   const resetForm = () => {
     setSubjectId('');
     setName('');
@@ -71,6 +87,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     setTeacherId('');
     setSelectedDepartment('');
     setSubjectType('');
+    setBatchIds([]);
   };
 
   const handleSelectChange = (value) => {
@@ -90,6 +107,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       teacher: teacherId,
       department: selectedDepartment,
       type: subjectType,
+      batchIds: subjectType === 'practical' ? Array.from(batchIds) : undefined,
     };
 
     try {
@@ -172,15 +190,16 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               size='sm'
             >
              {Array.isArray(classes) && classes.length > 0 ? (
-  classes.map((classItem) => (
-    <SelectItem key={classItem._id} value={classItem._id}>
-      {classItem._id}
-    </SelectItem>
-  ))
-) : (
-  <SelectItem value="no-classes">No classes available</SelectItem>
-)}
+              classes.map((classItem) => (
+                <SelectItem key={classItem._id} value={classItem._id}>
+                  {classItem._id}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="no-classes">No classes available</SelectItem>
+            )}
             </Select>
+            
             <Select
               label="Subject Teacher"
               placeholder="Select Subject Teacher"
@@ -210,22 +229,41 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               <SelectItem key="theory" textValue='theory'>Theory</SelectItem>
               <SelectItem key="practical" value="practical">Practical</SelectItem>
             </Select>
+            {subjectType === 'practical' && (
+              <Select
+                label="Batches"
+                placeholder="Select Batches"
+                className="col-span-1 w-full"
+                selectedKeys={Array.from(batchIds)}
+                onSelectionChange={handleSelectionChange} required
+                variant="bordered"
+                size='sm'
+                selectionMode="multiple"
+              >
+                {batches.map((batch) => (
+                  <SelectItem key={batch._id} value={batch._id}>
+                    {batch._id}
+                  </SelectItem>
+                ))}
+              </Select>
+            )}
             <div className="col-span-2 flex justify-end gap-4">
               <Button
                 variant="ghost"
-                size='sm'
-                color="default"
+                size="sm"
                 onClick={handleCancel}
+                className="w-fit px-3 font-normal bg-gray-200 text-gray-600"
               >
                 Cancel
               </Button>
               <Button
-                variant="ghost"
-                size='sm'
-                color="primary"
                 type="submit"
+                variant="flat"
+                size="sm"
+                color="primary"
+                className="w-fit px-3 font-normal"
               >
-                {mode === 'add' ? 'Add Subject' : 'Save Changes'}
+                {mode === 'add' ? 'Add Subject' : 'Update Subject'}
               </Button>
             </div>
           </form>
