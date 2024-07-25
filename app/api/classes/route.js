@@ -18,20 +18,31 @@ export async function POST(req) {
             passOutYear,
             department,
             year,
-            batches // Save batches as part of the class
+            batches
         });
 
         await newClass.save();
 
+        // Update the students to reference the new class
         await Student.updateMany(
             { _id: { $in: students } },
             { $set: { class: newClass._id } }
         );
+
         await Faculty.findByIdAndUpdate(
             classCoordinator,
             { $push: { coordinatedClasses: newClass._id } },
             { new: true }
         );
+
+
+        // Update the faculty to reference the new class
+        await Faculty.updateOne(
+            { _id: classCoordinator },
+            { $set: { classes: newClass._id } }
+        );
+
+
         console.log("Class Registered Successfully", newClass);
         return NextResponse.json({ message: "Class Registered Successfully", class: newClass }, { status: 201 });
     } catch (error) {
@@ -55,13 +66,14 @@ export async function PUT(req) {
         }
 
         const previousStudentIds = existingClass.students;
+        const previousClassCoordinator = existingClass.teacher;
 
         existingClass.teacher = classCoordinator;
         existingClass.passOutYear = passOutYear;
         existingClass.department = department;
         existingClass.year = year;
         existingClass.students = students;
-        existingClass.batches = batches; // Update batches as part of the class
+        existingClass.batches = batches;
 
         // Update students to reference the new class
         await Student.updateMany(
@@ -74,6 +86,20 @@ export async function PUT(req) {
             { $set: { class: existingClass._id } }
         );
 
+        // Update the previous faculty to remove the class reference
+        if (previousClassCoordinator && previousClassCoordinator !== classCoordinator) {
+            await Faculty.updateOne(
+                { _id: previousClassCoordinator },
+                { $unset: { classes: "" } }
+            );
+        }
+
+        // Update the new faculty to reference the class
+        await Faculty.updateOne(
+            { _id: classCoordinator },
+            { $set: { classes: existingClass._id } }
+        );
+
         await existingClass.save();
 
         console.log("Class Updated Successfully", existingClass);
@@ -83,6 +109,7 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
     }
 }
+
 export async function GET(req) {
     try {
         await connectMongoDB();

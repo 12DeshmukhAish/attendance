@@ -250,7 +250,7 @@ export default function StudentTable() {
             value={selectedDepartment}
             onChange={(value) =>
               setSelectedDepartment(value.target.value)}
-            className="max-w-xs"
+            className="max-w-xs my-4"
           >
             {departmentOptions.map((department) => (
               <SelectItem key={department.key} value={department.label}>
