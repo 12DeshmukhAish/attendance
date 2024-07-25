@@ -55,6 +55,8 @@ const AttendanceDisplay = () => {
     const storedProfile = sessionStorage.getItem("userProfile");
     if (storedProfile) {
       const profile = JSON.parse(storedProfile);
+      if(profile?.classes) {
+        setSelectedClass(profile?.classes)}
       setUserProfile(profile);
       if (profile.role === "admin") {
         setSelectedDepartment(profile.department);
@@ -82,7 +84,11 @@ const AttendanceDisplay = () => {
       if (userProfile.role === "student") {
         url += `studentId=${userProfile._id}`;
       } else if (userProfile.role === "faculty") {
-        url += `subjectId=${selectedSubject}`;
+        if (userProfile.classes.includes(selectedClass) && viewType=="cumulative") {
+          url += `classId=${selectedClass}`;
+        } else {
+          url += `subjectId=${selectedSubject}`;
+        }
       } else if (userProfile.role === "admin" || userProfile.role === "superadmin") {
         url += `classId=${selectedClass}`;
         if (viewType === "individual" && selectedSubject) {
@@ -107,7 +113,7 @@ const AttendanceDisplay = () => {
     if (userProfile) {
       if (
         userProfile.role === "student" ||
-        (userProfile.role === "faculty" && selectedSubject) ||
+        (userProfile.role === "faculty" && (selectedSubject || userProfile.classes.includes(selectedClass))) ||
         ((userProfile.role === "admin" || userProfile.role === "superadmin") &&
           selectedClass &&
           (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))
@@ -483,7 +489,7 @@ const renderAdminAttendance = () => {
 };  if (!userProfile) {
     return <div>Loading please wait...</div>;
   }
-
+console.log(userProfile);
   return (
     <div className="p-4">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
@@ -509,7 +515,7 @@ const renderAdminAttendance = () => {
               ))}
             </Select>
           )}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin") && (
+          {(userProfile.role === "admin" || userProfile.role === "superadmin" ) && (
             <>
               <Dropdown>
                 <DropdownTrigger>
@@ -523,6 +529,10 @@ const renderAdminAttendance = () => {
                   ))}
                 </DropdownMenu>
               </Dropdown>
+              </>
+          )}
+              {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile.classes) && (
+            <>
               <Dropdown>
                 <DropdownTrigger>
                   <Button variant="bordered">{viewType === "cumulative" ? "Cumulative View" : "Individual View"}</Button>
@@ -533,7 +543,11 @@ const renderAdminAttendance = () => {
                   <DropdownItem key="cumulative">Cumulative View</DropdownItem>
                   <DropdownItem key="individual">Individual View</DropdownItem>
                 </DropdownMenu>
-              </Dropdown>
+              </Dropdown> 
+               </>
+          )}
+              {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile.classes) && (
+            <>
               {viewType === "individual" && (
                 <Dropdown>
                   <DropdownTrigger>
@@ -550,7 +564,7 @@ const renderAdminAttendance = () => {
               )}
             </>
           )}
-          {userProfile?.role === "faculty" && (
+          {userProfile?.role === "faculty" && viewType === "individual" && (
             <Dropdown>
               <DropdownTrigger>
                 <Button variant="bordered">
@@ -594,8 +608,8 @@ const renderAdminAttendance = () => {
       ) : attendanceData ? (
         <div>
           {userProfile.role === "student" && renderStudentAttendance()}
-          {userProfile.role === "faculty" && renderFacultyAttendance()}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin") && renderAdminAttendance()}
+          {(userProfile.role === "faculty" && !userProfile?.classes) && renderFacultyAttendance()}
+          {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile.classes) && renderAdminAttendance()}
         </div>
       ) : (
         <div>No attendance data available</div>
