@@ -244,40 +244,46 @@ import Student from "@/models/student";
 // import Classes from "@/models/className";
 // import Student from "@/models/student";
 // import Subject from "@/models/subject";
-
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { subject, session, presentStudents, contents, batch } = data;
-console.log(batch);
-console.log(data);  
-   if (data) {
+        const { subject, session, contents, batchId, attendanceRecords } = data;
+        console.log(data);
+        const sessions =data.session
+        if (subject && sessions && Array.isArray(sessions) && attendanceRecords) {
             const date = new Date();
+            const attendanceResults = [];
 
-            // Ensure batch is a string if required
-            const batchString = Array.isArray(batch) ? batch.join(',') : batch;
+            for (const session of sessions) {
+                const filter = { date, subject, session };
+                if (batchId) {
+                    filter.batch = batchId;
+                }
 
-            const attendanceRecord = await Attendance.findOneAndUpdate(
-                { date, subject, session, batch: batchString },
-                { 
-                    $setOnInsert: { date, subject, session, batch: batchString },
-                    $set: { records: presentStudents.map(student => ({ student, status: 'present' })) }
-                },
-                { upsert: true, new: true, runValidators: true }
-            );
+                const attendanceRecord = await Attendance.findOneAndUpdate(
+                    filter,
+                    {
+                        $setOnInsert: { date, subject, session, ...(batchId && { batch: batchId }) },
+                        $set: { records: attendanceRecords }
+                    },
+                    { upsert: true, new: true, runValidators: true }
+                );
 
-            await Subject.findByIdAndUpdate(
-                subject,
-                { $addToSet: { reports: attendanceRecord._id } }
-            );
+                await Subject.findByIdAndUpdate(
+                    subject,
+                    { $addToSet: { reports: attendanceRecord._id } }
+                );
+
+                attendanceResults.push(attendanceRecord);
+            }
 
             // Update content status to covered and set completed date
             if (contents && contents.length > 0) {
                 await Subject.updateOne(
                     { _id: subject },
-                    { 
-                        $set: { 
+                    {
+                        $set: {
                             "content.$[elem].status": "covered",
                             "content.$[elem].completedDate": date
                         }
@@ -288,8 +294,8 @@ console.log(data);
                 );
             }
 
-            console.log("Attendance Recorded Successfully", attendanceRecord);
-            return NextResponse.json({ message: "Attendance Recorded Successfully", attendance: attendanceRecord }, { status: 200 });
+            console.log("Attendance Recorded Successfully", attendanceResults);
+            return NextResponse.json({ message: "Attendance Recorded Successfully", attendance: attendanceResults }, { status: 200 });
         } else {
             return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
         }

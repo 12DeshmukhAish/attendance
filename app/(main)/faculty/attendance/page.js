@@ -46,13 +46,17 @@ export default function App() {
       console.log('Fetching attendance for:', { selectedBatch });
       fetchSubjectAttendance();
     }
-  }, [selectedSubject,selectedDate]);
+  }, [selectedSubject, selectedDate]);
 
   const fetchSubjectAttendance = async () => {
     try {
       const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate.toISOString().split("T")[0]}&session=${selectedSession}&batchId=${selectedBatch}`);
       const { subject, students, attendanceRecord, batches } = response.data;
       console.log(response.data);
+
+      // Sort students by roll number as a number
+      students.sort((a, b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
+
       setSubjectDetails(subject);
       setBatches(batches);
       setStudents(students);
@@ -251,9 +255,9 @@ export default function App() {
         <div className="mt-8 flex flex-col items-center gap-3">
           <Image
             alt="No data found"
-            src="/no-search-data.png"
-            width={100}
-            height={100}
+            src="/update.svg"
+            width={500}
+            height={500}
             className="object-contain"
           />
           <p className="text-2xl">No Students Found</p>

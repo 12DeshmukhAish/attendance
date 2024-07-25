@@ -4,6 +4,7 @@ import axios from "axios";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import { toast } from 'sonner';
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
+import { departmentOptions } from "../utils/department";
 import {
   Table,
   Tooltip,
