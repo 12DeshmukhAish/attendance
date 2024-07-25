@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
 // import { connectMongoDB } from "@/lib/connectDb";
 // import Attendance from "@/models/attendance";
 // import Subject from "@/models/subject";
@@ -245,35 +245,38 @@ import { NextResponse } from "next/server";
 // import Student from "@/models/student";
 // import Subject from "@/models/subject";
 
+import { connectMongoDB } from './mongodb'; // Adjust the path as needed
+import Attendance from './models/attendance'; // Adjust the path as needed
+import Subject from './models/subject'; // Adjust the path as needed
+import { NextResponse } from 'next/server'; // Adjust the path as needed
+
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { subject, session, presentStudents, contents, batch } = data;
-console.log(batch);
-console.log(data);  
-   if (data) {
-            const date = new Date();
+        const { subject, session, contents, batchId, attendanceRecords } = data;
+        console.log(data);
 
-            // Ensure batch is a string if required
-            const batchString = Array.isArray(batch) ? batch.join(',') : batch;
+        if (subject && session && attendanceRecords) {
+            const date = new Date();
+            const filter = { date, subject, session };
+            if (batchId) {
+                filter.batch = batchId;
+            }
 
             const attendanceRecord = await Attendance.findOneAndUpdate(
-                { date, subject, session, batch: batchString },
-                { 
-                    $setOnInsert: { date, subject, session, batch: batchString },
-                    $set: { records: presentStudents.map(student => ({ student, status: 'present' })) }
+                filter,
+                {
+                    $setOnInsert: { date, subject, session, ...(batchId && { batch: batchId }) },
+                    $set: { records: attendanceRecords }
                 },
                 { upsert: true, new: true, runValidators: true }
             );
 
-                await Subject.findByIdAndUpdate(
-                    subject,
-                    { $addToSet: { reports: attendanceRecord._id } }
-                );
-
-                attendanceResults.push(attendanceRecord);
-            }
+            await Subject.findByIdAndUpdate(
+                subject,
+                { $addToSet: { reports: attendanceRecord._id } }
+            );
 
             // Update content status to covered and set completed date
             if (contents && contents.length > 0) {
@@ -291,8 +294,8 @@ console.log(data);
                 );
             }
 
-            console.log("Attendance Recorded Successfully", attendanceResults);
-            return NextResponse.json({ message: "Attendance Recorded Successfully", attendance: attendanceResults }, { status: 200 });
+            console.log("Attendance Recorded Successfully", attendanceRecord);
+            return NextResponse.json({ message: "Attendance Recorded Successfully", attendance: attendanceRecord }, { status: 200 });
         } else {
             return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
         }
@@ -301,6 +304,7 @@ console.log(data);
         return NextResponse.json({ error: "Failed to Record Attendance" }, { status: 500 });
     }
 }
+
 export async function PUT(req) {
     try {
         await connectMongoDB();
