@@ -107,6 +107,10 @@ export default function ClassTable() {
     } catch (error) {
       console.error('Error fetching classes:', error);
     }
+    finally{
+      setIsLoading(false)
+
+    }
   };
 
   const fetchTeachers = async () => {
@@ -123,15 +127,7 @@ export default function ClassTable() {
     }
   };
 
-  const fetchStudents = async () => {
-    try {
-      const response = await axios.get('/api/students');
-      setStudents(response.data);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    }
-  };
-
+ 
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(classes);
     const workbook = XLSX.utils.book_new();
@@ -141,12 +137,17 @@ export default function ClassTable() {
 
   const deleteClass = async (_id) => {
     try {
+      setIsLoading(true)
       await axios.delete(`/api/classes?_id=${_id}`);
       fetchClasses();
       toast.success('Class deleted successfully');
     } catch (error) {
       console.error("Error deleting class:", error);
       toast.error('Error deleting class');
+    }
+    finally{
+      setIsLoading(true)
+
     }
   };
 
@@ -222,8 +223,8 @@ export default function ClassTable() {
         );
       case "teacher":
         return (
-          // <span>{teachers.find(teacher => teacher._id === cellValue)?.name}</span>
-          cellValue
+          <span>{cellValue.name}</span>
+          // cellValue
         );
       case "students":
         return (
