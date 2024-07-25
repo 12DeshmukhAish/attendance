@@ -5,7 +5,7 @@ import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import { departmentOptions } from "../utils/department";
 import { toast } from 'sonner';
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
-import { departmentOptions } from "../utils/department";
+
 import {
   Table,
   Tooltip,
