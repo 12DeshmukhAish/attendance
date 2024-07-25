@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
+import { departmentOptions } from "../utils/department";
 import { toast } from 'sonner';
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 import { departmentOptions } from "../utils/department";
@@ -77,8 +78,24 @@ export default function StudentTable() {
   }, [profile]);
 
   useEffect(() => {
+    if (selectedDepartment) {
     fetchStudents(selectedDepartment);
+      
+    }
   }, [selectedDepartment]);
+
+  const fetchStudents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`/api/student${selectedDepartment ? `?department=${selectedDepartment}` : ''}`);
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      toast.error('Error fetching students');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -107,19 +124,6 @@ export default function StudentTable() {
     }
   };
 
-  const fetchStudents = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(`/api/student${selectedDepartment ? `?department=${selectedDepartment}` : ''}`);
-      setStudents(response.data);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-      toast.error('Error fetching students');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(students);
     const workbook = XLSX.utils.book_new();
@@ -138,8 +142,6 @@ export default function StudentTable() {
     }
   };
 
-  const hasSearchFilter = Boolean(filterValue);
-
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
     return columns.filter((column) => visibleColumns.has(column.uid));
@@ -148,7 +150,7 @@ export default function StudentTable() {
   const filteredItems = useMemo(() => {
     let filteredStudents = [...students];
 
-    if (hasSearchFilter) {
+    if (filterValue) {
       filteredStudents = filteredStudents.filter((student) => {
         return (
           (student.name && student.name.toLowerCase().includes(filterValue.toLowerCase())) ||
@@ -184,7 +186,7 @@ export default function StudentTable() {
     switch (columnKey) {
       case "actions":
         return (
-          <div className="relative flex items-center justify-items-center  justify-center gap-2">
+          <div className="relative flex items-center justify-items-center justify-center gap-2">
             <Tooltip content="Edit">
               <span
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
@@ -218,12 +220,8 @@ export default function StudentTable() {
   }, []);
 
   const onSearchChange = useCallback((value) => {
-    if (value) {
-      setFilterValue(value);
-      setPage(1);
-    } else {
-      setFilterValue("");
-    }
+    setFilterValue(value);
+    setPage(1);
   }, []);
 
   const handleModalClose = () => {
@@ -246,14 +244,16 @@ export default function StudentTable() {
       <div className="flex flex-col gap-4">
         {profile?.role === 'superadmin' && (
           <Select
-            label="Select Department"
             placeholder="Select a department"
+            variant="bordered"
+            size="sm"
             value={selectedDepartment}
-            onChange={(value) => setSelectedDepartment(value)}
+            onChange={(value) =>
+              setSelectedDepartment(value.target.value)}
             className="max-w-xs"
           >
             {departmentOptions.map((department) => (
-              <SelectItem key={department.value} value={department.value}>
+              <SelectItem key={department.key} value={department.label}>
                 {department.label}
               </SelectItem>
             ))}
@@ -433,7 +433,6 @@ export default function StudentTable() {
           page={page}
           onChange={(newPage) => setPage(newPage)}
         />
-        {/* {isLoading && <Spinner />} */}
       </div>
       <StudentModal
         isOpen={modalOpen}
