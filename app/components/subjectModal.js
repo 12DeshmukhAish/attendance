@@ -75,7 +75,6 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   };
 
-  
   const handleSelectionChange = (keys) => {
     setBatchIds(new Set(keys));
   };
@@ -184,7 +183,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               placeholder="Select Class"
               className="col-span-1 w-full"
               selectedKeys={[classId]}
-              onChange={(e) => setClassId(e.target.value)}
+              onChange={(keys) => setClassId(keys.currentKey)}
               required
               variant="bordered"
               size='sm'
@@ -205,7 +204,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               placeholder="Select Subject Teacher"
               className="col-span-1 w-full"
               selectedKeys={[teacherId]}
-              onChange={(e) => setTeacherId(e.target.value)}
+              onSelectionChange={(keys) => setTeacherId(keys.currentKey)}
               required
               variant="bordered"
               size='sm'
@@ -221,7 +220,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               placeholder="Select Subject Type"
               className="col-span-1 w-full"
               selectedKeys={[subjectType]}
-              onChange={(e) => setSubjectType(e.target.value)}
+              onSelectionChange={(keys) => setSubjectType(keys.currentKey)}
               required
               variant="bordered"
               size='sm'
