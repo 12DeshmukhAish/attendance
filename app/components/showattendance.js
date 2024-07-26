@@ -41,7 +41,6 @@ const AttendanceDisplay = () => {
   const fetchClasses = async () => {
     if (userProfile?.role === "admin" || userProfile?.role === "superadmin") {
       try {
-        // Corrected URL construction using a string literal with template strings
         const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
         setClasses(response.data);
       } catch (error) {
@@ -49,7 +48,6 @@ const AttendanceDisplay = () => {
       }
     }
   };
-  
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem("userProfile");
