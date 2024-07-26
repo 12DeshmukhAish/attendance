@@ -29,11 +29,19 @@ export async function POST(req) {
             { $set: { class: newClass._id } }
         );
 
+        await Faculty.findByIdAndUpdate(
+            classCoordinator,
+            { $push: { coordinatedClasses: newClass._id } },
+            { new: true }
+        );
+
+
         // Update the faculty to reference the new class
         await Faculty.updateOne(
             { _id: classCoordinator },
             { $set: { classes: newClass._id } }
         );
+
 
         console.log("Class Registered Successfully", newClass);
         return NextResponse.json({ message: "Class Registered Successfully", class: newClass }, { status: 201 });

@@ -35,7 +35,7 @@ const columns = [
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "name", "class", "teacher", "actions"];
 
-export default function SubjectTable() {
+export default function SubjectTable({ user }) { // Added user prop
   const [filterValue, setFilterValue] = useState("");
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
@@ -49,23 +49,24 @@ export default function SubjectTable() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user && user.department) { // Check if user and user.department are defined
+      fetchData();
+    }
+  }, [user?.department]); // Added user.department dependency
 
   const fetchData = async () => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const response = await axios.get('/api/subjectData');
-      setSubjects(response.data.subjects || []);
+      const filteredSubjects = response.data.subjects.filter(subject => subject.department === user.department); // Filter subjects by department
+      setSubjects(filteredSubjects || []);
       setTeachers(response.data.teachers || []);
-      // setIsLoading(false)
     } catch (error) {
       console.error('Error fetching data:', error);
-    }finally{
-        setIsLoading(false);
-      }
-    };
-  
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const deleteSubject = async (_id) => {
     try {
@@ -210,8 +211,7 @@ export default function SubjectTable() {
           <TableHeader columns={headerColumns}>
             {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
           </TableHeader>
-          <TableBody   isLoading={isLoading}
-          loadingContent={<Spinner label="Loading..." />} items={sortedItems}>
+          <TableBody isLoading={isLoading} loadingContent={<Spinner label="Loading..." />} items={sortedItems}>
             {(item) => (
               <TableRow key={item._id}>
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

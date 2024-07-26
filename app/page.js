@@ -41,7 +41,7 @@ export default function Home() {
                 <img src="/5155462_2689047.svg" alt="Attendance System Illustration" className="w-full h-auto" />
               </div>
               <div className="w-1/2 text-left">
-                <h2 className="text-3xl font-bold text-blue-500 mb-4">About the Project</h2>
+                {/* <h2 className="text-3xl font-bold text-blue-500 mb-4">About the Project</h2> */}
                 <p className="text-gray-600 text-lg mb-4">
                   This Attendance System is designed to efficiently track and manage student attendance with ease.
                   It automates the attendance process, making it more convenient for teachers and students.
