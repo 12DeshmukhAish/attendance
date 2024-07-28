@@ -245,11 +245,10 @@
 // import Student from "@/models/student";
 // import Subject from "@/models/subject";
 
-import { connectMongoDB } from './mongodb'; // Adjust the path as needed
-import Attendance from './models/attendance'; // Adjust the path as needed
-import Subject from './models/subject'; // Adjust the path as needed
+import { connectMongoDB } from '@/lib/connectDb'; // Adjust the path as needed
+import Attendance from '@/models/attendance';
+import Subject from '@/models/subject';
 import { NextResponse } from 'next/server'; // Adjust the path as needed
-
 export async function POST(req) {
     try {
         await connectMongoDB();
@@ -259,43 +258,51 @@ export async function POST(req) {
 
         if (subject && session && attendanceRecords) {
             const date = new Date();
-            const filter = { date, subject, session };
-            if (batchId) {
-                filter.batch = batchId;
-            }
+            const sessions = Array.isArray(session) ? session : [session];
 
-            const attendanceRecord = await Attendance.findOneAndUpdate(
-                filter,
-                {
-                    $setOnInsert: { date, subject, session, ...(batchId && { batch: batchId }) },
-                    $set: { records: attendanceRecords }
-                },
-                { upsert: true, new: true, runValidators: true }
-            );
+            const attendanceRecordsPromises = sessions.map(async (sess) => {
+                const filter = { date, subject, session: sess };
+                if (batchId) {
+                    filter.batch = batchId;
+                }
 
-            await Subject.findByIdAndUpdate(
-                subject,
-                { $addToSet: { reports: attendanceRecord._id } }
-            );
-
-            // Update content status to covered and set completed date
-            if (contents && contents.length > 0) {
-                await Subject.updateOne(
-                    { _id: subject },
+                const attendanceRecord = await Attendance.findOneAndUpdate(
+                    filter,
                     {
-                        $set: {
-                            "content.$[elem].status": "covered",
-                            "content.$[elem].completedDate": date
-                        }
+                        $setOnInsert: { date, subject, session: sess, ...(batchId && { batch: batchId }) },
+                        $set: { records: attendanceRecords }
                     },
-                    {
-                        arrayFilters: [{ "elem.title": { $in: contents }, "elem.status": { $ne: "covered" } }]
-                    }
+                    { upsert: true, new: true, runValidators: true }
                 );
-            }
 
-            console.log("Attendance Recorded Successfully", attendanceRecord);
-            return NextResponse.json({ message: "Attendance Recorded Successfully", attendance: attendanceRecord }, { status: 200 });
+                await Subject.findByIdAndUpdate(
+                    subject,
+                    { $addToSet: { reports: attendanceRecord._id } }
+                );
+
+                // Update content status to covered and set completed date
+                if (contents && contents.length > 0) {
+                    await Subject.updateOne(
+                        { _id: subject },
+                        {
+                            $set: {
+                                "content.$[elem].status": "covered",
+                                "content.$[elem].completedDate": date
+                            }
+                        },
+                        {
+                            arrayFilters: [{ "elem.title": { $in: contents }, "elem.status": { $ne: "covered" } }]
+                        }
+                    );
+                }
+
+                return attendanceRecord;
+            });
+
+            const attendanceRecordsResult = await Promise.all(attendanceRecordsPromises);
+
+            console.log("Attendance Recorded Successfully", attendanceRecordsResult);
+            return NextResponse.json({ message: "Attendance Recorded Successfully", attendance: attendanceRecordsResult }, { status: 200 });
         } else {
             return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
         }
@@ -304,7 +311,6 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Record Attendance" }, { status: 500 });
     }
 }
-
 export async function PUT(req) {
     try {
         await connectMongoDB();
