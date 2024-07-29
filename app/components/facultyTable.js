@@ -21,6 +21,8 @@ import {
   DropdownMenu,
   DropdownItem,
   Pagination,
+  Select,
+  SelectItem,
   Spinner,
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
