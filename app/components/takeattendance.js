@@ -36,7 +36,7 @@ export default function App() {
 
   const fetchSubjectDetails = async (subjectId) => {
     try {
-      const response = await axios.get(`/api/subject?_id=${subjectId}&batchId=${selectedBatch || ''}`);
+      const response = await axios.get(`/api/utils/batches?_id=${subjectId}&batchId=${selectedBatch || ''}`);
       const { subject, batches, students } = response.data;
       setSubjectDetails(subject);
       setBatches(batches || []);

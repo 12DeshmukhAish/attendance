@@ -58,6 +58,12 @@ export async function GET(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
+        const department = searchParams.get("department");
+
+        let filter = {};
+        if (department) filter.department = department;
+
+        console.log("Filter criteria:", filter);
 
         if (_id) {
             const faculty = await Faculty.findById(_id);
@@ -67,7 +73,7 @@ export async function GET(req) {
             console.log("Fetched Faculty Successfully", faculty);
             return NextResponse.json(faculty, { status: 200 });
         } else {
-            const faculties = await Faculty.find();
+            const faculties = await Faculty.find(filter);
             console.log("Fetched Faculties Successfully", faculties);
             return NextResponse.json(faculties, { status: 200 });
         }

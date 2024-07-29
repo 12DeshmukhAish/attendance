@@ -48,6 +48,7 @@ export default function SubjectTable({ user }) { // Added user prop
   const [teachers, setTeachers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [classes, setClasses] = useState([]);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -66,7 +67,9 @@ export default function SubjectTable({ user }) { // Added user prop
       setIsLoading(true);
       const response = await axios.get(`/api/subjectData?department=${profile.department}`);
        setSubjects(response.data.subjects);
+       console.log(response.data);
       setTeachers(response.data.teachers || []);
+      setClasses(response.data.classes)
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -238,6 +241,7 @@ export default function SubjectTable({ user }) { // Added user prop
         subjectData={selectedSubject}
         onSubmit={fetchData}
         teachers={teachers}
+        classes={classes}
       />
     </>
   );

@@ -4,7 +4,6 @@ import Subject from "@/models/subject";
 import Classes from "@/models/className";
 import Faculty from "@/models/faculty";
 import Student from "@/models/student";
-connectMongoDB();
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -53,11 +52,10 @@ console.log(subjectId);
     return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
   }
 }
-
 export async function POST(request) {
   try {
-    const { _id, name, class: classId, teacher, department, type, batchIds } = await request.json();
-
+    const { _id, name, class: classId, teacher, department, type, batch } = await request.json();
+    console.log(batch);
     const newSubject = new Subject({
       _id,
       name,
@@ -65,7 +63,7 @@ export async function POST(request) {
       teacher,
       department,
       subType: type,
-      batchIds: type === 'practical'|| 'tg' ? batchIds : undefined,
+      batch: type === 'practical' || type === 'tg' ? batch : undefined,
     });
 
     await newSubject.save();
@@ -77,14 +75,14 @@ export async function POST(request) {
     if (type === 'theory') {
       // Theory subjects are added to all students in the class
       const classDoc = await Classes.findById(classId);
-      const studentIds = classDoc.students; // Assuming all students in the class are stored in this array
+      const studentIds = classDoc.students;
       await Student.updateMany({ _id: { $in: studentIds } }, { $push: { subjects: newSubject._id } });
-    } else if (batchIds && batchIds.length > 0) {
+    } else if (batch && batch.length > 0) {
       // Practical subjects are added to students in selected batches
       const classDoc = await Classes.findById(classId);
       const studentIds = classDoc.batches
-        .filter(batch => batchIds.includes(batch._id))
-        .flatMap(batch => batch.students);
+        .filter(b => batch.includes(b._id))
+        .flatMap(b => b.students);
 
       await Student.updateMany({ _id: { $in: studentIds } }, { $push: { subjects: newSubject._id } });
     }
@@ -93,6 +91,7 @@ export async function POST(request) {
     if (teacher) {
       await Faculty.findByIdAndUpdate(teacher, { $addToSet: { subjects: _id } });
     }
+
     console.log(newSubject);
     return NextResponse.json(newSubject);
   } catch (error) {
@@ -100,10 +99,9 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Error creating subject' }, { status: 500 });
   }
 }
-
 export async function PUT(request) {
   try {
-    const { _id, name, class: classId, teacher, department, type, batchIds } = await request.json();
+    const { _id, name, class: classId, teacher, department, type, batch } = await request.json();
 
     const oldSubject = await Subject.findById(_id);
 
@@ -115,7 +113,7 @@ export async function PUT(request) {
         teacher,
         department,
         subType: type,
-        batchIds: type === 'practical'|| 'tg' ? batchIds : undefined,
+        batch: type === 'practical' || type === 'tg' ? batch : undefined,
       },
       { new: true }
     );
@@ -142,18 +140,18 @@ export async function PUT(request) {
         const oldClassDoc = await Classes.findById(oldSubject.class);
         const newClassDoc = await Classes.findById(classId);
 
-        if (oldSubject.batchIds && oldSubject.batchIds.length > 0) {
+        if (oldSubject.batch && oldSubject.batch.length > 0) {
           const oldStudentIds = oldClassDoc.batches
-            .filter(batch => oldSubject.batchIds.includes(batch._id))
-            .flatMap(batch => batch.students);
+            .filter(b => oldSubject.batch.includes(b._id))
+            .flatMap(b => b.students);
 
           await Student.updateMany({ _id: { $in: oldStudentIds } }, { $pull: { subjects: _id } });
         }
 
-        if (batchIds && batchIds.length > 0) {
+        if (batch && batch.length > 0) {
           const newStudentIds = newClassDoc.batches
-            .filter(batch => batchIds.includes(batch._id))
-            .flatMap(batch => batch.students);
+            .filter(b => batch.includes(b._id))
+            .flatMap(b => b.students);
 
           await Student.updateMany({ _id: { $in: newStudentIds } }, { $push: { subjects: _id } });
         }
@@ -169,41 +167,5 @@ export async function PUT(request) {
     return NextResponse.json(updatedSubject);
   } catch (error) {
     return NextResponse.json({ error: 'Error updating subject' }, { status: 500 });
-  }
-}
-
-export async function DELETE(request) {
-  const url = new URL(request.url);
-  const subjectId = url.searchParams.get('_id');
-
-  try {
-    const subject = await Subject.findByIdAndDelete(subjectId);
-
-    if (subject) {
-      await Classes.findByIdAndUpdate(subject.class, { $pull: { subjects: subjectId } });
-
-      // Remove subject from students based on type
-      if (subject.subType === 'theory') {
-        const classDoc = await Classes.findById(subject.class);
-        const studentIds = classDoc.students;
-        await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
-      } else if (subject.batchIds && subject.batchIds.length > 0) {
-        const classDoc = await Classes.findById(subject.class);
-        const studentIds = classDoc.batches
-          .filter(batch => subject.batchIds.includes(batch._id))
-          .flatMap(batch => batch.students);
-
-        await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
-      }
-
-      // Remove subject from faculty
-      if (subject.teacher) {
-        await Faculty.findByIdAndUpdate(subject.teacher, { $pull: { subjects: subjectId } });
-      }
-    }
-
-    return NextResponse.json(subject);
-  } catch (error) {
-    return NextResponse.json({ error: 'Error deleting subject' }, { status: 500 });
   }
 }

@@ -12,7 +12,7 @@ import {
 } from '@nextui-org/react';
 import { departmentOptions } from '../utils/department';
 
-export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSubmit, teachers }) {
+export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSubmit, classes,teachers }) {
   const [subjectId, setSubjectId] = useState('');
   const [name, setName] = useState('');
   const [classId, setClassId] = useState('');
@@ -21,7 +21,6 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const [subjectType, setSubjectType] = useState('');
   const [batchIds, setBatchIds] = useState([]);
   const [profile, setProfile] = useState(null);
-  const [classes, setClasses] = useState([]);
   const [batches, setBatches] = useState([]);
 
   useEffect(() => {
@@ -37,6 +36,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, [profile]);
 
+  console.log(classId);
   useEffect(() => {
     if (subjectData) {
       setSubjectId(subjectData._id);
@@ -51,11 +51,6 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, [subjectData]);
 
-  useEffect(() => {
-    if (selectedDepartment) {
-      fetchClasses();
-    }
-  }, [selectedDepartment]);
 
   useEffect(() => {
     if (classId && subjectType === 'practical') {
@@ -66,19 +61,10 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
     }
   }, [classId, subjectType, classes]);
 
-  const fetchClasses = async () => {
-    try {
-      const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
-      setClasses(response.data);
-    } catch (error) {
-      console.error('Error fetching classes:', error);
-    }
+ 
+  const handleSelectionChange = (selectedKeys) => {
+    setBatchIds(Array.from(selectedKeys)); // Convert Set to Array
   };
-
-  const handleSelectionChange = (keys) => {
-    setBatchIds(new Set(keys));
-  };
-
   const resetForm = () => {
     setSubjectId('');
     setName('');
@@ -96,7 +82,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   const handleCancel = () => {
     onClose();
   };
-
+console.log(batchIds);
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = {
@@ -106,7 +92,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       teacher: teacherId,
       department: selectedDepartment,
       type: subjectType,
-      batchIds: subjectType === 'practical' ? Array.from(batchIds) : undefined,
+      batch: batchIds?  batchIds : undefined,
     };
 
     try {
@@ -183,7 +169,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               placeholder="Select Class"
               className="col-span-1 w-full"
               selectedKeys={[classId]}
-              onChange={(keys) => setClassId(keys.currentKey)}
+              onChange={(e) => setClassId(e.target.value)}
               required
               variant="bordered"
               size='sm'
@@ -209,7 +195,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               variant="bordered"
               size='sm'
             >
-              {teachers.map((teacher) => (
+              {teachers && teachers.map((teacher) => (
                 <SelectItem key={teacher._id} value={teacher._id}>
                   {teacher.name}
                 </SelectItem>
@@ -229,23 +215,24 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
               <SelectItem key="practical" value="practical">Practical</SelectItem>
               <SelectItem key="tg" value="tg">Teacher Guardian</SelectItem>
             </Select>
-            {subjectType === 'practical'||'tg' && (
-              <Select
-                label="Batches"
-                placeholder="Select Batches"
-                className="col-span-1 w-full"
-                selectedKeys={Array.from(batchIds)}
-                onSelectionChange={handleSelectionChange} required
-                variant="bordered"
-                size='sm'
-                selectionMode="multiple"
-              >
-                {batches.map((batch) => (
-                  <SelectItem key={batch._id} value={batch._id}>
-                    {batch._id}
-                  </SelectItem>
-                ))}
-              </Select>
+            {(subjectType === 'practical'||subjectType === 'tg') && (
+                  <Select
+                  label="Batches"
+                  placeholder="Select Batches"
+                  className="col-span-1 w-full"
+                  selectedKeys={batchIds}
+                  onSelectionChange={handleSelectionChange}
+                  required
+                  variant="bordered"
+                  size='sm'
+                  selectionMode="multiple"
+                >
+                  {batches && batches.map((batch) => (
+                    <SelectItem key={batch._id} value={batch._id}>
+                      {batch._id}
+                    </SelectItem>
+                  ))}
+                </Select>
             )}
             <div className="col-span-2 flex justify-end gap-4">
               <Button
