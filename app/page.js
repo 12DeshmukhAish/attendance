@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Head from 'next/head';
+import Image from 'next/image';
  // Make sure to import your global CSS file
 
 export default function Home() {
@@ -15,7 +16,7 @@ export default function Home() {
         <header className="bg-white shadow-md">
           <div className="container mx-auto flex justify-between items-center px-4 py-6">
             <div className="flex items-center gap-5">
-              <img src="/logoschool.jpeg" alt="Student Assure Logo" className="h-12" />
+              <Image src="/logoschool.jpeg" height={12} width={12} alt="Student Assure Logo" className="h-12" />
               <div>
                 <h1 className="text-lg font-bold text-gray-800">
                   Savitribai Phule Shikshan Prasarak Mandal &#39; s<br />
@@ -38,7 +39,7 @@ export default function Home() {
             <p className="text-gray-600 text-lg mb-8">Efficiently track and manage student attendance with ease.</p>
             <div className="flex justify-between items-center space-x-8">
               <div className="w-1/2">
-                <img src="/5155462_2689047.svg" alt="Attendance System Illustration" className="w-full h-auto" />
+                <Image src="/5155462_2689047.svg" width={600} height={600} alt="Attendance System Illustration" className="w-full h-auto" />
               </div>
               <div className="w-1/2 text-left">
                 {/* <h2 className="text-3xl font-bold text-blue-500 mb-4">About the Project</h2> */}

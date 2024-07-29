@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
+import Classes from './className';
 
 const ContentSchema = new mongoose.Schema({
     title: {
@@ -44,6 +45,9 @@ const SubjectSchema = new mongoose.Schema({
     teacher: {
         type: String,
         ref: 'Faculty'  
+    },
+    batch:{
+        type:[String]
     },
     department: {
         type: String

@@ -38,7 +38,7 @@ export default function App() {
       console.log('Fetching attendance for:', { selectedSubject, selectedDate, selectedSession });
       fetchSubjectAttendance();
     }
-  }, [selectedSubject, selectedDate, selectedSession, selectedBatch]);
+  }, [selectedSubject, selectedDate, selectedSession, selectedBatch,fetchSubjectAttendance]);
 
   useEffect(() => {
     if (selectedSubject) {
@@ -46,7 +46,7 @@ export default function App() {
       console.log('Fetching attendance for:', { selectedBatch });
       fetchSubjectAttendance();
     }
-  }, [selectedSubject, selectedDate]);
+  }, [selectedSubject, selectedDate,fetchSubjectAttendance]);
 
   const fetchSubjectAttendance = async () => {
     try {

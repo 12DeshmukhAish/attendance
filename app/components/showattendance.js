@@ -41,7 +41,7 @@ const AttendanceDisplay = () => {
   const fetchClasses = async () => {
     if (userProfile?.role === "admin" || userProfile?.role === "superadmin") {
       try {
-        const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
+        const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}`);
         setClasses(response.data);
       } catch (error) {
         console.error('Error fetching classes:', error);

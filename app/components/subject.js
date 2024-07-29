@@ -47,27 +47,37 @@ export default function SubjectTable({ user }) { // Added user prop
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [classes, setClasses] = useState([]);
 
+  useEffect(() => {
+
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
   useEffect(() => {
     if (profile && profile.department) { // Check if user and user.department are defined
       fetchData();
     }
-  }, [profile?.department]); // Added user.department dependency
+  }, [profile?.department]); 
+
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('/api/subjectData');
-      const filteredSubjects = response.data.subjects.filter(subject => subject.department === user.department); // Filter subjects by department
-      setSubjects(filteredSubjects || []);
+      const response = await axios.get(`/api/subjectData?department=${profile.department}`);
+       setSubjects(response.data.subjects);
+       console.log(response.data);
       setTeachers(response.data.teachers || []);
+      setClasses(response.data.classes)
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
   const deleteSubject = async (_id) => {
     try {
       await axios.delete(`/api/subject?_id=${_id}`);
@@ -233,6 +243,7 @@ export default function SubjectTable({ user }) { // Added user prop
         subjectData={selectedSubject}
         onSubmit={fetchData}
         teachers={teachers}
+        classes={classes}
       />
     </>
   );
