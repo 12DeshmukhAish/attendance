@@ -227,8 +227,9 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
             >
               <SelectItem key="theory" textValue='theory'>Theory</SelectItem>
               <SelectItem key="practical" value="practical">Practical</SelectItem>
+              <SelectItem key="tg" value="tg">Teacher Guardian</SelectItem>
             </Select>
-            {subjectType === 'practical' && (
+            {subjectType === 'practical'||'tg' && (
               <Select
                 label="Batches"
                 placeholder="Select Batches"
