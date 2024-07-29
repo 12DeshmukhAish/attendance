@@ -55,6 +55,11 @@ console.log(subjectId);
 export async function POST(request) {
   try {
     const { _id, name, class: classId, teacher, department, type, batch } = await request.json();
+    
+    if(!department) 
+      {
+        return NextResponse.json({error:"department is missing"})
+    }
     console.log(batch);
     const newSubject = new Subject({
       _id,
@@ -103,8 +108,11 @@ export async function PUT(request) {
   try {
     const { _id, name, class: classId, teacher, department, type, batch } = await request.json();
 
+    if(!department){
+      console.log("department is not found",department);
+      return NextResponse.json({error:"department is missing"})
+    }
     const oldSubject = await Subject.findById(_id);
-
     const updatedSubject = await Subject.findByIdAndUpdate(
       _id,
       {
@@ -166,6 +174,43 @@ export async function PUT(request) {
 
     return NextResponse.json(updatedSubject);
   } catch (error) {
+    console.log(error);
     return NextResponse.json({ error: 'Error updating subject' }, { status: 500 });
   }
 }
+export async function DELETE(request) {
+  const url = new URL(request.url);
+  const subjectId = url.searchParams.get('_id');
+
+  try {
+      const subject = await Subject.findByIdAndDelete(subjectId);
+
+      if (subject) {
+          await Classes.findByIdAndUpdate(subject.class, { $pull: { subjects: subjectId } });
+
+          // Remove subject from students based on type
+          if (subject.subType === 'theory') {
+              const classDoc = await Classes.findById(subject.class);
+              const studentIds = classDoc.students;
+              await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
+          } else if (subject.batchIds && subject.batchIds.length > 0) {
+              const classDoc = await Classes.findById(subject.class);
+              const studentIds = classDoc.batches
+                  .filter(batch => subject.batchIds.includes(batch._id))
+                  .flatMap(batch => batch.students);
+
+              await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
+          }
+
+          // Remove subject from faculty
+          if (subject.teacher) {
+              await Faculty.findByIdAndUpdate(subject.teacher, { $pull: { subjects: subjectId } });
+          }
+      }
+
+      return NextResponse.json(subject);
+  } catch (error) {
+      return NextResponse.json({ error: 'Error deleting subject' }, { status: 500 });
+  }
+}
+

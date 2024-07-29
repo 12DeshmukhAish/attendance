@@ -218,7 +218,7 @@ export default function FacultyTable() {
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4">
-        {profile?.role === 'superadmin' && (
+        {profile && profile?.role === 'superadmin' && (
           <Select
             placeholder="Select a department"
             variant="bordered"

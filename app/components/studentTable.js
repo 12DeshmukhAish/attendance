@@ -52,7 +52,7 @@ export default function StudentTable() {
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortDescriptor, setSortDescriptor] = useState({
-    column: "_id",
+    column: "rollNumber",
     direction: "ascending",
   });
   const [page, setPage] = useState(1);

@@ -9,7 +9,10 @@ export async function POST(req) {
         const data = await req.json();
         const { _id, rollNumber, name, passOutYear, department, phoneNo,email,password, year } = data;
         console.log(data);
-
+        if(!department){
+            console.log("department is not found",department);
+            return NextResponse.json({error:"department is missing"})
+          }
         const newStudent = new Student({
             _id,
             rollNumber,
@@ -36,7 +39,10 @@ export async function PUT(req) {
         await connectMongoDB();
         const data = await req.json();
         const { _id, rollNumber, name, passOutYear, department, phoneNo,email,password, year } = data;
-
+        if(!department){
+            console.log("department is not found",department);
+            return NextResponse.json({error:"department is missing"})
+          }
         const existingStudent = await Student.findByIdAndUpdate(_id, {
             rollNumber,
             name,

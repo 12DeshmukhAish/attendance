@@ -13,10 +13,6 @@ const BatchSchema = new mongoose.Schema({
     students: [{
         type: String,
         ref: 'Student',
-    }],
-    subjects: [{
-        type: String,
-        ref: 'Subject',
     }]
 }, { _id: false });
 
