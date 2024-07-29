@@ -21,7 +21,7 @@ export async function GET(request) {
       subject = await Subject.findById(subjectId).lean();
 
       if (subject) {
-        if (subject.subType === 'practical') {
+        if (subject.subType === 'practical' || 'tg') {
           const classDoc = await Classes.findById(subject.class).populate('batches').lean();
           if (classDoc && classDoc.batches) {
             // Filter batches allocated to this subject
@@ -65,7 +65,7 @@ export async function POST(request) {
       teacher,
       department,
       subType: type,
-      batchIds: type === 'practical' ? batchIds : undefined,
+      batchIds: type === 'practical'|| 'tg' ? batchIds : undefined,
     });
 
     await newSubject.save();
@@ -115,7 +115,7 @@ export async function PUT(request) {
         teacher,
         department,
         subType: type,
-        batchIds: type === 'practical' ? batchIds : undefined,
+        batchIds: type === 'practical'|| 'tg' ? batchIds : undefined,
       },
       { new: true }
     );
