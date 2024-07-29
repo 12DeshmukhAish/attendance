@@ -11,6 +11,7 @@
   "dependencies": {
     "@nextui-org/react": "^2.4.2",
     "axios": "^1.7.2",
+    "bcryptjs": "^2.4.3",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.2.12",
     "mongoose": "^8.4.4",

@@ -1,4 +1,5 @@
 "use client";
+import { departmentOptions } from "../utils/department";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import Image from "next/image";
@@ -20,6 +21,8 @@ import {
   DropdownMenu,
   DropdownItem,
   Pagination,
+  Select,
+  SelectItem,
   Spinner,
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
@@ -55,15 +58,35 @@ export default function FacultyTable() {
   const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [faculty, setFaculty] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => {
-    fetchFaculty();
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);  
+  const [profile, setProfile] = useState(null);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  
 
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+  useEffect(() => {
+    if (profile && profile?.role !== "superadmin") {
+      console.log(profile);
+      setSelectedDepartment(profile.department);
+      console.log(selectedDepartment);
+    }
+  }, [profile]);
+  useEffect(() => {
+    if (profile && profile.department) { // Check if user and user.department are defined
+      fetchFaculty();
+    }
+  }, [selectedDepartment]); 
+
+  
   const fetchFaculty = async () => {
     try {
       setIsLoading(true)
-      const response = await axios.get('/api/faculty');
+      const response = await axios.get(`/api/faculty${selectedDepartment ? `?department=${selectedDepartment}` : ''}`);
       setFaculty(response.data);
       setIsLoading(false)
     } catch (error) {
@@ -194,6 +217,25 @@ export default function FacultyTable() {
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
+        {profile?.role === 'superadmin' && (
+          <Select
+            placeholder="Select a department"
+            variant="bordered"
+            size="sm"
+            value={selectedDepartment}
+            onChange={(value) =>
+              setSelectedDepartment(value.target.value)}
+            className="max-w-xs my-4"
+          >
+            {departmentOptions.map((department) => (
+              <SelectItem key={department.key} value={department.label}>
+                {department.label}
+              </SelectItem>
+            ))}
+          </Select>
+        )}
+      </div>
         <div className="flex justify-between gap-3 items-end">
           <Input
             isClearable

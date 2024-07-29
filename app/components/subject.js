@@ -49,10 +49,10 @@ export default function SubjectTable({ user }) { // Added user prop
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (user && user.department) { // Check if user and user.department are defined
+    if (profile && profile.department) { // Check if user and user.department are defined
       fetchData();
     }
-  }, [user?.department]); // Added user.department dependency
+  }, [profile?.department]); // Added user.department dependency
 
   const fetchData = async () => {
     try {
