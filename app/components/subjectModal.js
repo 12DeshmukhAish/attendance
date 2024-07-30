@@ -53,7 +53,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
 
 
   useEffect(() => {
-    if (classId && subjectType === 'practical') {
+    if (classId && subjectType === 'practical'||'tg') {
       const selectedClass = classes.find(cls => cls._id === classId);
       setBatches(selectedClass ? selectedClass.batches : []);
     } else {
@@ -92,6 +92,7 @@ console.log(batchIds);
       teacher: teacherId,
       department: selectedDepartment,
       type: subjectType,
+
       batch: batchIds?  batchIds : undefined,
     };
 
