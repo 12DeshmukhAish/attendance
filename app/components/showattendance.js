@@ -123,151 +123,65 @@ const AttendanceDisplay = () => {
   const generateExcelReport = () => {
     if (!attendanceData) return;
   
-    let wsData = [];
+    const wb = XLSX.utils.book_new();
   
-    const sortByRollNumber = (a, b) => parseInt(a.rollNumber || a.student.rollNumber, 10) - parseInt(b.rollNumber || b.student.rollNumber, 10);
-  
-    if (userProfile.role === "student") {
-      wsData.push(["Subject", "Total Lectures", "Present", "Attendance %"]);
+    const createSheet = (data, sheetName) => {
+      const wsData = [["Roll Number", "Student Name", "Total Lectures", "Present", "Attendance %"]];
       
-      attendanceData.forEach((subject) => {
-        wsData.push([
-          subject.name,
-          subject.totalLectures,
-          subject.presentCount,
-          ((subject.presentCount / subject.totalLectures) * 100).toFixed(2) + "%"
-        ]);
-      });
-  
-      const totalLectures = attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0);
-      const totalPresent = attendanceData.reduce((sum, subject) => sum + subject.presentCount, 0);
-      wsData.push([
-        "Total",
-        totalLectures,
-        totalPresent,
-        ((totalPresent / totalLectures) * 100).toFixed(2) + "%"
-      ]);
-  
-    } else if (userProfile.role === "faculty") {
-      wsData.push(["Roll Number", "Student Name", "Total Lectures", "Present", "Attendance %"]);
-      
-      attendanceData[0].students.sort(sortByRollNumber).forEach((student) => {
-        wsData.push([
-          student.rollNumber,
-          student.name,
-          attendanceData[0].totalLectures,
-          student.presentCount,
-          ((student.presentCount / attendanceData[0].totalLectures) * 100).toFixed(2) + "%"
-        ]);
-      });
-  
-    } else if (userProfile.role === "admin" || userProfile.role === "superadmin") {
-      if (viewType === "cumulative") {
-        const header1 = ["Roll No", "Student Name"];
-        const header2 = ["", ""];
-        attendanceData.forEach((subject) => {
-          header1.push(subject.name, "", "");
-          header2.push(`Faculty: ${subject.facultyName}`, "", "");
-        });
-        header1.push("Total Attendance", "", "");
-        header2.push("", "", "");
-        wsData.push(header1, header2);
-  
-        const header3 = ["", ""];
-        attendanceData.forEach(() => header3.push("Total", "Present", "%"));
-        header3.push("Total", "Present", "%");
-        wsData.push(header3);
-  
-        const allStudents = attendanceData.flatMap(subject => subject.students);
-        const uniqueStudents = [...new Set(allStudents.map(s => s.rollNumber))].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-  
-        uniqueStudents.forEach((rollNumber) => {
-          const row = [rollNumber, allStudents.find(s => s.rollNumber === rollNumber).name];
-          let totalPresent = 0;
-          let totalLectures = 0;
-  
-          attendanceData.forEach((subject) => {
-            const studentData = subject.students.find((s) => s.rollNumber === rollNumber);
-            totalLectures += subject.totalLectures;
-            const present = studentData ? studentData.presentCount : 0;
-            totalPresent += present;
-            row.push(
-              subject.totalLectures,
-              present,
-              ((present / subject.totalLectures) * 100).toFixed(2) + "%"
-            );
-          });
-  
-          row.push(
-            totalLectures,
-            totalPresent,
-            ((totalPresent / totalLectures) * 100).toFixed(2) + "%"
-          );
-          wsData.push(row);
-        });
-      } else if (viewType === "individual") {
-        wsData.push(["Roll Number", "Student Name", "Total Lectures", "Present", "Attendance %"]);
-        
-        attendanceData[0].students.sort(sortByRollNumber).forEach((student) => {
+      data.students.sort((a, b) => parseInt(a.rollNumber, 10) - parseInt(b.rollNumber, 10))
+        .forEach((student) => {
           wsData.push([
             student.rollNumber,
             student.name,
-            attendanceData[0].totalLectures,
+            data.totalLectures,
             student.presentCount,
-            ((student.presentCount / attendanceData[0].totalLectures) * 100).toFixed(2) + "%"
+            ((student.presentCount / data.totalLectures) * 100).toFixed(2) + "%"
           ]);
         });
-      }
-    }
   
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Set column widths
+      const colWidths = wsData[0].map((_, i) => ({ wch: Math.max(...wsData.map(row => String(row[i]).length)) + 2 }));
+      ws['!cols'] = colWidths;
   
-    // Set column widths
-    const colWidths = wsData[0].map((_, i) => ({ wch: Math.max(...wsData.map(row => String(row[i]).length)) + 2 }));
-    ws['!cols'] = colWidths;
-  
-    // Apply styles
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellRef = XLSX.utils.encode_cell({r: R, c: C});
-        if (!ws[cellRef]) continue;
-        ws[cellRef].s = {
-          border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' }
-          },
-          alignment: { vertical: 'center', horizontal: 'center' },
-          font: { name: 'Arial', sz: 11 }
-        };
-        if (R < 3 && (userProfile.role === "admin" || userProfile.role === "superadmin") && viewType === "cumulative") {
-          ws[cellRef].s.font.bold = true;
-          ws[cellRef].s.fill = { fgColor: { rgb: "EEEEEE" } };
-        } else if (R === 0) {
-          ws[cellRef].s.font.bold = true;
-          ws[cellRef].s.fill = { fgColor: { rgb: "EEEEEE" } };
+      // Apply styles
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellRef = XLSX.utils.encode_cell({r: R, c: C});
+          if (!ws[cellRef]) continue;
+          ws[cellRef].s = {
+            border: {
+              top: { style: 'thin' },
+              bottom: { style: 'thin' },
+              left: { style: 'thin' },
+              right: { style: 'thin' }
+            },
+            alignment: { vertical: 'center', horizontal: 'center' },
+            font: { name: 'Arial', sz: 11 }
+          };
+          if (R === 0) {
+            ws[cellRef].s.font.bold = true;
+            ws[cellRef].s.fill = { fgColor: { rgb: "EEEEEE" } };
+          }
         }
       }
-    }
   
-    // Merge cells for admin/superadmin cumulative view
-    if ((userProfile.role === "admin" || userProfile.role === "superadmin") && viewType === "cumulative") {
-      ws['!merges'] = [];
-      attendanceData.forEach((_, index) => {
-        const col = index * 3 + 2;
-        ws['!merges'].push(
-          { s: { r: 0, c: col }, e: { r: 0, c: col + 2 } },
-          { s: { r: 1, c: col }, e: { r: 1, c: col + 2 } }
-        );
-      });
-      const totalCol = attendanceData.length * 3 + 2;
-      ws['!merges'].push({ s: { r: 0, c: totalCol }, e: { r: 1, c: totalCol + 2 } });
-    }
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    };
   
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Attendance Report");
+    if (userProfile.role === "student") {
+      createSheet({ students: attendanceData, totalLectures: attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0) }, "Student Report");
+    } else if (userProfile.role === "faculty" || (userProfile.role === "admin" || userProfile.role === "superadmin")) {
+      if (Array.isArray(attendanceData)) {
+        attendanceData.forEach((batchData, index) => {
+          createSheet(batchData, `Batch ${index + 1}`);
+        });
+      } else {
+        createSheet(attendanceData, "Attendance Report");
+      }
+    }
   
     // Generate a unique filename with timestamp
     const fileName = `Attendance_Report_${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx`;
@@ -294,6 +208,7 @@ const AttendanceDisplay = () => {
     for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
     return buf;
   }
+  
   const renderStudentAttendance = () => {
     const totalLectures = attendanceData?.reduce((sum, subject) => sum + subject.totalLectures, 0);
     const totalPresent = attendanceData?.reduce((sum, subject) => sum + subject.presentCount, 0);
