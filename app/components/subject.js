@@ -51,6 +51,7 @@ export default function SubjectTable({ user }) { // Added user prop
   const [classes, setClasses] = useState([]);
 
   useEffect(() => {
+
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile));
@@ -61,6 +62,7 @@ export default function SubjectTable({ user }) { // Added user prop
       fetchData();
     }
   }, [profile?.department]); 
+
 
   const fetchData = async () => {
     try {

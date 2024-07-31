@@ -67,6 +67,7 @@ export default function FacultyTable() {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile));
+      console.log(profile);
     }
   }, []);
   useEffect(() => {

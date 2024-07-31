@@ -16,7 +16,7 @@ export default function Home() {
         <header className="bg-white shadow-md">
           <div className="container mx-auto flex justify-between items-center px-4 py-6">
             <div className="flex items-center gap-5">
-              <Image src="/logoschool.jpeg" height={12} width={12} alt="Student Assure Logo" className="h-12" />
+              <Image src="/logoschool.jpeg" height={100} width={100} alt="Student Assure Logo" className="h-12" />
               <div>
                 <h1 className="text-lg font-bold text-gray-800">
                   Savitribai Phule Shikshan Prasarak Mandal &#39; s<br />

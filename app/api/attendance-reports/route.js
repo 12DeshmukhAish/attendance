@@ -245,7 +245,7 @@ export async function GET(req) {
 
         console.log(result);
         return NextResponse.json(result, { status: 200 });
-    } catch (error) {
+    } catch (error) {~
         console.error("Error fetching attendance report:", error);
         return NextResponse.json({ error: "Failed to Fetch Attendance Report" }, { status: 500 });
     }

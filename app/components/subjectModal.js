@@ -310,7 +310,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
   }, [subjectData]);
 
   useEffect(() => {
-    if (classId && subjectType === 'practical') {
+    if (classId && subjectType === 'practical'||'tg') {
       const selectedClass = classes.find(cls => cls._id === classId);
       setBatches(selectedClass ? selectedClass.batches : []);
     } else {
@@ -351,7 +351,7 @@ export default function SubjectModal({ isOpen, onClose, mode, subjectData, onSub
       teacher: teacherId,
       department: profile.department,
       type: subjectType,
-      batch: batchIds.length > 0 ? batchIds : undefined,
+      batch: batchIds?  batchIds : undefined,
     };
 
     try {
