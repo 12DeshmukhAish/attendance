@@ -471,22 +471,22 @@ console.log(userProfile);
               ))}
             </Select>
           )}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin" ) && (
-            <>
-              <Dropdown>
-                <DropdownTrigger>
-                  <Button variant="bordered">
-                    {selectedClass ? selectedClass : "Select Class"}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
-                  {classes.map((classItem) => (
-                    <DropdownItem key={classItem._id}>{classItem._id}</DropdownItem>
-                  ))}
-                </DropdownMenu>
-              </Dropdown>
-              </>
-          )}
+     {(userProfile.role === "admin" || userProfile.role === "superadmin" ) && (
+  <>
+    <Dropdown>
+      <DropdownTrigger>
+        <Button variant="bordered">
+          {selectedClass ? selectedClass : "Select Class"}
+        </Button>
+      </DropdownTrigger>
+      <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
+        {classes.map((classItem) => (
+          <DropdownItem key={classItem._id}>{classItem._id}</DropdownItem>
+        ))}
+      </DropdownMenu>
+    </Dropdown>
+  </>
+)}
               {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile.classes) && (
             <>
               <Dropdown>
