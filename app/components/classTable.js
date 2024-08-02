@@ -165,16 +165,16 @@ export default function ClassTable() {
       return [];
     }
     let filteredClasses = [...classes];
-
+  
     if (hasSearchFilter) {
       filteredClasses = filteredClasses.filter((cls) => {
         return (
           (cls.name && cls.name.toLowerCase().includes(filterValue.toLowerCase())) ||
-          (cls.teacher && teachers.find(teacher => teacher._id === cls.teacher)?.name.toLowerCase().includes(filterValue.toLowerCase()))
+          (cls.teacher && cls.teacher.name && cls.teacher.name.toLowerCase().includes(filterValue.toLowerCase()))
         );
       });
     }
-
+  
     return filteredClasses;
   }, [classes, filterValue, teachers]);
 
@@ -221,11 +221,10 @@ export default function ClassTable() {
             </Tooltip>
           </div>
         );
-      case "teacher":
-        return (
-          <span>{cellValue.name}</span>
-          // cellValue
-        );
+        case "teacher":
+          return (
+            <span>{cellValue && cellValue.name ? cellValue.name : 'N/A'}</span>
+          );
       case "students":
         return (
           <span>
@@ -316,12 +315,12 @@ export default function ClassTable() {
           </Button>
         </div>
       </div>
-      {sortedItems.length > 0 ? (
-        <Table
-          aria-label="Class Table"
-          sortDescriptor={sortDescriptor}
-          onSortChange={setSortDescriptor}
-        >
+      {sortedItems && sortedItems.length > 0 ? (
+  <Table
+    aria-label="Class Table"
+    sortDescriptor={sortDescriptor}
+    onSortChange={setSortDescriptor}
+  >
           <TableHeader columns={headerColumns}>
             {(column) => (
               <TableColumn key={column.uid}>
