@@ -414,7 +414,7 @@ export default function FacultyTable() {
           loadingContent={<Spinner label="Loading..." />}
           emptyContent={
             <div className="flex justify-center items-center w-full h-full">
-              <Image src="/faculty.svg" alt="No Content" width={800} height={800} />
+              <Image src="/faculty.svg" alt="No Content" width={600} height={600} />
             </div>
           }
           items={sortedItems}

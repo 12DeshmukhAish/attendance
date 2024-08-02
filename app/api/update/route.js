@@ -63,10 +63,8 @@ export async function GET(req) {
 
     return NextResponse.json({
       message: "Data fetched successfully",
-      subject,
       students: studentsWithAttendance,
       attendanceRecord: attendanceRecord || null,
-      batches: batches.length > 0 ? batches : null
     }, { status: 200 });
 
   } catch (error) {

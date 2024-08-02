@@ -33,32 +33,44 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (selectedSubject && selectedDate && selectedSession) {
-      console.log(selectedSession, selectedSubject, selectedDate);
-      console.log('Fetching attendance for:', { selectedSubject, selectedDate, selectedSession });
-      fetchSubjectAttendance();
-    }
-  }, [selectedSubject, selectedDate, selectedSession, selectedBatch]);
-
-  useEffect(() => {
     if (selectedSubject) {
-      console.log(selectedBatch);
-      console.log('Fetching attendance for:', { selectedBatch });
+      console.log(selectedSubject);
+      fetchSubjectData();
+    }
+  }, [selectedSubject]);
+
+
+  
+  useEffect(() => {
+    if (selectedSubject && selectedBatch && selectedDate) {
+      console.log(selectedSubject);
       fetchSubjectAttendance();
     }
-  }, [selectedSubject, selectedDate]);
+  }, [selectedSubject,selectedBatch,selectedDate]);
+  const fetchSubjectData = async () => {
+    try {
+      const response = await axios.get(`/api/utils/subjectBatch?subjectId=${selectedSubject}`);
+      const {subject}= response.data;
+      console.log(subject);
+      
+      setSubjectDetails(subject);
+      setBatches(subject.batch);
+    } catch (error) {
+      console.error('Error fetching subject data:', error);
+    }
+  };
+
+
 
   const fetchSubjectAttendance = async () => {
     try {
       const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate.toISOString().split("T")[0]}&session=${selectedSession}&batchId=${selectedBatch || ''}`);
-      const { subject, students, attendanceRecord, batches } = response.data;
+      const {  students, attendanceRecord } = response.data;
       console.log(response.data);
 
       // Sort students by roll number as a number
       students.sort((a, b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
-
-      setSubjectDetails(subject);
-      setBatches(batches);
+    
       setStudents(students);
       setAttendanceRecord(attendanceRecord);
       if (attendanceRecord) {
