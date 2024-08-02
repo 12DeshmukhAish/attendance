@@ -38,7 +38,7 @@ export default function App() {
       console.log('Fetching attendance for:', { selectedSubject, selectedDate, selectedSession });
       fetchSubjectAttendance();
     }
-  }, [selectedSubject, selectedDate, selectedSession, selectedBatch,fetchSubjectAttendance]);
+  }, [selectedSubject, selectedDate, selectedSession, selectedBatch]);
 
   useEffect(() => {
     if (selectedSubject) {
@@ -46,11 +46,11 @@ export default function App() {
       console.log('Fetching attendance for:', { selectedBatch });
       fetchSubjectAttendance();
     }
-  }, [selectedSubject, selectedDate,fetchSubjectAttendance]);
+  }, [selectedSubject, selectedDate]);
 
   const fetchSubjectAttendance = async () => {
     try {
-      const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate.toISOString().split("T")[0]}&session=${selectedSession}&batchId=${selectedBatch}`);
+      const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate.toISOString().split("T")[0]}&session=${selectedSession}&batchId=${selectedBatch || ''}`);
       const { subject, students, attendanceRecord, batches } = response.data;
       console.log(response.data);
 

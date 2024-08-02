@@ -105,36 +105,41 @@ export async function PUT(req) {
 
         console.log("Query filter:", JSON.stringify(filter));
 
-        // First, try to find the document without updating
+        // Try to find the document
         let attendanceRecord = await Attendance.findOne(filter);
 
         if (!attendanceRecord) {
-            console.log("No matching record found. Attempting to find without date filter.");
-            // If not found, try without the date filter
-            delete filter.date;
-            attendanceRecord = await Attendance.findOne(filter);
+            console.log("No matching record found. Creating a new record.");
+            // Create a new record
+            attendanceRecord = new Attendance({
+                date: attendanceDate,
+                subject,
+                session,
+                records: attendanceRecords,
+                ...(batchId && { batch: batchId })
+            });
+        } else {
+            // Update existing record
+            attendanceRecord.date = attendanceDate;
+            attendanceRecord.records = attendanceRecords;
         }
 
-        if (!attendanceRecord) {
-            console.log("Still no matching record found. Returning 404.");
-            return NextResponse.json({ message: "Attendance Record Not Found" }, { status: 404 });
-        }
+        // Save the record (this will either create a new one or update the existing one)
+        await attendanceRecord.save();
 
-        // If found, now update the record
-        attendanceRecord = await Attendance.findOneAndUpdate(
-            { _id: attendanceRecord._id },
-            { $set: { records: attendanceRecords, date: attendanceDate } },
-            { new: true, runValidators: true }
+        // Update the subject's reports
+        await Subject.findByIdAndUpdate(
+            subject,
+            { $addToSet: { reports: attendanceRecord._id } }
         );
 
-        console.log("Attendance Updated Successfully", attendanceRecord);
-        return NextResponse.json({ message: "Attendance Updated Successfully", attendance: attendanceRecord }, { status: 200 });
+        console.log("Attendance Updated/Created Successfully", attendanceRecord);
+        return NextResponse.json({ message: "Attendance Updated/Created Successfully", attendance: attendanceRecord }, { status: 200 });
     } catch (error) {
-        console.error("Error updating attendance:", error);
-        return NextResponse.json({ error: "Failed to Update Attendance" }, { status: 500 });
+        console.error("Error updating/creating attendance:", error);
+        return NextResponse.json({ error: "Failed to Update/Create Attendance" }, { status: 500 });
     }
 }
-
 export async function DELETE(req) {
     try {
         await connectMongoDB();

@@ -239,30 +239,7 @@ export default function StudentTable() {
     fileInput.click();
   }, []);
 
-  const topContent = useMemo(() => {
-    return (
-      <div className="flex flex-col gap-4">
-        {profile?.role === 'superadmin' && (
-          <Select
-            placeholder="Select a department"
-            variant="bordered"
-            size="sm"
-            value={selectedDepartment}
-            onChange={(value) =>
-              setSelectedDepartment(value.target.value)}
-            className="max-w-xs my-4"
-          >
-            {departmentOptions.map((department) => (
-              <SelectItem key={department.key} value={department.label}>
-                {department.label}
-              </SelectItem>
-            ))}
-          </Select>
-        )}
-      </div>
-    );
-  }, [profile, selectedDepartment]);
-
+ 
   const bottomContent = (
     <div className="flex justify-between items-center">
       <span className="text-default-400 text-small">Total {students.length} students</span>
@@ -297,6 +274,25 @@ export default function StudentTable() {
 
   return (
     <div>
+      <div className="flex flex-col gap-4">
+        {profile?.role === 'superadmin' && (
+          <Select
+            placeholder="Select a department"
+            variant="bordered"
+            size="sm"
+            value={selectedDepartment}
+            onChange={(value) =>
+              setSelectedDepartment(value.target.value)}
+            className="max-w-xs my-4"
+          >
+            {departmentOptions.map((department) => (
+              <SelectItem key={department.key} value={department.label}>
+                {department.label}
+              </SelectItem>
+            ))}
+          </Select>
+        )}
+      </div>
       <div className="flex justify-between gap-3 items-end">
         <Input
           isClearable
@@ -385,7 +381,6 @@ export default function StudentTable() {
         bottomContentPlacement="outside"
         classNames={classNames}
         sortDescriptor={sortDescriptor}
-        topContent={topContent}
         topContentPlacement="outside"
         onSortChange={setSortDescriptor}
       >

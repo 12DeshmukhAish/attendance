@@ -4,6 +4,7 @@ import Subject from "@/models/subject";
 import Classes from "@/models/className";
 import Faculty from "@/models/faculty";
 import Student from "@/models/student";
+import Attendance from "@/models/attendance";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -183,34 +184,43 @@ export async function DELETE(request) {
   const subjectId = url.searchParams.get('_id');
 
   try {
-      const subject = await Subject.findByIdAndDelete(subjectId);
+    const subject = await Subject.findById(subjectId);
 
-      if (subject) {
-          await Classes.findByIdAndUpdate(subject.class, { $pull: { subjects: subjectId } });
+    if (subject) {
+      // Delete all attendance reports associated with this subject
+      await Attendance.deleteMany({ subject: subjectId });
 
-          // Remove subject from students based on type
-          if (subject.subType === 'theory') {
-              const classDoc = await Classes.findById(subject.class);
-              const studentIds = classDoc.students;
-              await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
-          } else if (subject.batchIds && subject.batchIds.length > 0) {
-              const classDoc = await Classes.findById(subject.class);
-              const studentIds = classDoc.batches
-                  .filter(batch => subject.batchIds.includes(batch._id))
-                  .flatMap(batch => batch.students);
+      // Delete the subject
+      await Subject.findByIdAndDelete(subjectId);
 
-              await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
-          }
+      // Remove subject from class
+      await Classes.findByIdAndUpdate(subject.class, { $pull: { subjects: subjectId } });
 
-          // Remove subject from faculty
-          if (subject.teacher) {
-              await Faculty.findByIdAndUpdate(subject.teacher, { $pull: { subjects: subjectId } });
-          }
+      // Remove subject from students based on type
+      if (subject.subType === 'theory') {
+        const classDoc = await Classes.findById(subject.class);
+        const studentIds = classDoc.students;
+        await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
+      } else if (subject.batchIds && subject.batchIds.length > 0) {
+        const classDoc = await Classes.findById(subject.class);
+        const studentIds = classDoc.batches
+          .filter(batch => subject.batchIds.includes(batch._id))
+          .flatMap(batch => batch.students);
+
+        await Student.updateMany({ _id: { $in: studentIds } }, { $pull: { subjects: subjectId } });
       }
 
-      return NextResponse.json(subject);
+      // Remove subject from faculty
+      if (subject.teacher) {
+        await Faculty.findByIdAndUpdate(subject.teacher, { $pull: { subjects: subjectId } });
+      }
+
+      return NextResponse.json({ message: 'Subject and associated reports deleted successfully' });
+    } else {
+      return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+    }
   } catch (error) {
-      return NextResponse.json({ error: 'Error deleting subject' }, { status: 500 });
+    console.error('Error deleting subject:', error);
+    return NextResponse.json({ error: 'Error deleting subject' }, { status: 500 });
   }
 }
-

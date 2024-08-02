@@ -58,41 +58,55 @@ export default function FacultyTable() {
   const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [faculty, setFaculty] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);  
+  const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState('');
-  
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
-      console.log(profile);
+      console.log("Raw stored profile:", storedProfile);
+      try {
+        const parsedProfile = JSON.parse(storedProfile);
+        console.log("Parsed profile:", parsedProfile);
+        setProfile(parsedProfile);
+      } catch (error) {
+        console.error("Error parsing profile:", error);
+      }
     }
   }, []);
+
   useEffect(() => {
-    if (profile && profile?.role !== "superadmin") {
+    console.log("Updated profile state:", profile);
+    if (profile && profile?.role === "admin") {
       console.log(profile);
       setSelectedDepartment(profile.department);
       console.log(selectedDepartment);
     }
   }, [profile]);
+
   useEffect(() => {
-    if (profile && profile.department) { // Check if user and user.department are defined
+    if (profile && profile.department) {
       fetchFaculty();
     }
-  }, [selectedDepartment]); 
+  }, [selectedDepartment]);
 
-  
+
   const fetchFaculty = async () => {
     try {
       setIsLoading(true)
       const response = await axios.get(`/api/faculty${selectedDepartment ? `?department=${selectedDepartment}` : ''}`);
-      setFaculty(response.data);
+      let facultyData = response.data;
+
+      if (profile.role !== "superadmin") {
+        facultyData = facultyData.filter(member => !member.isAdmin);
+      }
+  
+      setFaculty(facultyData);
       setIsLoading(false)
     } catch (error) {
       console.error('Error fetching faculty:', error);
-    }finally{
+    } finally {
       setIsLoading(false)
     }
   };
@@ -217,26 +231,8 @@ export default function FacultyTable() {
 
   const topContent = useMemo(() => {
     return (
-      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4">
-        {profile && profile?.role === 'superadmin' && (
-          <Select
-            placeholder="Select a department"
-            variant="bordered"
-            size="sm"
-            value={selectedDepartment}
-            onChange={(value) =>
-              setSelectedDepartment(value.target.value)}
-            className="max-w-xs my-4"
-          >
-            {departmentOptions.map((department) => (
-              <SelectItem key={department.key} value={department.label}>
-                {department.label}
-              </SelectItem>
-            ))}
-          </Select>
-        )}
-      </div>
+        
         <div className="flex justify-between gap-3 items-end">
           <Input
             isClearable
@@ -363,8 +359,26 @@ export default function FacultyTable() {
     ],
   };
   return (
-   
     <>
+    <div className="flex flex-col gap-4">
+        {profile?.role !== 'admin' && (
+            <Select
+              placeholder="Select a department"
+              variant="bordered"
+              size="sm"
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+              className="max-w-xs my-4"
+            >
+              {departmentOptions.map((department) => (
+                <SelectItem key={department.key} value={department.label}>
+                  {department.label}
+                </SelectItem>
+              ))}
+            </Select>
+          )}
+          </div>
+    
       <Table
         isCompact
         removeWrapper
@@ -396,8 +410,8 @@ export default function FacultyTable() {
           )}
         </TableHeader>
         <TableBody
-        isLoading={isLoading}
-        loadingContent={<Spinner label="Loading..." />}
+          isLoading={isLoading}
+          loadingContent={<Spinner label="Loading..." />}
           emptyContent={
             <div className="flex justify-center items-center w-full h-full">
               <Image src="/faculty.svg" alt="No Content" width={800} height={800} />

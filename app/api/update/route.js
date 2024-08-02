@@ -58,7 +58,7 @@ export async function GET(req) {
       _id: student._id,
       name: student.name,
       rollNumber: student.rollNumber,
-      status: attendanceRecord?.records?.find(record => record.student.equals(student._id))?.status || 'absent'
+      status: attendanceRecord?.records
     }));
 
     return NextResponse.json({
