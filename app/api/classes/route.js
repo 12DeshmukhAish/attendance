@@ -8,7 +8,6 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-
         const { _id, passOutYear, classCoordinator, department, year, students, batches } = data;
 
         const newClass = new Classes({
@@ -20,7 +19,6 @@ export async function POST(req) {
             year,
             batches
         });
-
         await newClass.save();
 
         // Update the students to reference the new class

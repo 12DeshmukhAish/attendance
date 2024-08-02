@@ -17,6 +17,7 @@ export async function GET(req) {
     if (!subjectId || !dateString || !session) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
+
     const date = new Date(dateString);
     const subject = await Subject.findById(subjectId).populate('class teacher', 'name');
 
@@ -29,20 +30,19 @@ export async function GET(req) {
     
     const classDoc = await Classes.findById(subject.class).lean();
     
-    if (subject.subType === 'practical') {
+    if (subject.subType === 'practical' || subject.subType === 'tg') {
       if (classDoc && classDoc.batches) {
-        batches = classDoc.batches.map(batch => (batch._id ));
+        batches = classDoc.batches.map(batch => batch._id);
       }
-      
+
       if (batchId) {
         const selectedBatch = classDoc.batches.find(batch => batch._id === batchId);
         if (selectedBatch) {
-          students = await Student.find({ _id: { $in: selectedBatch.students } }, 'name _id rollNumber');
+          students = await Student.find({ _id: { $in: selectedBatch.students } }, 'name _id rollNumber').lean();
         }
       }
-    } else if (subject.subType === 'theory') {
-      // For theory subjects, get all students in the class
-      students = await Student.find({ _id: { $in: classDoc.students } }, 'name _id rollNumber');
+    } else {
+      students = await Student.find({ class: subject.class, subjects: subjectId }, 'name _id rollNumber').lean();
     }
 
     const attendanceQuery = {
@@ -52,14 +52,13 @@ export async function GET(req) {
     };
     if (batchId) attendanceQuery.batch = batchId;
 
-    const attendanceRecord = await Attendance.findOne(attendanceQuery);
+    const attendanceRecord = await Attendance.findOne(attendanceQuery).lean();
     
-console.log(attendanceRecord);
     const studentsWithAttendance = students.map(student => ({
       _id: student._id,
       name: student.name,
       rollNumber: student.rollNumber,
-      status: attendanceRecord?.records?.find(record => record.student.status)
+      status: attendanceRecord?.records?.find(record => record.student.equals(student._id))?.status || 'absent'
     }));
 
     return NextResponse.json({
@@ -72,7 +71,7 @@ console.log(attendanceRecord);
 
   } catch (error) {
     console.error("Error fetching subject attendance:", error);
-    return NextResponse.json({ error: "Failed to fetch", details: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch data", details: error.message }, { status: 500 });
   }
 }
 
