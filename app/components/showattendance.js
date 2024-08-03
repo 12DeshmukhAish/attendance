@@ -107,7 +107,9 @@ const AttendanceDisplay = () => {
     }
   };
 
-
+  useEffect(() => {
+    setSelectedClass(""); // Reset selected class when department changes
+  }, [selectedDepartment]);
   useEffect(() => {
     if (userProfile) {
       if (
@@ -123,9 +125,7 @@ const AttendanceDisplay = () => {
   }, [userProfile, selectedSubject, selectedClass, viewType, dateRange]);
   const generateExcelReport = () => {
     if (!attendanceData) return;
-
     const wb = XLSX.utils.book_new();
-
     const createSheet = (data, sheetName) => {
       let wsData = [];
 
@@ -216,9 +216,7 @@ const AttendanceDisplay = () => {
         createSheet(attendanceData, "Attendance Report");
       }
     }
-    useEffect(() => {
-      setSelectedClass(""); // Reset selected class when department changes
-    }, [selectedDepartment]);
+    
 
     // Generate a unique filename with timestamp
     const fileName = `Attendance_Report_${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx`;
