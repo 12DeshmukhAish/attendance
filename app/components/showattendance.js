@@ -34,6 +34,7 @@ const AttendanceDisplay = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [userProfile, setUserProfile] = useState(null);
   const [classes, setClasses] = useState([]);
+  const [selectedInactiveSubject, setSelectedInactiveSubject] = useState("");
   const [dateRange, setDateRange] = useState({
     start: today(getLocalTimeZone()).subtract({ weeks: 2 }),
     end: today(getLocalTimeZone()),
@@ -54,12 +55,17 @@ const AttendanceDisplay = () => {
     const storedProfile = sessionStorage.getItem("userProfile");
     if (storedProfile) {
       const profile = JSON.parse(storedProfile);
-      if (profile?.classes) {
-        setSelectedClass(profile?.classes)
+      if (profile && profile.classes) {
+        console.log(profile);
+        setSelectedClass(profile.classes)
+
       }
       setUserProfile(profile);
       if (profile.role === "admin") {
         setSelectedDepartment(profile.department);
+      }
+      if (profile.role === "faculty" && profile.classes) {
+        setSelectedClass(profile.classes);
       }
     }
   }, []);
@@ -216,7 +222,7 @@ const AttendanceDisplay = () => {
         createSheet(attendanceData, "Attendance Report");
       }
     }
-    
+
 
     // Generate a unique filename with timestamp
     const fileName = `Attendance_Report_${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx`;
@@ -445,12 +451,12 @@ const AttendanceDisplay = () => {
         )}
       </div>
     );
-  }; 
-  
+  };
+
   console.log(userProfile);
 
 
-  if(!userProfile){
+  if (!userProfile) {
     return <div className="flex justify-center items-center min-h-screen">
       <Loader2 className="h-8 w-8 animate-spin" />
     </div>
@@ -462,7 +468,7 @@ const AttendanceDisplay = () => {
           <h1 className="text-2xl font-bold mb-2">Attendance Report</h1>
           <p className="text-gray-600">User: {userProfile.name} ({userProfile.role})</p>
         </div>
-        
+
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
           {userProfile?.role === "superadmin" && (
             <Dropdown>
@@ -483,19 +489,19 @@ const AttendanceDisplay = () => {
           )}
           {(userProfile.role === "admin" || userProfile.role === "superadmin") && (
             <>
-                <Dropdown>
-                  <DropdownTrigger>
-                    <Button variant="bordered">
-                      { selectedClass|| "Select Class"}
-                    </Button>
-                  </DropdownTrigger>
-                  <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
-                    {classes.map((classItem) => (
-                      <DropdownItem key={classItem._id}>{classItem._id}</DropdownItem>
-                    ))}
-                  </DropdownMenu>
-                </Dropdown>
-              
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant="bordered">
+                    {selectedClass || "Select Class"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
+                  {classes.map((classItem) => (
+                    <DropdownItem key={classItem._id}>{classItem._id}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+
             </>
           )}
           {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile.classes) && (
@@ -507,12 +513,33 @@ const AttendanceDisplay = () => {
                 <DropdownMenu aria-label="View type selection" onAction={(key) => {
                   setAttendanceData(null)
                   setViewType(key)
+                  setSelectedClass(userProfile?.classes)
                 }}>
                   <DropdownItem key="cumulative">Cumulative View</DropdownItem>
                   <DropdownItem key="individual">Individual View</DropdownItem>
                 </DropdownMenu>
               </Dropdown>
             </>
+          )}
+          {userProfile?.role === "faculty" && userProfile.inactiveSubjects && viewType === "individual" && userProfile.inactiveSubjects.length > 0 && (
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered">
+                  {selectedSubject ? `Previous: ${selectedSubject}` : "Select Previous Subject"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Inactive subject selection"
+                onAction={(key) => {
+                  setSelectedSubject(key);
+
+                }}
+              >
+                {userProfile.inactiveSubjects.map((subject) => (
+                  <DropdownItem key={subject}>{subject}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
           )}
           {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile.classes) && (
             <>
@@ -532,7 +559,7 @@ const AttendanceDisplay = () => {
               )}
             </>
           )}
-          {userProfile?.role === "faculty" && viewType === "individual" && (
+          {userProfile?.role === "faculty" && userProfile.subjects.length > 0 && viewType === "individual" && (
             <Dropdown>
               <DropdownTrigger>
                 <Button variant="bordered">
@@ -556,8 +583,8 @@ const AttendanceDisplay = () => {
             aria-label="Date Range"
             value={dateRange}
             onChange={setDateRange}
-          className="max-w-[50%]"
-          variant="bordered"
+            className="max-w-[50%]"
+            variant="bordered"
           />
         </div>
         <div className="w-[10%] mt-4">  <Button variant="ghost" color="primary" size="sm" onClick={generateExcelReport} className="mb-8">

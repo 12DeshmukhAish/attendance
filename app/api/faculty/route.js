@@ -5,6 +5,7 @@ import Subject from "@/models/subject";
 import Classes from "@/models/className";
 import Student from "@/models/student";
 import mongoose from "mongoose";
+
 export async function POST(req) {
     try {
         await connectMongoDB();
@@ -77,24 +78,66 @@ export async function GET(req) {
         console.log("Filter criteria:", filter);
 
         if (_id) {
-            const faculty = await Faculty.findById(_id);
+            const faculty = await Faculty.findById(_id).lean();
             if (!faculty) {
                 return NextResponse.json({ error: "Faculty not found" }, { status: 404 });
             }
+
+            // Fetch all subjects for the faculty
+            const allSubjects = await Subject.find({
+                _id: { $in: faculty.subjects }
+            }).select('_id name isActive').lean();
+
+            // Separate active and inactive subjects
+            const activeSubjects = allSubjects.filter(subject => subject.isActive).map(subject=>subject._id);;
+            const inactiveSubjectIds = allSubjects
+                .filter(subject => !subject.isActive)
+                .map(subject => subject._id);
+
+            faculty.subjects = activeSubjects;
+            if (inactiveSubjectIds.length > 0) {
+                faculty.inactiveSubjects = inactiveSubjectIds;
+            }
+
             console.log("Fetched Faculty Successfully", faculty);
             return NextResponse.json(faculty, { status: 200 });
         } else {
-            const faculties = await Faculty.find(filter);
-            console.log("Fetched Faculties Successfully", faculties);
-            return NextResponse.json(faculties, { status: 200 });
+            const faculties = await Faculty.find(filter).lean();
+
+            // Fetch subjects for all faculties
+            const facultiesWithSubjects = await Promise.all(faculties.map(async (faculty) => {
+                const allSubjects = await Subject.find({
+                    _id: { $in: faculty.subjects }
+                }).select('_id name isActive').lean();
+
+                // Separate active and inactive subjects
+                const activeSubjects = allSubjects.filter(subject => subject.isActive).map(subject=>subject._id);
+                const inactiveSubjectIds = allSubjects
+                    .filter(subject => !subject.isActive)
+                    .map(subject => subject._id);
+
+                    console.log(activeSubjects);
+                    
+                const result = {
+                    ...faculty,
+                    subjects: activeSubjects
+                };
+
+                if (inactiveSubjectIds.length > 0) {
+                    result.inactiveSubjects = inactiveSubjectIds;
+                }
+
+                return result;
+            }));
+
+            console.log("Fetched Faculties Successfully", facultiesWithSubjects);
+            return NextResponse.json(facultiesWithSubjects, { status: 200 });
         }
     } catch (error) {
         console.error("Error fetching faculties:", error);
         return NextResponse.json({ error: "Failed to Fetch Faculties" }, { status: 500 });
     }
 }
-
-
 export async function DELETE(req) {
     try {
         await connectMongoDB();

@@ -16,7 +16,11 @@ import {
   Pagination,
   SelectItem,
   Select,
- 
+  Switch,
+  useDisclosure,
+  Modal,
+  ModalBody,ModalContent,ModalFooter,ModalHeader
+
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -44,10 +48,11 @@ const columns = [
   { uid: "passOutYear", name: "Pass Out Year" },
   { uid: "year", name: "Admission Year" },
   { uid: "department", name: "Department" },
+  { uid: "isActive", name: "Status" },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "year", "department", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "year", "department", "actions", "isActive"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -67,6 +72,10 @@ export default function ClassTable() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+
+  const [classToToggle, setClassToToggle] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -91,23 +100,51 @@ export default function ClassTable() {
   const handleSelectChange = (value) => {
     setSelectedDepartment(value);
   };
+  const openConfirmModal = (classId, currentStatus) => {
+    setClassToToggle({ id: classId, currentStatus });
+    onOpen();
+  };
 
+  const toggleClassStatus = async () => {
+    if (!classToToggle) return;
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post('/api/endofacademic', { classId: classToToggle.id });
+      if (response.status === 200) {
+        setClasses(prevClasses =>
+          prevClasses.map(cls =>
+            cls._id === classToToggle.id ? { ...cls, isActive: !classToToggle.currentStatus } : cls
+          )
+        );
+        toast.success(`Class ${!classToToggle.currentStatus ? 'activated' : 'deactivated'} successfully`);
+      } else {
+        throw new Error('Failed to update class status');
+      }
+    } catch (error) {
+      console.error("Error toggling class status:", error);
+      toast.error('Error updating class status');
+    } finally {
+      setIsLoading(false);
+      onClose();
+    }
+  };
   const fetchClasses = async () => {
     try {
       setIsLoading(true)
       const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
-      if (response.status==200) {
-        
-      setClasses(response.data);
+      if (response.status == 200) {
+
+        setClasses(response.data);
       }
-      else{
+      else {
         setClasses(null)
       }
       console.log(response.data);
     } catch (error) {
       console.error('Error fetching classes:', error);
     }
-    finally{
+    finally {
       setIsLoading(false)
 
     }
@@ -118,16 +155,16 @@ export default function ClassTable() {
       setIsLoading(true)
       const response = await axios.get('/api/faculty');
       setTeachers(response.data);
-      
+
     } catch (error) {
       console.error('Error fetching teachers:', error);
     }
-    finally{
+    finally {
       setIsLoading(false);
     }
   };
 
- 
+
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(classes);
     const workbook = XLSX.utils.book_new();
@@ -145,7 +182,7 @@ export default function ClassTable() {
       console.error("Error deleting class:", error);
       toast.error('Error deleting class');
     }
-    finally{
+    finally {
       setIsLoading(true)
 
     }
@@ -165,7 +202,7 @@ export default function ClassTable() {
       return [];
     }
     let filteredClasses = [...classes];
-  
+
     if (hasSearchFilter) {
       filteredClasses = filteredClasses.filter((cls) => {
         return (
@@ -174,7 +211,7 @@ export default function ClassTable() {
         );
       });
     }
-  
+
     return filteredClasses;
   }, [classes, filterValue, teachers]);
 
@@ -221,20 +258,27 @@ export default function ClassTable() {
             </Tooltip>
           </div>
         );
-        case "teacher":
-          return (
-            <span>{cellValue && cellValue.name ? cellValue.name : 'N/A'}</span>
-          );
+      case "teacher":
+        return (
+          <span>{cellValue && cellValue.name ? cellValue.name : 'N/A'}</span>
+        );
       case "students":
         return (
           <span>
             {cellValue ? cellValue.length : 0}
           </span>
         );
+      case "isActive":
+        return (
+          <Switch
+            isSelected={cellValue}
+            onChange={() => openConfirmModal(cls._id, cellValue)}
+          />
+        );
       default:
         return <span>{cellValue}</span>;
     }
-  }, [teachers, students]);
+  }, [teachers, students, openConfirmModal]);
 
   const renderHeader = (column) => {
     const columnName = capitalize(column.name);
@@ -316,11 +360,11 @@ export default function ClassTable() {
         </div>
       </div>
       {sortedItems && sortedItems.length > 0 ? (
-  <Table
-    aria-label="Class Table"
-    sortDescriptor={sortDescriptor}
-    onSortChange={setSortDescriptor}
-  >
+        <Table
+          aria-label="Class Table"
+          sortDescriptor={sortDescriptor}
+          onSortChange={setSortDescriptor}
+        >
           <TableHeader columns={headerColumns}>
             {(column) => (
               <TableColumn key={column.uid}>
@@ -364,6 +408,23 @@ export default function ClassTable() {
         teachers={teachers}
         students={students}
       />
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalContent>
+          <ModalHeader>Confirm Status Change</ModalHeader>
+          <ModalBody>
+            Are you sure you want to {classToToggle?.currentStatus ? 'deactivate' : 'activate'} this class?
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onClose}>
+              Cancel
+            </Button>
+            <Button color="primary" onPress={toggleClassStatus}>
+              Confirm
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

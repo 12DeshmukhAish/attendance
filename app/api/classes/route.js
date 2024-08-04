@@ -142,6 +142,7 @@ export async function GET(req) {
 }
 
 export async function DELETE(req) {
+
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
@@ -152,12 +153,10 @@ export async function DELETE(req) {
         if (!deletedClass) {
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
-
         await Student.updateMany(
             { _id: { $in: deletedClass.students } },
             { $unset: { class: "" } }
         );
-
         console.log("Class Deleted Successfully", deletedClass);
         return NextResponse.json({ message: "Class Deleted Successfully" }, { status: 200 });
     } catch (error) {

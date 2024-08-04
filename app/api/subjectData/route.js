@@ -13,7 +13,7 @@ export async function GET(req) {
 
         console.log("Filter criteria:", filter);
         await connectMongoDB();
-        const subjects = await Subject.find(filter).select("_id name class teacher subType batch");
+        const subjects = await Subject.find(filter).select("_id name class teacher subType batch isActive");
         const teachers = await Faculty.find().select('name _id');
         const classes = await Classes.find(filter).select('_id batches._id');
         console.log(subjects,classes);
