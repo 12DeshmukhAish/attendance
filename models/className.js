@@ -13,10 +13,6 @@ const BatchSchema = new mongoose.Schema({
     students: [{
         type: String,
         ref: 'Student',
-    }],
-    subjects: [{
-        type: String,
-        ref: 'Subject',
     }]
 }, { _id: false });
 
@@ -48,6 +44,10 @@ const classSchema = new mongoose.Schema({
     },
     batches: {
         type: [BatchSchema],
+    },
+    isActive: {
+        type: Boolean,
+        default: true,
     },
 }, { timestamps: true });
 

@@ -29,7 +29,7 @@ export async function GET(req) {
                     $group: {
                         _id: {
                             subject: '$subject',
-                            batch: '$batch'
+                            batch: '$batch',
                         },
                         presentCount: {
                             $sum: {
@@ -42,12 +42,13 @@ export async function GET(req) {
                 {
                     $lookup: {
                         from: 'subjects',
-                        localField: '_id.subject',
+                        localField: 'subject',
                         foreignField: '_id',
                         as: 'subjectInfo'
                     }
                 },
                 { $unwind: '$subjectInfo' },
+                { $match: { 'subjectInfo.isActive': true } },
                 {
                     $project: {
                         _id: '$_id.subject',
@@ -245,7 +246,7 @@ export async function GET(req) {
 
         console.log(result);
         return NextResponse.json(result, { status: 200 });
-    } catch (error) {
+    } catch (error) {~
         console.error("Error fetching attendance report:", error);
         return NextResponse.json({ error: "Failed to Fetch Attendance Report" }, { status: 500 });
     }

@@ -46,6 +46,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     }
   }, [profile]);
 
+
+  console.log(classData);
+  
   
   useEffect(() => {
     if (mode === "edit" && classData) {
@@ -268,7 +271,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
               selectionMode="multiple"
               label="Students"
               name="students"
-              selectedKeys={Array.from(selectedStudents)}
+              selectedKeys={[classData?.students] ||Array.from(selectedStudents)   }
               onSelectionChange={handleSelectionChange}
               variant="bordered"
               size="sm"

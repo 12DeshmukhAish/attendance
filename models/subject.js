@@ -56,6 +56,10 @@ const SubjectSchema = new mongoose.Schema({
         type: [ObjectId],
         ref: 'Attendance'
     },
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
     content: [ContentSchema]
 }, {
     timestamps: true,

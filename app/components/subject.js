@@ -30,10 +30,11 @@ const columns = [
   { uid: "class", name: "Class" },
   { uid: "teacher", name: "Teacher" },
   { uid: "department", name: "Department" },
+  { uid: "isActive", name: "Status" },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "name", "class", "teacher", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "name", "class", "teacher","isActive", "actions"];
 
 export default function SubjectTable({ user }) { // Added user prop
   const [filterValue, setFilterValue] = useState("");
@@ -159,6 +160,13 @@ export default function SubjectTable({ user }) { // Added user prop
         return (
           <span>{teachers.find(teacher => teacher._id === cellValue)?.name}</span>
         );
+        case "isActive":
+        return (
+          <span>
+            {cellValue ? "Active" : "Inactive"}
+          </span>
+        );
+     
       default:
         return <span>{cellValue}</span>;
     }
