@@ -471,13 +471,14 @@ const AttendanceDisplay = () => {
 
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
           {userProfile?.role === "superadmin" && (
-            <Dropdown>
+            <Dropdown >
               <DropdownTrigger>
                 <Button variant="bordered">
                   {selectedDepartment || "Select Department"}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
+              
                 aria-label="Department selection"
                 onAction={(key) => setSelectedDepartment(key)}
               >
@@ -492,7 +493,7 @@ const AttendanceDisplay = () => {
               <Dropdown>
                 <DropdownTrigger>
                   <Button variant="bordered">
-                    {selectedClass || "Select Class"}
+                    { selectedClass ? selectedClass: "Select Class"}
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
@@ -513,7 +514,7 @@ const AttendanceDisplay = () => {
                 <DropdownMenu aria-label="View type selection" onAction={(key) => {
                   setAttendanceData(null)
                   setViewType(key)
-                  setSelectedClass(userProfile?.classes)
+                  // setSelectedClass(userProfile?.classes)
                 }}>
                   <DropdownItem key="cumulative">Cumulative View</DropdownItem>
                   <DropdownItem key="individual">Individual View</DropdownItem>
@@ -544,13 +545,13 @@ const AttendanceDisplay = () => {
           {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile.classes) && (
             <>
               {viewType === "individual" && (
-                <Dropdown>
+                <Dropdown >
                   <DropdownTrigger>
                     <Button variant="bordered">
                       {selectedSubject ? selectedSubject : "Select Subject"}
                     </Button>
                   </DropdownTrigger>
-                  <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
+                  <DropdownMenu className="max-h-48 overflow-y-auto" aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
                     {classes.find((c) => c._id === selectedClass)?.subjects.map((subject) => (
                       <DropdownItem key={subject}>{subject}</DropdownItem>
                     ))}

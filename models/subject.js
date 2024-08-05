@@ -35,7 +35,7 @@ const SubjectSchema = new mongoose.Schema({
     },
     subType: {
         type: String,
-        enum: ['theory', 'practical'],
+        enum: ['theory', 'practical','tg'],
         required: true
     },
     class: {

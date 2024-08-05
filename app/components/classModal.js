@@ -46,33 +46,36 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     }
   }, [profile]);
 
-
-  console.log(classData);
-  
-  
   useEffect(() => {
-    if (mode === "edit" && classData) {
-      setFormData({
-        _id: classData._id,
-        className: classData.className,
-        classCoordinator: classData.teacher,
-        passOutYear: classData.passOutYear,
-        department: classData.department,
-        year: classData.year
-      });
-      setBatches(classData.batches || []);
-      fetchStudents(classData.passOutYear, classData.year, classData.department);
-    } else {
-      resetForm();
+    if (isOpen) {
+      if (mode === "edit" && classData) {
+        console.log(classData);
+        
+        setFormData({
+          _id: classData._id,
+          className: classData.className,
+          classCoordinator: classData.teacher,
+          passOutYear: classData.passOutYear,
+          department: classData.department,
+          year: classData.year
+        });
+        setBatches(classData.batches || []);
+        if (classData.students) {
+          setSelectedStudents(new Set(classData?.students));
+          console.log(selectedStudents);
+          
+        }
+      } else {
+        resetForm();
+      }
     }
-  }, [mode, classData]);
+  }, [isOpen, mode, classData]);
 
   const fetchStudents = async (passOutYear, year, department) => {
     if (passOutYear && year && department) {
       try {
         const response = await axios.get(`/api/fetchstudentsByid?passOutYear=${passOutYear}&year=${year}&department=${department}`);
         setAllStudents(response.data);
-        setSelectedStudents(new Set(response.data.filter(student => student.classId === formData._id).map(student => student._id)));
         setSelectAll(response.data.length === selectedStudents.size);
       } catch (error) {
         console.error("Error fetching students:", error);
@@ -90,16 +93,14 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       updatedFormData.passOutYear = passOutYear;
       setFormData(updatedFormData);
     }
-
-  
   };
-  const { passOutYear, year, department } = formData;
-    useEffect(() => {
-      if (passOutYear && year && department) {
-        fetchStudents(passOutYear, year, department);
-      }
-    }, [passOutYear,year,department]);
-   
+
+  useEffect(() => {
+    const { passOutYear, year, department } = formData;
+    if (passOutYear && year && department) {
+      fetchStudents(passOutYear, year, department);
+    }
+  }, [formData.passOutYear, formData.year, formData.department]);
 
   const handleSelectAll = () => {
     if (selectAll) {
@@ -149,7 +150,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
         toast.success("Class updated successfully");
       }
       onSubmit();
-      handleCancel();
+      onClose();
     } catch (error) {
       console.error("Error:", error);
       toast.error(`Error occurred while ${mode === "add" ? "adding" : "updating"} class`);
@@ -163,24 +164,18 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       classCoordinator: "",
       passOutYear: "",
       year: "",
-      department: ""
+      department: profile?.role !== "superadmin" ? profile?.department : ""
     });
     setAllStudents([]);
     setSelectedStudents(new Set());
     setSelectAll(false);
     setBatches([]);
   };
-
-  const handleCancel = () => {
-    resetForm();
-    onClose();
-  };
-
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel} size="3xl">
-      <ModalContent className="max-h-[90vh] overflow-y-auto">
-        <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>
-        <ModalBody>
+    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
+    <ModalContent className="max-h-[90vh] overflow-y-auto">
+      <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>
+      <ModalBody>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Input
               label="Class ID"
@@ -271,7 +266,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
               selectionMode="multiple"
               label="Students"
               name="students"
-              selectedKeys={[classData?.students] ||Array.from(selectedStudents)   }
+              selectedKeys={Array.from(selectedStudents)}
               onSelectionChange={handleSelectionChange}
               variant="bordered"
               size="sm"
@@ -279,7 +274,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             >
               {allStudents.map((student) => (
                 <SelectItem key={student._id} textValue={student.name}>
-                  {student._id} {student.name}
+                  {student.rollNumber} {student.name}
                 </SelectItem>
               ))}
             </Select>
@@ -327,7 +322,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
                     .filter((student) => selectedStudents.has(student._id))
                     .map((student) => (
                     <SelectItem key={student._id} textValue={student.name}>
-                      {student._id} {student.name}
+                      {student.rollNumber} {student.name}
                     </SelectItem>
                   ))}
                 </Select>
@@ -343,9 +338,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             ))}
             <Button onClick={addBatch} size="sm" >Add Batch</Button>
           </div>
-        </ModalBody>
+          </ModalBody>
         <ModalFooter>
-          <Button size="md"  onClick={handleCancel}>Cancel</Button>
+          <Button size="md" onClick={onClose}>Cancel</Button>
           <Button color="primary" size="md" onClick={handleSubmit}>{mode === "add" ? "Add Class" : "Save Changes"}</Button>
         </ModalFooter>
       </ModalContent>

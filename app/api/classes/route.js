@@ -125,15 +125,13 @@ export async function GET(req) {
 
         const classes = await Classes.find(filter)
             .populate('teacher', 'name')
-            .populate('students', '_id')
+            .populate('students', '_id rollNumber name')
             .lean();
 
         if (classes.length === 0) {
             console.log("No classes found for criteria:", filter);
             return NextResponse.json({ status: 404 });
         }
-
-        console.log("Fetched Classes Successfully", classes);
         return NextResponse.json(classes, { status: 200 });
     } catch (error) {
         console.error("Error fetching classes:", error);

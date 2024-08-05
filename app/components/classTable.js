@@ -80,32 +80,55 @@ export default function ClassTable() {
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
+      const parsedProfile = JSON.parse(storedProfile);
+      setProfile(parsedProfile);
+      if (parsedProfile.role !== "superadmin") {
+        setSelectedDepartment(parsedProfile.department);
+      }
     }
   }, []);
-
   useEffect(() => {
     if (selectedDepartment) {
-      fetchClasses();
-      fetchTeachers();
+      fetchData();
     }
   }, [selectedDepartment]);
 
-  useEffect(() => {
-    if (profile?.role !== "superadmin") {
-      setSelectedDepartment(profile?.department);
-    }
-  }, [profile]);
+  const fetchData = useCallback(async () => {
+    if (!selectedDepartment) return;
 
-  const handleSelectChange = (value) => {
+    setIsLoading(true);
+    try {
+      const [classesResponse, teachersResponse] = await Promise.all([
+        axios.get(`/api/classes?department=${selectedDepartment}`),
+        axios.get('/api/fetchfaculty')
+      ]);
+
+      if (classesResponse.status === 200) {
+        setClasses(classesResponse.data);
+        console.log(classes);
+        
+      } else {
+        setClasses([]);
+      }
+
+      setTeachers(teachersResponse.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Error fetching data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedDepartment]);
+
+  const handleSelectChange = useCallback((value) => {
     setSelectedDepartment(value);
-  };
-  const openConfirmModal = (classId, currentStatus) => {
+  }, []);
+
+  const openConfirmModal = useCallback((classId, currentStatus) => {
     setClassToToggle({ id: classId, currentStatus });
     onOpen();
-  };
-
-  const toggleClassStatus = async () => {
+  }, [onOpen]);
+  const toggleClassStatus = useCallback(async () => {
     if (!classToToggle) return;
 
     try {
@@ -128,42 +151,7 @@ export default function ClassTable() {
       setIsLoading(false);
       onClose();
     }
-  };
-  const fetchClasses = async () => {
-    try {
-      setIsLoading(true)
-      const response = await axios.get(`/api/classes?department=${selectedDepartment}`);
-      if (response.status == 200) {
-
-        setClasses(response.data);
-      }
-      else {
-        setClasses(null)
-      }
-      console.log(response.data);
-    } catch (error) {
-      console.error('Error fetching classes:', error);
-    }
-    finally {
-      setIsLoading(false)
-
-    }
-  };
-
-  const fetchTeachers = async () => {
-    try {
-      setIsLoading(true)
-      const response = await axios.get('/api/faculty');
-      setTeachers(response.data);
-
-    } catch (error) {
-      console.error('Error fetching teachers:', error);
-    }
-    finally {
-      setIsLoading(false);
-    }
-  };
-
+  }, [classToToggle, onClose]);
 
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(classes);
@@ -172,21 +160,19 @@ export default function ClassTable() {
     XLSX.writeFile(workbook, "classes_data.xlsx");
   };
 
-  const deleteClass = async (_id) => {
+  const deleteClass = useCallback(async (_id) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       await axios.delete(`/api/classes?_id=${_id}`);
-      fetchClasses();
+      fetchData();
       toast.success('Class deleted successfully');
     } catch (error) {
       console.error("Error deleting class:", error);
       toast.error('Error deleting class');
+    } finally {
+      setIsLoading(false);
     }
-    finally {
-      setIsLoading(true)
-
-    }
-  };
+  }, [fetchData]);
 
   const pages = classes ? Math.ceil(classes?.length / rowsPerPage) : 0;
 
@@ -404,7 +390,7 @@ export default function ClassTable() {
         onClose={() => setModalOpen(false)}
         mode={modalMode}
         classData={selectedClass}
-        onSubmit={fetchClasses}
+        onSubmit={fetchData}
         teachers={teachers}
         students={students}
       />
