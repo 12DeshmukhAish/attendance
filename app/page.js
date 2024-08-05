@@ -26,8 +26,12 @@ export default function Home() {
               </div>
             </div>
             <nav className="flex items-center space-x-4">
-              <Link href="/login" legacyBehavior>
-                <a className="text-gray-600 hover:text-blue-500">Login</a>
+            <Link href="/login" legacyBehavior>
+                <a>
+                  <button className="b1">
+                    Login
+                  </button>
+                </a>
               </Link>
             </nav>
           </div>
@@ -81,7 +85,7 @@ export default function Home() {
 
         <footer className="bg-white py-6 mt-12">
           <div className="container mx-auto text-center px-4">
-            <p className="text-gray-600">&copy; 2024 Attendance System</p>
+            <p className="text-gray-600">&copy; 2024 UnityTech Solutions.All rights reserved.</p>
           </div>
         </footer>
       </div>
