@@ -31,12 +31,8 @@ export async function GET(req) {
     const classDoc = await Classes.findById(subject.class).lean();
     
     if (subject.subType === 'practical' || subject.subType === 'tg') {
-      if (classDoc && classDoc.batches) {
-        batches = classDoc.batches.map(batch => batch._id);
-      }
-
       if (batchId) {
-        const selectedBatch = classDoc.batches.find(batch => batch._id === batchId);
+        const selectedBatch = classDoc.batches.find(batch => batch._id.toString() === batchId);
         if (selectedBatch) {
           students = await Student.find({ _id: { $in: selectedBatch.students } }, 'name _id rollNumber').lean();
         }
@@ -44,13 +40,13 @@ export async function GET(req) {
     } else {
       students = await Student.find({ class: subject.class, subjects: subjectId }, 'name _id rollNumber').lean();
     }
-
+   
     const attendanceQuery = {
       subject: subjectId,
       date: { "$gte": new Date(date.setUTCHours(0, 0, 0, 0)), "$lt": new Date(date.setUTCHours(23, 59, 59, 999)) },
       session: parseInt(session)
     };
-    if (batchId) attendanceQuery.batch = batchId;
+    if (subject.subType !== 'theory' && batchId) attendanceQuery.batch = batchId;
 
     const attendanceRecord = await Attendance.findOne(attendanceQuery).lean();
     
