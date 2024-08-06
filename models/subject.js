@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import Classes from './className';
-import { type } from 'express/lib/response';
 
 const ContentSchema = new mongoose.Schema({
     title: {

@@ -207,7 +207,7 @@ export default function App() {
             </DropdownMenu>
           </Dropdown>
         </div>
-        {batches?.length > 0 && (
+        {batches && (
           <div className="max-w-[60%]">
             <Dropdown>
               <DropdownTrigger>
