@@ -20,6 +20,7 @@ export default function App() {
   const [attendanceRecord, setAttendanceRecord] = useState(null);
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
+  const [isTableVisible, setIsTableVisible] = useState(false);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -56,7 +57,7 @@ export default function App() {
       const response = await axios.get(`/api/utils/subjectBatch?subjectId=${selectedSubject}`);
       const { subject } = response.data;
       console.log(response.data);
-      
+
       setSubjectDetails(subject);
       if (subject.subType === 'practical' || subject.subType === 'tg') {
         setBatches(subject.batch);
@@ -69,23 +70,25 @@ export default function App() {
     }
   };
 
-
+  const handleTakeAttendance = () => {
+    setIsTableVisible(true);
+  };
   const fetchSubjectAttendance = async () => {
-      try {
-        const response = await axios.get(`/api/update`, {
-          params: {
-            subjectId: selectedSubject,
-            date: selectedDate.toISOString().split("T")[0],
-            session: selectedSession,
-            batchId: subjectDetails.subType === 'theory' ? undefined : selectedBatch
-          }
-        });
-         const {  students, attendanceRecord } = response.data;
+    try {
+      const response = await axios.get(`/api/update`, {
+        params: {
+          subjectId: selectedSubject,
+          date: selectedDate.toISOString().split("T")[0],
+          session: selectedSession,
+          batchId: subjectDetails.subType === 'theory' ? undefined : selectedBatch
+        }
+      });
+      const { students, attendanceRecord } = response.data;
       console.log(response.data);
 
       // Sort students by roll number as a number
       students.sort((a, b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
-    
+
       setStudents(students);
       setAttendanceRecord(attendanceRecord);
       if (attendanceRecord) {
@@ -145,6 +148,13 @@ export default function App() {
     } catch (error) {
       console.error('Failed to update attendance:', error);
       alert("Failed to update attendance");
+    }
+    finally{
+      setSelectedBatch(null)
+      setIsTableVisible(false)
+      setSelectedKeys(new Set())
+      setSelectedContents([])
+      setSelectedSession([])
     }
   };
 
@@ -228,58 +238,95 @@ export default function App() {
                 ))}
               </DropdownMenu>
             </Dropdown>
+            <Button color="primary" variant="shadow" className="mx-4" onClick={handleTakeAttendance}>
+              Take Attendance
+            </Button>
           </div>
         )}
       </div>
-      {subjectDetails && (
-        <div className="mb-4">
-          <h2>Subject Content</h2>
-          <CheckboxGroup
-            value={selectedContents}
-            onChange={setSelectedContents}
-          >
-            {subjectDetails.content && subjectDetails.content
-              .filter(content => content.status !== "covered")
-              .map((content, index) => (
-                <Checkbox key={index} value={content.name}>
-                  {index + 1} {content.name}
-                </Checkbox>
-              ))}
-          </CheckboxGroup>
-        </div>
-      )}
-
-      {students.length > 0 && (
-        <div className="flex flex-col gap-3 mt-4">
-          <Table
-            aria-label="Attendance table"
-            selectionMode="multiple"
-            selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
-          >
-            <TableHeader>
-              <TableColumn>Roll Number</TableColumn>
-              <TableColumn>Name</TableColumn>
-            </TableHeader>
-            <TableBody
-            className="max-h-[80vh]"
+      {selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
+        <div className="flex gap-4 mb-4">
+          <div className="w-1/2 h-[70vh]">
+            <h2>Course Content</h2>
+            <Table aria-label="Course Content Table" 
+              className="h-[70vh]"
+              >
+              <TableHeader>
+                <TableColumn>Select</TableColumn>
+                <TableColumn>Title</TableColumn>
+                <TableColumn>Description</TableColumn>
+                <TableColumn>Proposed Date</TableColumn>
+                <TableColumn>Completed Date</TableColumn>
+                <TableColumn>References</TableColumn>
+                {/* <TableColumn>Course Outcomes</TableColumn>
+                <TableColumn>Program  Outcomes</TableColumn> */}
+                <TableColumn>Status</TableColumn>
+              </TableHeader>
+              <TableBody>
+                {subjectDetails.content && subjectDetails.content.map((content, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Checkbox
+                        isSelected={selectedContents.includes(content.title)}
+                        onChange={() => {
+                          setSelectedContents(prev =>
+                            prev.includes(content.title)
+                              ? prev.filter(item => item !== content.title)
+                              : [...prev, content.title]
+                          );
+                        }}
+                        isDisabled={content.status === 'covered'}
+                      />
+                    </TableCell>
+                    <TableCell>{content.title}</TableCell>
+                    <TableCell>{content.description}</TableCell>
+                    <TableCell>{content.proposedDate}</TableCell>
+                    <TableCell>{content.completedDate}</TableCell>
+                    <TableCell>
+                      {content.references && content.references.map((ref, refIndex) => (
+                        <div key={refIndex}>
+                          <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
+                        </div>
+                      ))}
+                    </TableCell>
+                    <TableCell>{content.status}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="w-1/2 h-[70vh]">
+            <h2>Students List</h2>
+            <Table
+              aria-label="Attendance Table"
+              selectionMode="multiple"
+              selectedKeys={selectedKeys}
+              onSelectionChange={setSelectedKeys}
+              className="h-[70vh]"
             >
-              {students.map((student) => (
-                <TableRow key={student._id}>
-                  <TableCell>{student.rollNumber}</TableCell>
-                  <TableCell>{student.name}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <Button className="max-w-[50%] mx-auto" color="primary" onPress={updateAttendance}>
-            Submit Attendance
-          </Button>
+              <TableHeader>
+                <TableColumn>Roll Number</TableColumn>
+                <TableColumn>Name</TableColumn>
+              </TableHeader>
+              <TableBody>
+                {students.map((student) => (
+                  <TableRow key={student._id}>
+                    <TableCell>{student.rollNumber}</TableCell>
+                    <TableCell>{student.name}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="w-full flex justify-center ">
+              <Button className="max-w-[50%] my-2 justify-center" color="primary" onPress={updateAttendance}>
+                Submit Attendance
+              </Button>
+            </div>
+          </div>
         </div>
       )}
-      {students.length === 0 && (
-        <div className="mt-8 flex flex-col items-center gap-3">
+      {!isTableVisible && (
+        <div className="mt-8 flex flex-col items-center gap-3 ">
           <Image
             alt="No data found"
             src="/update.svg"

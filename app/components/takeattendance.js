@@ -97,6 +97,13 @@ export default function App() {
       console.error('Failed to submit attendance:', error);
       alert("Failed to submit attendance");
     }
+    finally{
+      setSelectedBatch(null)
+      setIsTableVisible(false)
+      setSelectedKeys(new Set())
+      setSelectedContents([])
+      setSelectedSession([])
+    }
   };
   
   return (
