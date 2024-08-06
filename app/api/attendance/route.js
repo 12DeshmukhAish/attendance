@@ -79,67 +79,63 @@ export async function PUT(req) {
         await connectMongoDB();
         const data = await req.json();
         const { date, subject, session, batchId, attendanceRecords } = data;
-        console.log("Received data:", data);
 
-        if (!date || !Date.parse(date)) {
-            return NextResponse.json({ message: "Invalid date format" }, { status: 400 });
+        if (!date || !Date.parse(date) || !subject || !session || !attendanceRecords) {
+            return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
         }
 
         const attendanceDate = new Date(date);
-        console.log("Parsed attendance date:", attendanceDate);
-
-        // Create a date range for the entire day in UTC
         const startOfDay = new Date(Date.UTC(attendanceDate.getUTCFullYear(), attendanceDate.getUTCMonth(), attendanceDate.getUTCDate()));
         const endOfDay = new Date(startOfDay);
         endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
 
-        let filter = {
-            date: { $gte: startOfDay, $lt: endOfDay },
-            subject,
-            session
-        };
+        const sessions = Array.isArray(session) ? session : [session];
 
-        if (batchId) {
-            filter.batch = batchId;
-        }
-
-        console.log("Query filter:", JSON.stringify(filter));
-
-        // Try to find the document
-        let attendanceRecord = await Attendance.findOne(filter);
-
-        if (!attendanceRecord) {
-            console.log("No matching record found. Creating a new record.");
-            // Create a new record
-            attendanceRecord = new Attendance({
-                date: attendanceDate,
+        const sessionPromises = sessions.map(async (sess) => {
+            const filter = {
+                date: { $gte: startOfDay, $lt: endOfDay },
                 subject,
-                session,
-                records: attendanceRecords,
-                ...(batchId && { batch: batchId })
-            });
-        } else {
-            // Update existing record
-            attendanceRecord.date = attendanceDate;
-            attendanceRecord.records = attendanceRecords;
-        }
+                session: sess
+            };
 
-        // Save the record (this will either create a new one or update the existing one)
-        await attendanceRecord.save();
+            if (batchId) {
+                filter.batch = batchId;
+            }
 
-        // Update the subject's reports
-        await Subject.findByIdAndUpdate(
-            subject,
-            { $addToSet: { reports: attendanceRecord._id } }
-        );
+            let attendanceRecord = await Attendance.findOne(filter);
 
-        console.log("Attendance Updated/Created Successfully", attendanceRecord);
-        return NextResponse.json({ message: "Attendance Updated/Created Successfully", attendance: attendanceRecord }, { status: 200 });
+            if (!attendanceRecord) {
+                attendanceRecord = new Attendance({
+                    date: attendanceDate,
+                    subject,
+                    session: sess,
+                    records: attendanceRecords,
+                    ...(batchId && { batch: batchId })
+                });
+            } else {
+                attendanceRecord.date = attendanceDate;
+                attendanceRecord.records = attendanceRecords;
+            }
+
+            await attendanceRecord.save();
+
+            await Subject.findByIdAndUpdate(
+                subject,
+                { $addToSet: { reports: attendanceRecord._id } }
+            );
+
+            return attendanceRecord;
+        });
+
+        const attendanceRecordsResult = await Promise.all(sessionPromises);
+
+        return NextResponse.json({ message: "Attendance Updated/Created Successfully", attendance: attendanceRecordsResult }, { status: 200 });
     } catch (error) {
         console.error("Error updating/creating attendance:", error);
         return NextResponse.json({ error: "Failed to Update/Create Attendance" }, { status: 500 });
     }
 }
+
 export async function DELETE(req) {
     try {
         await connectMongoDB();
