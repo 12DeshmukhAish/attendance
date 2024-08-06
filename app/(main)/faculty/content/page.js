@@ -9,7 +9,7 @@ const TeachingPlanPage = () => {
   const [subjectIds, setSubjectIds] = useState([]);
   const [subject, setSubject] = useState({});
   const [content, setContent] = useState([{
-    title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+    title: '', description: '', proposedDate: '', completedDate: '', references: '', courseOutcomes:'',programOutcomes:'',status: 'not_covered'
   }]);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -37,7 +37,7 @@ const TeachingPlanPage = () => {
       const response = await axios.get(`/api/subject?_id=${subjectId}`);
       setSubject(response.data.subject);
       setContent(response.data.subject.content || [{
-        title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+        title: '', description: '', proposedDate: '', completedDate: '', references: '',courseOutcomes:'',programOutcomes:'', status: 'not_covered'
       }]);
     } catch (error) {
       console.error('Error fetching subject info:', error);
@@ -52,7 +52,7 @@ const TeachingPlanPage = () => {
 
   const handleAddContent = () => {
     setContent([...content, {
-      title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+      title: '', description: '', proposedDate: '', completedDate: '', references: '', courseOutcomes:'',programOutcomes:'',status: 'not_covered'
     }]);
   };
 
@@ -77,7 +77,7 @@ const TeachingPlanPage = () => {
   const handleCancel = () => {
     setSubjectId('');
     setContent([{
-      title: '', description: '', proposedDate: '', completedDate: '', references: '', status: 'not_covered'
+      title: '', description: '', proposedDate: '', completedDate: '', references: '',programOutcomes:'',courseOutcomes:'', status: 'not_covered'
     }]);
     setIsEditing(false);
   };
@@ -133,6 +133,8 @@ const TeachingPlanPage = () => {
         proposedDate: row[2] || '',
         completedDate: row[3] || '',
         references: row[4] || '',
+        courseOutcomes:row[5]||'',
+        programOutcomes:row[6]||'',
         status: row[5] || 'not_covered',
       }));
 
@@ -188,6 +190,8 @@ const TeachingPlanPage = () => {
                 <TableColumn>Proposed Date</TableColumn>
                 <TableColumn>Completed Date</TableColumn>
                 <TableColumn>References</TableColumn>
+                <TableColumn>Course Outcomes</TableColumn>
+                <TableColumn>Program Outcomes</TableColumn>
                 <TableColumn>Status</TableColumn>
               </TableHeader>
               <TableBody>
@@ -198,6 +202,8 @@ const TeachingPlanPage = () => {
                     <TableCell>{item.proposedDate}</TableCell>
                     <TableCell>{item.completedDate}</TableCell>
                     <TableCell>{item.references}</TableCell>
+                    <TableCell>{item.courseOutcomes}</TableCell>
+                    <TableCell>{item.programOutcomes}</TableCell>
                     <TableCell>{item.status}</TableCell>
                   </TableRow>
                 ))}
@@ -272,6 +278,28 @@ const TeachingPlanPage = () => {
                   name="references"
                   label="References"
                   value={item.references}
+                  onChange={(e) => handleContentChange(index, e)}
+                  
+                  className="w-full"
+                  variant="bordered"
+                  size="sm"
+                />
+                  <Input
+                  type="text"
+                  name="courseOutcomes"
+                  label="Course Outcomes"
+                  value={item.courseOutcomes}
+                  onChange={(e) => handleContentChange(index, e)}
+                  
+                  className="w-full"
+                  variant="bordered"
+                  size="sm"
+                />
+                  <Input
+                  type="text"
+                  name="programOutcomes"
+                  label="ProgramOutcomes"
+                  value={item.programOutcomes}
                   onChange={(e) => handleContentChange(index, e)}
                   
                   className="w-full"

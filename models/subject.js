@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import Classes from './className';
+import { type } from 'express/lib/response';
 
 const ContentSchema = new mongoose.Schema({
     title: {
@@ -17,6 +18,12 @@ const ContentSchema = new mongoose.Schema({
     },
     references: {
         type: String,
+    },
+    courseOutcomes:{
+        type: String,
+    },
+    programOutcomes:{
+        type:String,
     },
     status: {
         type: String,

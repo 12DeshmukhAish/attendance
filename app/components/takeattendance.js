@@ -173,6 +173,8 @@ export default function App() {
                 <TableColumn>Proposed Date</TableColumn>
                 <TableColumn>Completed Date</TableColumn>
                 <TableColumn>References</TableColumn>
+                {/* <TableColumn>Course Outcomes</TableColumn>
+                <TableColumn>Program  Outcomes</TableColumn> */}
                 <TableColumn>Status</TableColumn>
               </TableHeader>
               <TableBody>
