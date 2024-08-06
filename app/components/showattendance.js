@@ -88,12 +88,19 @@ const AttendanceDisplay = () => {
 
       if (userProfile.role === "student") {
         url += `studentId=${userProfile._id}`;
-      } else if (userProfile.role === "faculty") {
-        if (userProfile?.classes.includes(selectedClass) && viewType == "cumulative") {
+      } if (userProfile.role === "faculty") {
+        if (viewType === "cumulative" && userProfile?.classes?.includes(selectedClass)) {
           url += `classId=${selectedClass}`;
-        } else {
+        } else if (selectedSubject) {
           url += `subjectId=${selectedSubject}`;
+        } else if (userProfile?.classes?.length > 0) {
+          url += `classId=${userProfile.classes[0]}`; // Use the first class if no specific selection
+        } else {
+          setError("No class or subject selected for faculty");
+          setLoading(false);
+          return;
         }
+      
       } else if (userProfile.role === "admin" || userProfile.role === "superadmin") {
         url += `classId=${selectedClass}`;
         if (viewType === "individual" && selectedSubject) {
@@ -522,26 +529,49 @@ const AttendanceDisplay = () => {
               </Dropdown>
             </>
           )}
-          {userProfile?.role === "faculty" && userProfile.inactiveSubjects && viewType === "individual" && userProfile.inactiveSubjects.length > 0 && (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button variant="bordered">
-                  {selectedSubject ? `Previous: ${selectedSubject}` : "Select Previous Subject"}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Inactive subject selection"
-                onAction={(key) => {
-                  setSelectedSubject(key);
-
-                }}
-              >
-                {userProfile.inactiveSubjects.map((subject) => (
-                  <DropdownItem key={subject}>{subject}</DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          )}
+    {userProfile?.role === "faculty" && viewType === "individual" && (
+  <>
+  {userProfile.subjects && (    <Dropdown>
+      <DropdownTrigger>
+        <Button variant="bordered">
+          {selectedSubject ? `Current: ${selectedSubject}` : "Select Current Year Subject"}
+        </Button>
+      </DropdownTrigger>
+      <DropdownMenu 
+        aria-label="Subject selection" 
+        onAction={(key) => {
+          setSelectedSubject(key);
+          setSelectedInactiveSubject(""); // Clear inactive subject when selecting an active one
+        }}
+      >
+        {userProfile.subjects?.map((subject) => (
+          <DropdownItem key={subject}>{subject}</DropdownItem>
+        ))}
+      </DropdownMenu>
+    </Dropdown>
+    )}
+{userProfile.inactiveSubjects && (
+    <Dropdown>
+      <DropdownTrigger>
+        <Button variant="bordered">
+          {selectedInactiveSubject ? `Previous: ${selectedInactiveSubject}` : "Select Previous Year Subject"}
+        </Button>
+      </DropdownTrigger>
+      <DropdownMenu
+        aria-label="Inactive subject selection"
+        onAction={(key) => {
+          setSelectedInactiveSubject(key);
+          setSelectedSubject(""); // Clear active subject when selecting an inactive one
+        }}
+      >
+        {userProfile.inactiveSubjects?.map((subject) => (
+          <DropdownItem key={subject}>{subject}</DropdownItem>
+        ))}
+      </DropdownMenu>
+    </Dropdown>
+    )}
+  </>
+)}
           {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile?.classes) && (
             <>
               {viewType === "individual" && (
@@ -560,21 +590,7 @@ const AttendanceDisplay = () => {
               )}
             </>
           )}
-          {userProfile?.role === "faculty" && userProfile.subjects.length > 0 && viewType === "individual" && (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button variant="bordered">
-                  {selectedSubject || "Select Subject"}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
-                {userProfile.subjects.map((subject) => (
-                  <DropdownItem key={subject}>{subject}</DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          )}
-        </div>
+          </div>
       </div>
 
       <div className="mb-8 flex items-center  gap-10 w-full justify-center ">

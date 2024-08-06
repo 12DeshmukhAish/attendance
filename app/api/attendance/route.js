@@ -155,34 +155,3 @@ export async function DELETE(req) {
     }
 }
 
-
-export async function GET(req) {
-    try {
-        await connectMongoDB();
-        const { date, subject, session, batchId } = req.query;
-
-        if (subject && session) {
-            const filter = { subject, session };
-            if (date) {
-                filter.date = new Date(date);
-            }
-            if (batchId) {
-                filter.batch = batchId;
-            }
-
-            const attendanceRecord = await Attendance.findOne(filter);
-
-            if (!attendanceRecord) {
-                return NextResponse.json({ message: "Attendance Record Not Found" }, { status: 404 });
-            }
-
-            console.log("Attendance Fetched Successfully", attendanceRecord);
-            return NextResponse.json({ message: "Attendance Fetched Successfully", attendance: attendanceRecord }, { status: 200 });
-        } else {
-            return NextResponse.json({ message: "Invalid Query Parameters" }, { status: 400 });
-        }
-    } catch (error) {
-        console.error("Error fetching attendance:", error);
-        return NextResponse.json({ error: "Failed to Fetch Attendance" }, { status: 500 });
-    }
-}

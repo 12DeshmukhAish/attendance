@@ -287,7 +287,7 @@ const TeachingPlanPage = () => {
                   <Input
                   type="text"
                   name="courseOutcomes"
-                  label="Course Outcomes"
+                  label="CourseOutcomes"
                   value={item.courseOutcomes}
                   onChange={(e) => handleContentChange(index, e)}
                   

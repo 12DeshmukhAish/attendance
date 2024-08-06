@@ -1,6 +1,6 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, CheckboxGroup, Checkbox } from "@nextui-org/react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Checkbox, CheckboxGroup } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
 import { DatePicker } from "@nextui-org/date-picker";
@@ -35,11 +35,9 @@ export default function App() {
 
   useEffect(() => {
     if (selectedSubject) {
-      console.log(selectedSubject);
       fetchSubjectData();
     }
   }, [selectedSubject]);
-
 
   useEffect(() => {
     if (selectedSubject && selectedDate && selectedSession) {
@@ -52,11 +50,14 @@ export default function App() {
       }
     }
   }, [selectedSubject, selectedDate, selectedSession, selectedBatch, subjectDetails]);
+
   const fetchSubjectData = async () => {
     try {
       const response = await axios.get(`/api/utils/subjectBatch?subjectId=${selectedSubject}`);
       const { subject } = response.data;
+
       console.log(response.data);
+
 
       setSubjectDetails(subject);
       if (subject.subType === 'practical' || subject.subType === 'tg') {
@@ -70,9 +71,11 @@ export default function App() {
     }
   };
 
+
   const handleTakeAttendance = () => {
     setIsTableVisible(true);
   };
+
   const fetchSubjectAttendance = async () => {
     try {
       const response = await axios.get(`/api/update`, {
@@ -84,15 +87,16 @@ export default function App() {
         }
       });
       const { students, attendanceRecord } = response.data;
+
       console.log(response.data);
 
-      // Sort students by roll number as a number
+
       students.sort((a, b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
 
       setStudents(students);
       setAttendanceRecord(attendanceRecord);
       if (attendanceRecord) {
-        setSelectedKeys(new Set(attendanceRecord.records.map(r => r.status == "present" && r.student)));
+        setSelectedKeys(new Set(attendanceRecord.records.map(r => r.status === "present" && r.student)));
         setSelectedContents(attendanceRecord.contents || []);
       } else {
         setSelectedKeys(new Set());
@@ -117,7 +121,7 @@ export default function App() {
     let presentStudentIds = [];
     if (selectedKeys instanceof Set) {
       if (selectedKeys.has("all")) {
-        presentStudentIds = students.map(student => student._id); // Use student._id here
+        presentStudentIds = students.map(student => student._id);
       } else {
         presentStudentIds = Array.from(selectedKeys);
       }
@@ -132,8 +136,6 @@ export default function App() {
     }));
 
     try {
-      console.log(attendanceData);
-      console.log("date:", new Date(selectedDate));
       const response = await axios.put(`/api/attendance`, {
         subject: selectedSubject,
         date: selectedDate.toISOString().split("T")[0],
@@ -142,7 +144,6 @@ export default function App() {
         attendanceRecords: attendanceData
       });
 
-      console.log('Attendance updated successfully:', response.data);
       alert("Attendance updated successfully");
       fetchSubjectAttendance();
     } catch (error) {
@@ -185,10 +186,7 @@ export default function App() {
         <div className="max-w-[60%]">
           <DatePicker
             selected={selectedDate}
-            onChange={date => {
-              console.log(selectedDate);
-              setSelectedDate(convertToDate(date));
-            }}
+            onChange={date => setSelectedDate(convertToDate(date))}
             dateFormat="yyyy-MM-dd"
           />
         </div>
@@ -205,11 +203,7 @@ export default function App() {
               disallowEmptySelection
               selectionMode="single"
               selectedKeys={selectedSession ? new Set([selectedSession.toString()]) : new Set()}
-              onSelectionChange={(keys) => {
-                const session = parseInt(Array.from(keys)[0]);
-                console.log('Session changed:', session);
-                setSelectedSession(session);
-              }}
+              onSelectionChange={(keys) => setSelectedSession(parseInt(Array.from(keys)[0]))}
             >
               {sessions.map((session) => (
                 <DropdownItem key={session.toString()}>Session {session}</DropdownItem>
@@ -244,6 +238,7 @@ export default function App() {
           </div>
         )}
       </div>
+
       {selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
         <div className="flex gap-4 mb-4">
           <div className="w-1/2 h-[70vh]">
@@ -279,14 +274,17 @@ export default function App() {
                       />
                     </TableCell>
                     <TableCell>{content.title}</TableCell>
+
                     <TableCell>{content.description}</TableCell>
                     <TableCell>{content.proposedDate}</TableCell>
                     <TableCell>{content.completedDate}</TableCell>
                     <TableCell>
+
                       {content.references && content.references.map((ref, refIndex) => (
                         <div key={refIndex}>
                           <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
                         </div>
+
                       ))}
                     </TableCell>
                     <TableCell>{content.status}</TableCell>
@@ -335,6 +333,7 @@ export default function App() {
             className="object-contain"
           />
           <p className="text-2xl">No Students Found</p>
+
         </div>
       )}
     </div>
