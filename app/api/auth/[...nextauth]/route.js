@@ -24,7 +24,7 @@ export const authOptions = {
             throw new Error('Invalid username');
           }
 
-          if (faculty && faculty._id.startsWith("Super")) {
+          if (faculty && faculty.isSuper) {
             id = faculty._id;
             userRole = "superadmin";
           } else if (faculty) {

@@ -24,6 +24,9 @@ const FacultySchema = new mongoose.Schema({
     password: {
         type: String
     },
+    isSuper: {
+        type: Boolean
+    },
     isAdmin: {
         type: Boolean
     },
