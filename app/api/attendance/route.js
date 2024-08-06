@@ -78,7 +78,7 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { date, subject, session, batchId, attendanceRecords, contents } = data;
+        const { date, subject, session, batchId, attendanceRecords } = data;
         console.log("Received data:", data);
 
         if (!date || !Date.parse(date)) {
@@ -132,29 +132,6 @@ export async function PUT(req) {
             subject,
             { $addToSet: { reports: attendanceRecord._id } }
         );
-        if (contents && contents.length > 0) {
-            const indianFormattedDate = new Date().toLocaleString('en-IN', {
-                timeZone: 'Asia/Kolkata',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-            await Subject.updateOne(
-                { _id: subject },
-                {
-                    $set: {
-                        "content.$[elem].status": "covered",
-                        "content.$[elem].completedDate": indianFormattedDate
-                    }
-                },
-                {
-                    arrayFilters: [{ "elem.title": { $in: contents }, "elem.status": { $ne: "covered" } }]
-                }
-            );
-        }
 
         console.log("Attendance Updated/Created Successfully", attendanceRecord);
         return NextResponse.json({ message: "Attendance Updated/Created Successfully", attendance: attendanceRecord }, { status: 200 });
@@ -182,48 +159,3 @@ export async function DELETE(req) {
     }
 }
 
-
-export async function GET(req) {
-    try {
-        await connectMongoDB();
-        const { searchParams } = new URL(req.url);
-        const date = searchParams.get("date");
-        const subject = searchParams.get("subject");
-        const session = searchParams.get("session");
-        const batchId = searchParams.get("batchId");
-
-        if (subject && session) {
-            const filter = { subject, session };
-            if (date) {
-                filter.date = new Date(date);
-            }
-            if (batchId) {
-                filter.batch = batchId;
-            }
-
-            const attendanceRecord = await Attendance.findOne(filter);
-
-            // Fetch subject details including content
-            const subjectDetails = await Subject.findById(subject);
-
-            if (!attendanceRecord) {
-                return NextResponse.json({ 
-                    message: "Attendance Record Not Found", 
-                    subjectContent: subjectDetails ? subjectDetails.content : null 
-                }, { status: 404 });
-            }
-
-            console.log("Attendance Fetched Successfully", attendanceRecord);
-            return NextResponse.json({ 
-                message: "Attendance Fetched Successfully", 
-                attendance: attendanceRecord,
-                subjectContent: subjectDetails ? subjectDetails.content : null
-            }, { status: 200 });
-        } else {
-            return NextResponse.json({ message: "Invalid Query Parameters" }, { status: 400 });
-        }
-    } catch (error) {
-        console.error("Error fetching attendance:", error);
-        return NextResponse.json({ error: "Failed to Fetch Attendance" }, { status: 500 });
-    }
-}
