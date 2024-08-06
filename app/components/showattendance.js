@@ -89,7 +89,7 @@ const AttendanceDisplay = () => {
       if (userProfile.role === "student") {
         url += `studentId=${userProfile._id}`;
       } else if (userProfile.role === "faculty") {
-        if (userProfile.classes.includes(selectedClass) && viewType == "cumulative") {
+        if (userProfile?.classes.includes(selectedClass) && viewType == "cumulative") {
           url += `classId=${selectedClass}`;
         } else {
           url += `subjectId=${selectedSubject}`;
@@ -120,7 +120,7 @@ const AttendanceDisplay = () => {
     if (userProfile) {
       if (
         userProfile.role === "student" ||
-        (userProfile.role === "faculty" && (selectedSubject || userProfile.classes.includes(selectedClass))) ||
+        (userProfile.role === "faculty" && (selectedSubject || userProfile?.classes?.includes(selectedClass))) ||
         ((userProfile.role === "admin" || userProfile.role === "superadmin") &&
           selectedClass &&
           (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))
@@ -505,7 +505,7 @@ const AttendanceDisplay = () => {
 
             </>
           )}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile.classes) && (
+          {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile?.classes) && (
             <>
               <Dropdown>
                 <DropdownTrigger>
@@ -542,7 +542,7 @@ const AttendanceDisplay = () => {
               </DropdownMenu>
             </Dropdown>
           )}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile.classes) && (
+          {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile?.classes) && (
             <>
               {viewType === "individual" && (
                 <Dropdown >
@@ -606,7 +606,7 @@ const AttendanceDisplay = () => {
         <div>
           {userProfile.role === "student" && renderStudentAttendance()}
           {(userProfile.role === "faculty" && !userProfile?.classes) && renderFacultyAttendance()}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile.classes) && renderAdminAttendance()}
+          {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile?.classes) && renderAdminAttendance()}
         </div>
       ) : (
         <div>No attendance data available</div>
