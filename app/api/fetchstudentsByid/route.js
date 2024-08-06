@@ -15,7 +15,7 @@ export async function GET(req) {
         if (year) filter.year = year;
         if (department && department !== "FE") filter.department = department;
 
-        const students = await Student.find(filter).select("_id name").lean();
+        const students = await Student.find(filter).select("_id name rollNumber").lean();
         console.log(students);
         return NextResponse.json(students, { status: 200 });
     } catch (error) {

@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import Classes from './className';
-import { type } from 'express/lib/response';
 
 const ContentSchema = new mongoose.Schema({
     title: {
@@ -42,7 +41,7 @@ const SubjectSchema = new mongoose.Schema({
     },
     subType: {
         type: String,
-        enum: ['theory', 'practical'],
+        enum: ['theory', 'practical','tg'],
         required: true
     },
     class: {

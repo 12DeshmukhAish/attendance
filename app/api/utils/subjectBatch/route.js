@@ -11,7 +11,7 @@ export async function GET(req) {
     if (!subjectId ) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
-    const subject = await Subject.findById(subjectId).select("name subType batch");
+    const subject = await Subject.findById(subjectId).select("name subType batch content");
     console.log(subject);
 
     if (!subject) {

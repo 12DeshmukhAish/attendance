@@ -160,7 +160,7 @@ export async function GET(req) {
                     }
                 }
             ];
-        } else if (classId) {
+        }  else if (classId) {
             pipeline = [
                 {
                     $lookup: {
@@ -187,7 +187,8 @@ export async function GET(req) {
                     $group: {
                         _id: {
                             student: '$records.student',
-                            subject: '$subject'
+                            subject: '$subject',
+                            subjectName: '$subjectInfo.name' // Add this line
                         },
                         totalCount: { $sum: 1 },
                         presentCount: {
@@ -206,7 +207,7 @@ export async function GET(req) {
                         _id: '$_id.student',
                         subjects: {
                             $push: {
-                                subject: '$_id.subject',
+                                subject: '$_id.subjectName', // Change this line
                                 totalCount: '$totalCount',
                                 presentCount: '$presentCount'
                             }

@@ -40,32 +40,47 @@ export default function App() {
   }, [selectedSubject]);
 
 
-  
   useEffect(() => {
-    if (selectedSubject && selectedBatch && selectedDate) {
-      console.log(selectedSubject);
-      fetchSubjectAttendance();
+    if (selectedSubject && selectedDate && selectedSession) {
+      if (subjectDetails && (subjectDetails.subType === 'practical' || subjectDetails.subType === 'tg')) {
+        if (selectedBatch) {
+          fetchSubjectAttendance();
+        }
+      } else {
+        fetchSubjectAttendance();
+      }
     }
-  }, [selectedSubject,selectedBatch,selectedDate]);
+  }, [selectedSubject, selectedDate, selectedSession, selectedBatch, subjectDetails]);
   const fetchSubjectData = async () => {
     try {
       const response = await axios.get(`/api/utils/subjectBatch?subjectId=${selectedSubject}`);
-      const {subject}= response.data;
-      console.log(subject);
+      const { subject } = response.data;
+      console.log(response.data);
       
       setSubjectDetails(subject);
-      setBatches(subject.batch);
+      if (subject.subType === 'practical' || subject.subType === 'tg') {
+        setBatches(subject.batch);
+      } else {
+        setBatches([]);
+        setSelectedBatch(null);
+      }
     } catch (error) {
       console.error('Error fetching subject data:', error);
     }
   };
 
 
-
   const fetchSubjectAttendance = async () => {
-    try {
-      const response = await axios.get(`/api/update?subjectId=${selectedSubject}&date=${selectedDate.toISOString().split("T")[0]}&session=${selectedSession}&batchId=${selectedBatch || ''}`);
-      const {  students, attendanceRecord } = response.data;
+      try {
+        const response = await axios.get(`/api/update`, {
+          params: {
+            subjectId: selectedSubject,
+            date: selectedDate.toISOString().split("T")[0],
+            session: selectedSession,
+            batchId: subjectDetails.subType === 'theory' ? undefined : selectedBatch
+          }
+        });
+         const {  students, attendanceRecord } = response.data;
       console.log(response.data);
 
       // Sort students by roll number as a number
@@ -192,7 +207,7 @@ export default function App() {
             </DropdownMenu>
           </Dropdown>
         </div>
-        {batches?.length > 0 && (
+        {batches && (
           <div className="max-w-[60%]">
             <Dropdown>
               <DropdownTrigger>

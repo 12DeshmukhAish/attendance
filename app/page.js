@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import Head from 'next/head';
 import Image from 'next/image';
- // Make sure to import your global CSS file
 
 export default function Home() {
   return (
