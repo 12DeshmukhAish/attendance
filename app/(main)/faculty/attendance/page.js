@@ -1,18 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useMemo } from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Checkbox, CheckboxGroup } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
 import { DatePicker } from "@nextui-org/date-picker";
 import Image from "next/image";
-import { parseAbsoluteToLocal } from "@internationalized/date";
 
 export default function App() {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [students, setStudents] = useState([]);
   const [selectedKeys, setSelectedKeys] = useState(new Set());
-  const [selectedSession, setSelectedSession] = useState(null);
-  const [selectedContents, setSelectedContents] = useState([]);
+  const [selectedSession, setSelectedSession] = useState(null);  
+  const [selectedContentIds, setSelectedContentIds] = useState([]);
   const [sessions] = useState([1, 2, 3, 4, 5, 6, 7]);
   const [profile, setProfile] = useState(null);
   const [subjectDetails, setSubjectDetails] = useState(null);
@@ -97,10 +96,10 @@ export default function App() {
       setAttendanceRecord(attendanceRecord);
       if (attendanceRecord) {
         setSelectedKeys(new Set(attendanceRecord.records.map(r => r.status === "present" && r.student)));
-        setSelectedContents(attendanceRecord.contents || []);
+        setSelectedContentIds(attendanceRecord.contents._id || []);
       } else {
         setSelectedKeys(new Set());
-        setSelectedContents([]);
+        setSelectedContentIds([]);
       }
     } catch (error) {
       console.error('Error fetching subject attendance:', error);
@@ -154,11 +153,84 @@ export default function App() {
       setSelectedBatch(null)
       setIsTableVisible(false)
       setSelectedKeys(new Set())
-      setSelectedContents([])
+      setSelectedContentIds([]);
       setSelectedSession([])
     }
   };
 
+  
+  const CourseContentTable = useMemo(() => {
+    if (!subjectDetails || !subjectDetails.content) return null;
+
+    return (
+      <Table aria-label="Course Content Table">
+        <TableHeader>
+          <TableColumn>Select</TableColumn>
+          <TableColumn>Title</TableColumn>
+          <TableColumn>Description</TableColumn>
+          <TableColumn>Proposed Date</TableColumn>
+          <TableColumn>Completed Date</TableColumn>
+          <TableColumn>References</TableColumn>
+          <TableColumn>Status</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {subjectDetails.content.map((content) => (
+            <TableRow key={content._id}>
+              <TableCell>
+                <Checkbox
+                  isSelected={selectedContentIds.includes(content._id)}
+                  onChange={() => {
+                    setSelectedContentIds(prev =>
+                      prev.includes(content._id)
+                        ? prev.filter(id => id !== content._id)
+                        : [...prev, content._id]
+                    );
+                  }}
+                  isDisabled={content.status === 'covered'}
+                />
+              </TableCell>
+              <TableCell>{content.title}</TableCell>
+              <TableCell>{content.description}</TableCell>
+              <TableCell>{content.proposedDate}</TableCell>
+              <TableCell>{content.completedDate}</TableCell>
+              <TableCell>
+                {content.references && content.references.map((ref, refIndex) => (
+                  <div key={refIndex}>
+                    <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
+                  </div>
+                ))}
+              </TableCell>
+              <TableCell>{content.status}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }, [subjectDetails, selectedContentIds]);
+
+  const StudentListTable = useMemo(() => {
+    return (
+      <Table
+        aria-label="Attendance Table"
+        selectionMode="multiple"
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+      >
+        <TableHeader>
+          <TableColumn>Roll Number</TableColumn>
+          <TableColumn>Name</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {students.map((student) => (
+            <TableRow key={student._id}>
+              <TableCell>{student.rollNumber}</TableCell>
+              <TableCell>{student.name}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }, [students, selectedKeys]);
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex gap-4">
@@ -238,90 +310,22 @@ export default function App() {
           </div>
         )}
       </div>
-
       {selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
         <div className="flex gap-4 mb-4">
-          <div className="w-1/2 h-[70vh]">
+          <div className="w-1/2">
             <h2>Course Content</h2>
-            <Table aria-label="Course Content Table" 
-              className="h-[70vh]"
-              >
-              <TableHeader>
-                <TableColumn>Select</TableColumn>
-                <TableColumn>Title</TableColumn>
-                <TableColumn>Description</TableColumn>
-                <TableColumn>Proposed Date</TableColumn>
-                <TableColumn>Completed Date</TableColumn>
-                <TableColumn>References</TableColumn>
-                {/* <TableColumn>Course Outcomes</TableColumn>
-                <TableColumn>Program  Outcomes</TableColumn> */}
-                <TableColumn>Status</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {subjectDetails.content && subjectDetails.content.map((content, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Checkbox
-                        isSelected={selectedContents.includes(content.title)}
-                        onChange={() => {
-                          setSelectedContents(prev =>
-                            prev.includes(content.title)
-                              ? prev.filter(item => item !== content.title)
-                              : [...prev, content.title]
-                          );
-                        }}
-                        isDisabled={content.status === 'covered'}
-                      />
-                    </TableCell>
-                    <TableCell>{content.title}</TableCell>
-
-                    <TableCell>{content.description}</TableCell>
-                    <TableCell>{content.proposedDate}</TableCell>
-                    <TableCell>{content.completedDate}</TableCell>
-                    <TableCell>
-
-                      {content.references && content.references.map((ref, refIndex) => (
-                        <div key={refIndex}>
-                          <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
-                        </div>
-
-                      ))}
-                    </TableCell>
-                    <TableCell>{content.status}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {CourseContentTable}
           </div>
-          <div className="w-1/2 h-[70vh]">
+          <div className="w-1/2">
             <h2>Students List</h2>
-            <Table
-              aria-label="Attendance Table"
-              selectionMode="multiple"
-              selectedKeys={selectedKeys}
-              onSelectionChange={setSelectedKeys}
-              className="h-[70vh]"
-            >
-              <TableHeader>
-                <TableColumn>Roll Number</TableColumn>
-                <TableColumn>Name</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student._id}>
-                    <TableCell>{student.rollNumber}</TableCell>
-                    <TableCell>{student.name}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="w-full flex justify-center ">
-              <Button className="max-w-[50%] my-2 justify-center" color="primary" onPress={updateAttendance}>
-                Submit Attendance
-              </Button>
-            </div>
+            {StudentListTable}
           </div>
         </div>
+      )}
+      {isTableVisible && selectedSubject && subjectDetails &&(
+        <Button color="primary" className="max-w-[50%] mx-auto" variant="shadow" onClick={updateAttendance}>
+          Update Attendance
+        </Button>
       )}
       {!isTableVisible && (
         <div className="mt-8 flex flex-col items-center gap-3 ">

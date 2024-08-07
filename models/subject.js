@@ -30,7 +30,7 @@ const ContentSchema = new mongoose.Schema({
         default: 'not_covered'
     },
 }, {
-    _id: false,
+    _id: true,
 });
 
 const SubjectSchema = new mongoose.Schema({

@@ -1,7 +1,8 @@
-import { connectMongoDB } from '@/lib/connectDb'; // Adjust the path as needed
+import { connectMongoDB } from '@/lib/connectDb';
 import Attendance from '@/models/attendance';
 import Subject from '@/models/subject';
-import { NextResponse } from 'next/server'; // Adjust the path as needed
+import { NextResponse } from 'next/server';
+
 export async function POST(req) {
     try {
         await connectMongoDB();
@@ -54,7 +55,7 @@ export async function POST(req) {
                             }
                         },
                         {
-                            arrayFilters: [{ "elem.title": { $in: contents }, "elem.status": { $ne: "covered" } }]
+                            arrayFilters: [{ "elem._id": { $in: contents }, "elem.status": { $ne: "covered" } }]
                         }
                     );
                 }
@@ -74,11 +75,12 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Record Attendance" }, { status: 500 });
     }
 }
+
 export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { date, subject, session, batchId, attendanceRecords } = data;
+        const { date, subject, session, batchId, attendanceRecords, contents } = data;
 
         if (!date || !Date.parse(date) || !subject || !session || !attendanceRecords) {
             return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
@@ -123,6 +125,32 @@ export async function PUT(req) {
                 subject,
                 { $addToSet: { reports: attendanceRecord._id } }
             );
+
+            // Update content status to covered and set completed date in Indian format
+            if (contents && contents.length > 0) {
+                const indianFormattedDate = attendanceDate.toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                await Subject.updateOne(
+                    { _id: subject },
+                    {
+                        $set: {
+                            "content.$[elem].status": "covered",
+                            "content.$[elem].completedDate": indianFormattedDate
+                        }
+                    },
+                    {
+                        arrayFilters: [{ "elem._id": { $in: contents }, "elem.status": { $ne: "covered" } }]
+                    }
+                );
+            }
 
             return attendanceRecord;
         });

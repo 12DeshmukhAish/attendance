@@ -1,6 +1,5 @@
-
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Checkbox, CheckboxGroup } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
@@ -12,8 +11,7 @@ export default function App() {
   const [students, setStudents] = useState([]);
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [selectedSession, setSelectedSession] = useState([]);
-  const [selectedContents, setSelectedContents] = useState([]);
-  const [sessions] = useState([1, 2, 3, 4, 5, 6, 7]);
+  const [selectedContentIds, setSelectedContentIds] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [profile, setProfile] = useState(null);
   const [subjectDetails, setSubjectDetails] = useState(null);
@@ -26,7 +24,9 @@ export default function App() {
     }
   }, []);
 
-  const subjectOptions = profile ? profile.subjects.map(sub => ({ _id: sub, name: sub })) : [];
+  const subjectOptions = useMemo(() => 
+    profile ? profile.subjects.map(sub => ({ _id: sub, name: sub })) : []
+  , [profile]);
 
   useEffect(() => {
     if (selectedSubject !== "Subject") {
@@ -38,6 +38,9 @@ export default function App() {
     try {
       const response = await axios.get(`/api/utils/batches?_id=${subjectId}&batchId=${selectedBatch || ''}`);
       const { subject, batches, students } = response.data;
+      console.log("Received subject details:", subject);
+      console.log("Received batches:", batches);
+      console.log("Received students:", students);
       setSubjectDetails(subject);
       setBatches(batches || []);
       setStudents(students || []);
@@ -49,24 +52,22 @@ export default function App() {
   const handleTakeAttendance = () => {
     setIsTableVisible(true);
   };
+
   const submitAttendance = async () => {
     if (selectedSubject === "Subject") {
       alert("Please select a subject");
       return;
     }
   
-    if (!selectedSession) {
-      alert("Please select a session");
+    if (selectedSession.length === 0) {
+      alert("Please select at least one session");
       return;
     }
   
-  
-    // Create attendance records
-   
     let presentStudentIds = [];
     if (selectedKeys instanceof Set) {
       if (selectedKeys.has("all")) {
-        presentStudentIds = students.map(student => student._id); // Use student._id here
+        presentStudentIds = students.map(student => student._id);
       } else {
         presentStudentIds = Array.from(selectedKeys);
       }
@@ -84,7 +85,7 @@ export default function App() {
       subject: selectedSubject,
       session: selectedSession,
       attendanceRecords,
-      contents: selectedContents,
+      contents: selectedContentIds,
       batchId: selectedBatch
     };
   
@@ -92,19 +93,92 @@ export default function App() {
       const response = await axios.post('/api/attendance', attendanceData);
       console.log('Attendance submitted successfully:', response.data);
       alert("Attendance submitted successfully");
-      fetchSubjectDetails(selectedSubject); // Refresh subject details
+      fetchSubjectDetails(selectedSubject);
     } catch (error) {
       console.error('Failed to submit attendance:', error);
       alert("Failed to submit attendance");
-    }
-    finally{
-      setSelectedBatch(null)
-      setIsTableVisible(false)
-      setSelectedKeys(new Set())
-      setSelectedContents([])
-      setSelectedSession([])
+    } finally {
+      setSelectedBatch(null);
+      setIsTableVisible(false);
+      setSelectedKeys(new Set());
+      setSelectedContentIds([]);
+      setSubjectDetails(null)
+      setSelectedSession([]);
     }
   };
+
+  const CourseContentTable = useMemo(() => {
+    if (!subjectDetails || !subjectDetails.content) return null;
+
+    return (
+      <Table aria-label="Course Content Table">
+        <TableHeader>
+          <TableColumn>Select</TableColumn>
+          <TableColumn>Title</TableColumn>
+          <TableColumn>Description</TableColumn>
+          <TableColumn>Proposed Date</TableColumn>
+          <TableColumn>Completed Date</TableColumn>
+          <TableColumn>References</TableColumn>
+          <TableColumn>Status</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {subjectDetails.content.map((content) => (
+            <TableRow key={content._id}>
+              <TableCell>
+                <Checkbox
+                  isSelected={selectedContentIds.includes(content._id)}
+                  onChange={() => {
+                    setSelectedContentIds(prev =>
+                      prev.includes(content._id)
+                        ? prev.filter(id => id !== content._id)
+                        : [...prev, content._id]
+                    );
+                  }}
+                  isDisabled={content.status === 'covered'}
+                />
+              </TableCell>
+              <TableCell>{content.title}</TableCell>
+              <TableCell>{content.description}</TableCell>
+              <TableCell>{content.proposedDate}</TableCell>
+              <TableCell>{content.completedDate}</TableCell>
+              <TableCell>
+                {content.references && content.references.map((ref, refIndex) => (
+                  <div key={refIndex}>
+                    <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
+                  </div>
+                ))}
+              </TableCell>
+              <TableCell>{content.status}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }, [subjectDetails, selectedContentIds]);
+
+  const StudentListTable = useMemo(() => {
+    return (
+      <Table
+        aria-label="Attendance Table"
+        selectionMode="multiple"
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+      >
+        <TableHeader>
+          <TableColumn>Roll Number</TableColumn>
+          <TableColumn>Name</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {students.map((student) => (
+            <TableRow key={student._id}>
+              <TableCell>{student.rollNumber}</TableCell>
+              <TableCell>{student.name}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }, [students, selectedKeys]);
   
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -149,7 +223,6 @@ export default function App() {
           </DropdownMenu>
         </Dropdown>
 
-       
         <CheckboxGroup
           orientation="horizontal"
           label="Select Sessions"
@@ -172,77 +245,16 @@ export default function App() {
         <div className="flex gap-4 mb-4">
           <div className="w-1/2">
             <h2>Course Content</h2>
-            <Table aria-label="Course Content Table">
-              <TableHeader>
-                <TableColumn>Select</TableColumn>
-                <TableColumn>Title</TableColumn>
-                <TableColumn>Description</TableColumn>
-                <TableColumn>Proposed Date</TableColumn>
-                <TableColumn>Completed Date</TableColumn>
-                <TableColumn>References</TableColumn>
-                {/* <TableColumn>Course Outcomes</TableColumn>
-                <TableColumn>Program  Outcomes</TableColumn> */}
-                <TableColumn>Status</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {subjectDetails.content && subjectDetails.content.map((content, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Checkbox
-                        isSelected={selectedContents.includes(content.title)}
-                        onChange={() => {
-                          setSelectedContents(prev =>
-                            prev.includes(content.title)
-                              ? prev.filter(item => item !== content.title)
-                              : [...prev, content.title]
-                          );
-                        }}
-                        isDisabled={content.status === 'covered'}
-                      />
-                    </TableCell>
-                    <TableCell>{content.title}</TableCell>
-                    <TableCell>{content.description}</TableCell>
-                    <TableCell>{content.proposedDate}</TableCell>
-                    <TableCell>{content.completedDate}</TableCell>
-                    <TableCell>
-                      {content.references && content.references.map((ref, refIndex) => (
-                        <div key={refIndex}>
-                          <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
-                        </div>
-                      ))}
-                    </TableCell>
-                    <TableCell>{content.status}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {CourseContentTable}
           </div>
           <div className="w-1/2">
             <h2>Students List</h2>
-            <Table
-              aria-label="Attendance Table"
-              selectionMode="multiple"
-              selectedKeys={selectedKeys}
-              onSelectionChange={setSelectedKeys}
-            >
-              <TableHeader>
-                <TableColumn>Roll Number</TableColumn>
-                <TableColumn>Name</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student._id}>
-                    <TableCell>{student.rollNumber}</TableCell>
-                    <TableCell>{student.name}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {StudentListTable}
           </div>
         </div>
       )}
 
-      {isTableVisible && (
+      {isTableVisible && selectedSubject && subjectDetails && (
         <Button color="primary" className="max-w-[50%] mx-auto" variant="shadow" onClick={submitAttendance}>
           Submit Attendance
         </Button>
