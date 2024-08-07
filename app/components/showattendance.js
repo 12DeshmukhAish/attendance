@@ -88,19 +88,16 @@ const AttendanceDisplay = () => {
 
       if (userProfile.role === "student") {
         url += `studentId=${userProfile._id}`;
-      } if (userProfile.role === "faculty") {
-        if (viewType === "cumulative" && userProfile?.classes?.includes(selectedClass)) {
-          url += `classId=${selectedClass}`;
+      } else if (userProfile.role === "faculty") {
+        if (userProfile.classes && viewType === "cumulative") {
+          url += `classId=${userProfile.classes}`;
         } else if (selectedSubject) {
           url += `subjectId=${selectedSubject}`;
-        } else if (userProfile?.classes?.length > 0) {
-          url += `classId=${userProfile.classes[0]}`; // Use the first class if no specific selection
         } else {
-          setError("No class or subject selected for faculty");
+          setError("No subject selected for faculty");
           setLoading(false);
           return;
         }
-      
       } else if (userProfile.role === "admin" || userProfile.role === "superadmin") {
         url += `classId=${selectedClass}`;
         if (viewType === "individual" && selectedSubject) {
@@ -120,14 +117,18 @@ const AttendanceDisplay = () => {
     }
   };
 
+
   useEffect(() => {
     setSelectedClass(""); // Reset selected class when department changes
   }, [selectedDepartment]);
+
   useEffect(() => {
     if (userProfile) {
       if (
         userProfile.role === "student" ||
-        (userProfile.role === "faculty" && (selectedSubject || userProfile?.classes?.includes(selectedClass))) ||
+        (userProfile.role === "faculty" &&
+          ((selectedSubject && viewType === "individual") ||
+            (userProfile.classes && viewType === "cumulative"))) ||
         ((userProfile.role === "admin" || userProfile.role === "superadmin") &&
           selectedClass &&
           (viewType === "cumulative" || (viewType === "individual" && selectedSubject)))
@@ -148,6 +149,13 @@ const AttendanceDisplay = () => {
 
         wsData.push(["Roll Number", "Student Name", ...subjects.flatMap(s => [s, "", ""]), "Final Attendance", "", ""]);
         wsData.push(["", "", ...subjects.flatMap(() => ["Total", "Present", "%"]), "Total", "Present", "%"]);
+
+        // Sort data by roll number
+        data.sort((a, b) => {
+          const rollA = parseInt(a.student.rollNumber, 10);
+          const rollB = parseInt(b.student.rollNumber, 10);
+          return rollA - rollB;
+        });
 
         data.forEach((studentData) => {
           let row = [studentData.student.rollNumber, studentData.student.name];
@@ -172,6 +180,7 @@ const AttendanceDisplay = () => {
         // Handle individual view
         wsData.push(["Roll Number", "Student Name", "Total Lectures", "Present", "Attendance %"]);
 
+        // Sort students by roll number
         data.students.sort((a, b) => parseInt(a.rollNumber, 10) - parseInt(b.rollNumber, 10))
           .forEach((student) => {
             wsData.push([
@@ -230,7 +239,6 @@ const AttendanceDisplay = () => {
       }
     }
 
-
     // Generate a unique filename with timestamp
     const fileName = `Attendance_Report_${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx`;
 
@@ -262,6 +270,10 @@ const AttendanceDisplay = () => {
     const totalPresent = attendanceData?.reduce((sum, subject) => sum + subject.presentCount, 0);
 
     return (
+      <div>
+         <h2 className="text-2xl font-bold mb-4 text-gray-800">Student Attendance Summary</h2>
+     
+     
       <Table aria-label="Student Attendance Table">
         <TableHeader>
           <TableColumn>Subject</TableColumn>
@@ -286,19 +298,20 @@ const AttendanceDisplay = () => {
           </TableRow>
         </TableBody>
       </Table>
+      </div>
     );
   };
 
 
   const renderFacultyAttendance = () => (
     <div>
-      {attendanceData.map((subjectData, index) => (
-        <div key={index}>
-          <h3>Subject: {subjectData.name}</h3>
-          <p>Faculty: {subjectData.facultyName}</p>
-          <p>Batch: {subjectData.batch}</p>
-          <p>Total Lectures: {subjectData.totalLectures}</p>
-          <Table aria-label={`Attendance Table for ${subjectData.name}`}>
+    {attendanceData.map((subjectData, index) => (
+      <div key={index} className="my-8">
+        <h3 className="text-xl font-semibold mb-2 text-gray-800">Subject: {subjectData.name}</h3>
+        <p className="text-md my-1 text-gray-600">Faculty: <span className="font-medium">{subjectData.facultyName}</span></p>
+        <p className="text-md my-1 text-gray-600">Batch: <span className="font-medium">{subjectData.batch}</span></p>
+        <p className="text-md my-10 text-gray-600">Total Lectures: <span className="font-medium">{subjectData.totalLectures}</span></p>
+        <Table aria-label={`Attendance Table for ${subjectData.name}`}>
             <TableHeader>
               <TableColumn>Roll Number</TableColumn>
               <TableColumn>Student Name</TableColumn>
@@ -470,11 +483,12 @@ const AttendanceDisplay = () => {
   }
   return (
     <div className="p-4">
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
-        <div className="mb-4 md:mb-0">
-          <h1 className="text-2xl font-bold mb-2">Attendance Report</h1>
-          <p className="text-gray-600">User: {userProfile.name} ({userProfile.role})</p>
-        </div>
+    <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+      <div className="mb-4 md:mb-0">
+        <h1 className="text-3xl font-bold mb-2 text-gray-800">Attendance Report</h1>
+        <p className="text-lg text-gray-600">User: <span className="font-semibold">{userProfile.name}</span> ({userProfile.role})</p>
+      </div>
+
 
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
           {userProfile?.role === "superadmin" && (
@@ -485,7 +499,7 @@ const AttendanceDisplay = () => {
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
-              
+
                 aria-label="Department selection"
                 onAction={(key) => setSelectedDepartment(key)}
               >
@@ -500,7 +514,7 @@ const AttendanceDisplay = () => {
               <Dropdown>
                 <DropdownTrigger>
                   <Button variant="bordered">
-                    { selectedClass ? selectedClass: "Select Class"}
+                    {selectedClass ? selectedClass : "Select Class"}
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
@@ -529,49 +543,49 @@ const AttendanceDisplay = () => {
               </Dropdown>
             </>
           )}
-    {userProfile?.role === "faculty" && viewType === "individual" && (
-  <>
-  {userProfile.subjects && (    <Dropdown>
-      <DropdownTrigger>
-        <Button variant="bordered">
-          {selectedSubject ? `Current: ${selectedSubject}` : "Select Current Year Subject"}
-        </Button>
-      </DropdownTrigger>
-      <DropdownMenu 
-        aria-label="Subject selection" 
-        onAction={(key) => {
-          setSelectedSubject(key);
-          setSelectedInactiveSubject(""); // Clear inactive subject when selecting an active one
-        }}
-      >
-        {userProfile.subjects?.map((subject) => (
-          <DropdownItem key={subject}>{subject}</DropdownItem>
-        ))}
-      </DropdownMenu>
-    </Dropdown>
-    )}
-{userProfile.inactiveSubjects && (
-    <Dropdown>
-      <DropdownTrigger>
-        <Button variant="bordered">
-          {selectedInactiveSubject ? `Previous: ${selectedInactiveSubject}` : "Select Previous Year Subject"}
-        </Button>
-      </DropdownTrigger>
-      <DropdownMenu
-        aria-label="Inactive subject selection"
-        onAction={(key) => {
-          setSelectedInactiveSubject(key);
-          setSelectedSubject(""); // Clear active subject when selecting an inactive one
-        }}
-      >
-        {userProfile.inactiveSubjects?.map((subject) => (
-          <DropdownItem key={subject}>{subject}</DropdownItem>
-        ))}
-      </DropdownMenu>
-    </Dropdown>
-    )}
-  </>
-)}
+          {userProfile?.role === "faculty" && viewType === "individual" && (
+            <>
+              {userProfile.subjects && (<Dropdown>
+                <DropdownTrigger>
+                  <Button variant="bordered">
+                    {selectedSubject ? `Current: ${selectedSubject}` : "Select Current Year Subject"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Subject selection"
+                  onAction={(key) => {
+                    setSelectedSubject(key);
+                    setSelectedInactiveSubject(""); // Clear inactive subject when selecting an active one
+                  }}
+                >
+                  {userProfile.subjects?.map((subject) => (
+                    <DropdownItem key={subject}>{subject}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+              )}
+              {userProfile.inactiveSubjects && (
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button variant="bordered">
+                      {selectedInactiveSubject ? `Previous: ${selectedInactiveSubject}` : "Select Previous Year Subject"}
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    aria-label="Inactive subject selection"
+                    onAction={(key) => {
+                      setSelectedInactiveSubject(key);
+                      setSelectedSubject(""); // Clear active subject when selecting an inactive one
+                    }}
+                  >
+                    {userProfile.inactiveSubjects?.map((subject) => (
+                      <DropdownItem key={subject}>{subject}</DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+              )}
+            </>
+          )}
           {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile?.classes) && (
             <>
               {viewType === "individual" && (
@@ -590,7 +604,7 @@ const AttendanceDisplay = () => {
               )}
             </>
           )}
-          </div>
+        </div>
       </div>
 
       <div className="mb-8 flex items-center  gap-10 w-full justify-center ">

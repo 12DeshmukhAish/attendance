@@ -24,9 +24,9 @@ export default function App() {
     }
   }, []);
 
-  const subjectOptions = useMemo(() => 
+  const subjectOptions = useMemo(() =>
     profile ? profile.subjects.map(sub => ({ _id: sub, name: sub })) : []
-  , [profile]);
+    , [profile]);
 
   useEffect(() => {
     if (selectedSubject !== "Subject") {
@@ -58,12 +58,12 @@ export default function App() {
       alert("Please select a subject");
       return;
     }
-  
+
     if (selectedSession.length === 0) {
       alert("Please select at least one session");
       return;
     }
-  
+
     let presentStudentIds = [];
     if (selectedKeys instanceof Set) {
       if (selectedKeys.has("all")) {
@@ -73,14 +73,14 @@ export default function App() {
       }
     } else {
       presentStudentIds = selectedKeys.includes("all")
-        ? students.map(student => student._id) 
+        ? students.map(student => student._id)
         : selectedKeys;
     }
     const attendanceRecords = students.map(student => ({
       student: student._id,
       status: presentStudentIds.includes(student._id) ? 'present' : 'absent'
     }));
-  
+
     const attendanceData = {
       subject: selectedSubject,
       session: selectedSession,
@@ -88,7 +88,7 @@ export default function App() {
       contents: selectedContentIds,
       batchId: selectedBatch
     };
-  
+
     try {
       const response = await axios.post('/api/attendance', attendanceData);
       console.log('Attendance submitted successfully:', response.data);
@@ -111,7 +111,7 @@ export default function App() {
     if (!subjectDetails || !subjectDetails.content) return null;
 
     return (
-      <Table aria-label="Course Content Table">
+      <Table aria-label="Course Content Table" className="max-h-[75vh]">
         <TableHeader>
           <TableColumn>Select</TableColumn>
           <TableColumn>Title</TableColumn>
@@ -119,6 +119,8 @@ export default function App() {
           <TableColumn>Proposed Date</TableColumn>
           <TableColumn>Completed Date</TableColumn>
           <TableColumn>References</TableColumn>
+          <TableColumn>CO</TableColumn>
+          <TableColumn>PO:</TableColumn>
           <TableColumn>Status</TableColumn>
         </TableHeader>
         <TableBody>
@@ -141,13 +143,9 @@ export default function App() {
               <TableCell>{content.description}</TableCell>
               <TableCell>{content.proposedDate}</TableCell>
               <TableCell>{content.completedDate}</TableCell>
-              <TableCell>
-                {content.references && content.references.map((ref, refIndex) => (
-                  <div key={refIndex}>
-                    <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
-                  </div>
-                ))}
-              </TableCell>
+              <TableCell>{content.references} </TableCell>
+              <TableCell>{content.courseOutcomes} </TableCell>
+              <TableCell>{content.programOutcomes} </TableCell>
               <TableCell>{content.status}</TableCell>
             </TableRow>
           ))}
@@ -155,7 +153,6 @@ export default function App() {
       </Table>
     );
   }, [subjectDetails, selectedContentIds]);
-
   const StudentListTable = useMemo(() => {
     return (
       <Table
@@ -163,6 +160,7 @@ export default function App() {
         selectionMode="multiple"
         selectedKeys={selectedKeys}
         onSelectionChange={setSelectedKeys}
+        className="max-h-[75vh]"
       >
         <TableHeader>
           <TableColumn>Roll Number</TableColumn>
@@ -179,7 +177,7 @@ export default function App() {
       </Table>
     );
   }, [students, selectedKeys]);
-  
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex space-x-4 mb-4 items-center">
@@ -202,8 +200,8 @@ export default function App() {
             ))}
           </DropdownMenu>
         </Dropdown>
-
-        <Dropdown>
+        {subjectDetails?.subType !== "theory" &&
+                  < Dropdown >
           <DropdownTrigger>
             <Button variant="bordered" className="capitalize">
               {selectedBatch ? `Batch ${selectedBatch}` : "Select Batch"}
@@ -222,49 +220,55 @@ export default function App() {
             ))}
           </DropdownMenu>
         </Dropdown>
+}
+      <CheckboxGroup
+        orientation="horizontal"
+        label="Select Sessions"
+        value={selectedSession}
+        onChange={setSelectedSession}
+      >
+        {Array.from({ length: 7 }, (_, i) => i + 1).map(session => (
+          <Checkbox key={session} value={session.toString()}>
+            {session}
+          </Checkbox>
+        ))}
+      </CheckboxGroup>
 
-        <CheckboxGroup
-          orientation="horizontal"
-          label="Select Sessions"
-          value={selectedSession}
-          onChange={setSelectedSession}
-        >
-          {Array.from({ length: 7 }, (_, i) => i + 1).map(session => (
-            <Checkbox key={session} value={session.toString()}>
-              {session}
-            </Checkbox>
-          ))}
-        </CheckboxGroup>
-
-        <Button color="primary" variant="shadow" onClick={handleTakeAttendance}>
-          Take Attendance
-        </Button>
-      </div>
-
-      {selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
-        <div className="flex gap-4 mb-4">
-          <div className="w-1/2">
-            <h2>Course Content</h2>
-            {CourseContentTable}
-          </div>
-          <div className="w-1/2">
-            <h2>Students List</h2>
-            {StudentListTable}
-          </div>
-        </div>
-      )}
-
-      {isTableVisible && selectedSubject && subjectDetails && (
-        <Button color="primary" className="max-w-[50%] mx-auto" variant="shadow" onClick={submitAttendance}>
-          Submit Attendance
-        </Button>
-      )}
-
-      {!students.length && !isTableVisible && (
-        <div className="flex justify-center mt-4">
-          <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
-        </div>
-      )}
+      <Button color="primary" variant="shadow" onClick={handleTakeAttendance}>
+        Take Attendance
+      </Button>
     </div>
+
+      {
+    selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
+      <div className="flex gap-4 mb-4">
+        <div className="w-1/2">
+          <h2>Course Content</h2>
+          {CourseContentTable}
+        </div>
+        <div className="w-1/2">
+          <h2>Students List</h2>
+          {StudentListTable}
+        </div>
+      </div>
+    )
+  }
+
+  {
+    isTableVisible && selectedSubject && subjectDetails && (
+      <Button color="primary" className="max-w-[50%] mx-auto" variant="shadow" onClick={submitAttendance}>
+        Submit Attendance
+      </Button>
+    )
+  }
+
+  {
+    !students.length && !isTableVisible && (
+      <div className="flex justify-center mt-4">
+        <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
+      </div>
+    )
+  }
+    </div >
   );
 }

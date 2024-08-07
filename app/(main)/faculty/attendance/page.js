@@ -163,7 +163,7 @@ export default function App() {
     if (!subjectDetails || !subjectDetails.content) return null;
 
     return (
-      <Table aria-label="Course Content Table">
+      <Table aria-label="Course Content Table" className="max-h-[75vh]">
         <TableHeader>
           <TableColumn>Select</TableColumn>
           <TableColumn>Title</TableColumn>
@@ -171,6 +171,8 @@ export default function App() {
           <TableColumn>Proposed Date</TableColumn>
           <TableColumn>Completed Date</TableColumn>
           <TableColumn>References</TableColumn>
+          <TableColumn>CO</TableColumn>          
+          <TableColumn>PO:</TableColumn>
           <TableColumn>Status</TableColumn>
         </TableHeader>
         <TableBody>
@@ -192,14 +194,10 @@ export default function App() {
               <TableCell>{content.title}</TableCell>
               <TableCell>{content.description}</TableCell>
               <TableCell>{content.proposedDate}</TableCell>
-              <TableCell>{content.completedDate}</TableCell>
-              <TableCell>
-                {content.references && content.references.map((ref, refIndex) => (
-                  <div key={refIndex}>
-                    <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
-                  </div>
-                ))}
-              </TableCell>
+              <TableCell>{content.completedDate}</TableCell>              
+              <TableCell>{ content.references} </TableCell>
+              <TableCell>{ content.courseOutcomes} </TableCell>
+              <TableCell>{ content.programOutcomes} </TableCell>
               <TableCell>{content.status}</TableCell>
             </TableRow>
           ))}
@@ -214,6 +212,7 @@ export default function App() {
         aria-label="Attendance Table"
         selectionMode="multiple"
         selectedKeys={selectedKeys}
+        className="max-h-[75vh]"
         onSelectionChange={setSelectedKeys}
       >
         <TableHeader>
@@ -283,7 +282,7 @@ export default function App() {
             </DropdownMenu>
           </Dropdown>
         </div>
-        {batches && (
+        {subjectDetails?.subType !== "theory" &&
           <div className="max-w-[60%]">
             <Dropdown>
               <DropdownTrigger>
@@ -304,11 +303,12 @@ export default function App() {
                 ))}
               </DropdownMenu>
             </Dropdown>
-            <Button color="primary" variant="shadow" className="mx-4" onClick={handleTakeAttendance}>
+           
+          </div>
+        }
+         <Button color="primary" variant="shadow" className="mx-4" onClick={handleTakeAttendance}>
               Take Attendance
             </Button>
-          </div>
-        )}
       </div>
       {selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
         <div className="flex gap-4 mb-4">
