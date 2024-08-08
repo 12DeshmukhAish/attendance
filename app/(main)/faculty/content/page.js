@@ -90,10 +90,6 @@ const TeachingPlanPage = () => {
     }
 
     const validContent = content.filter(item => item.title.trim() !== '');
-    if (validContent.length === 0) {
-      toast.error('Please add at least one content item');
-      return;
-    }
 
     try {
       const response = await axios.put(`/api/contents?_id=${subjectId}`, {
