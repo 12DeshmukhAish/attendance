@@ -98,7 +98,7 @@ const Sidebar = () => {
             width={80}
             height={80}
             className="sidebar__logo rounded-full"
-            src="/logo.png"
+            src="/icon.png"
             alt="logo"
           />
           <p className="sidebar__logo-name">Attendance System</p>
