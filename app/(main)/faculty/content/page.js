@@ -135,7 +135,7 @@ const TeachingPlanPage = () => {
         references: row[4] || '',
         courseOutcomes:row[5]||'',
         programOutcomes:row[6]||'',
-        status: row[5] || 'not_covered',
+        status: row[7] || 'not_covered',
       }));
 
       setContent(parsedContent);
