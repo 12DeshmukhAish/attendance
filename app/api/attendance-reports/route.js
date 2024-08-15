@@ -163,56 +163,58 @@ export async function GET(req) {
         }  else if (classId) {
             pipeline = [
                 {
-                    $lookup: {
-                        from: 'subjects',
-                        localField: 'subject',
-                        foreignField: '_id',
-                        as: 'subjectInfo'
-                    }
+                  $lookup: {
+                    from: 'subjects',
+                    localField: 'subject',
+                    foreignField: '_id',
+                    as: 'subjectInfo'
+                  }
                 },
                 { $unwind: '$subjectInfo' },
                 {
-                    $match: {
-                        'subjectInfo.class': classId,
-                        date: { $gte: startDate, $lte: endDate }
-                    }
+                  $match: {
+                    'subjectInfo.class': classId,
+                    date: { $gte: startDate, $lte: endDate }
+                  }
                 },
                 { $unwind: '$records' },
                 {
-                    $match: {
-                        'records.status': { $in: ['present', 'absent'] }
-                    }
+                  $match: {
+                    'records.status': { $in: ['present', 'absent'] }
+                  }
                 },
                 {
-                    $group: {
-                        _id: {
-                            student: '$records.student',
-                            subject: '$subject',
-                            subjectName: '$subjectInfo.name' // Add this line
-                        },
-                        totalCount: { $sum: 1 },
-                        presentCount: {
-                            $sum: {
-                                $cond: [
-                                    { $eq: ['$records.status', 'present'] },
-                                    1,
-                                    0
-                                ]
-                            }
-                        }
+                  $group: {
+                    _id: {
+                      student: '$records.student',
+                      subject: '$subject',
+                      subjectName: '$subjectInfo.name',
+                      subjectType: '$subjectInfo.subType'  // Include subject type
+                    },
+                    totalCount: { $sum: 1 },
+                    presentCount: {
+                      $sum: {
+                        $cond: [
+                          { $eq: ['$records.status', 'present'] },
+                          1,
+                          0
+                        ]
+                      }
                     }
+                  }
                 },
                 {
-                    $group: {
-                        _id: '$_id.student',
-                        subjects: {
-                            $push: {
-                                subject: '$_id.subjectName', // Change this line
-                                totalCount: '$totalCount',
-                                presentCount: '$presentCount'
-                            }
-                        }
+                  $group: {
+                    _id: '$_id.student',
+                    subjects: {
+                      $push: {
+                        subject: '$_id.subjectName',
+                        subjectType: '$_id.subjectType',  // Include subject type
+                        totalCount: '$totalCount',
+                        presentCount: '$presentCount'
+                      }
                     }
+                  }
                 },
                 {
                     $lookup: {

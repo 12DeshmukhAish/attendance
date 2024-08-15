@@ -16,8 +16,6 @@ import {
   Button,
   Spinner,
   DateRangePicker,
-  Select,
-  SelectItem,
 } from "@nextui-org/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { departmentOptions } from "../utils/department";
@@ -142,26 +140,26 @@ const AttendanceDisplay = () => {
     const wb = XLSX.utils.book_new();
     const createSheet = (data, sheetName) => {
       let wsData = [];
-
+  
       if (viewType === "cumulative") {
         // Handle cumulative view
         const subjects = Array.from(new Set(data.flatMap(d => d.subjects?.map(s => s.subject) || [])));
-
+  
         wsData.push(["Roll Number", "Student Name", ...subjects.flatMap(s => [s, "", ""]), "Final Attendance", "", ""]);
         wsData.push(["", "", ...subjects.flatMap(() => ["Total", "Present", "%"]), "Total", "Present", "%"]);
-
+  
         // Sort data by roll number
         data.sort((a, b) => {
           const rollA = parseInt(a.student.rollNumber, 10);
           const rollB = parseInt(b.student.rollNumber, 10);
           return rollA - rollB;
         });
-
+  
         data.forEach((studentData) => {
           let row = [studentData.student.rollNumber, studentData.student.name];
           let totalLectures = 0;
           let totalPresent = 0;
-
+  
           subjects.forEach((subject) => {
             const subjectData = studentData.subjects.find(s => s.subject === subject);
             if (subjectData) {
@@ -172,15 +170,14 @@ const AttendanceDisplay = () => {
               row.push("-", "-", "-");
             }
           });
-
+  
           row.push(totalLectures, totalPresent, ((totalPresent / totalLectures) * 100).toFixed(2));
           wsData.push(row);
         });
       } else {
-        // Handle individual view
+        // Handle individual view (existing code)
         wsData.push(["Roll Number", "Student Name", "Total Lectures", "Present", "Attendance %"]);
-
-        // Sort students by roll number
+  
         data.students.sort((a, b) => parseInt(a.rollNumber, 10) - parseInt(b.rollNumber, 10))
           .forEach((student) => {
             wsData.push([
@@ -192,13 +189,13 @@ const AttendanceDisplay = () => {
             ]);
           });
       }
-
+  
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
       // Set column widths
       const colWidths = wsData[0].map((_, i) => ({ wch: Math.max(...wsData.map(row => String(row[i]).length)) + 2 }));
       ws['!cols'] = colWidths;
-
+  
       // Apply styles
       const range = XLSX.utils.decode_range(ws['!ref']);
       for (let R = range.s.r; R <= range.e.r; ++R) {
@@ -221,10 +218,10 @@ const AttendanceDisplay = () => {
           }
         }
       }
-
+  
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     };
-
+  
     if (userProfile.role === "student") {
       createSheet({ students: attendanceData, totalLectures: attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0) }, "Student Report");
     } else if (userProfile.role === "faculty" || (userProfile.role === "admin" || userProfile.role === "superadmin")) {
@@ -271,33 +268,33 @@ const AttendanceDisplay = () => {
 
     return (
       <div>
-         <h2 className="text-2xl font-bold mb-4 text-gray-800">Student Attendance Summary</h2>
-     
-     
-      <Table aria-label="Student Attendance Table">
-        <TableHeader>
-          <TableColumn>Subject</TableColumn>
-          <TableColumn>Total Lectures</TableColumn>
-          <TableColumn>Present</TableColumn>
-          <TableColumn>Attendance %</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {attendanceData?.map((subject) => (
-            <TableRow key={subject._id}>
-              <TableCell>{subject.name}</TableCell>
-              <TableCell>{subject.totalLectures}</TableCell>
-              <TableCell>{subject.presentCount}</TableCell>
-              <TableCell>{((subject.presentCount / subject.totalLectures) * 100).toFixed(2)}%</TableCell>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Student Attendance Summary</h2>
+
+
+        <Table aria-label="Student Attendance Table">
+          <TableHeader>
+            <TableColumn>Subject</TableColumn>
+            <TableColumn>Total Lectures</TableColumn>
+            <TableColumn>Present</TableColumn>
+            <TableColumn>Attendance %</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {attendanceData?.map((subject) => (
+              <TableRow key={subject._id}>
+                <TableCell>{subject.name}</TableCell>
+                <TableCell>{subject.totalLectures}</TableCell>
+                <TableCell>{subject.presentCount}</TableCell>
+                <TableCell>{((subject.presentCount / subject.totalLectures) * 100).toFixed(2)}%</TableCell>
+              </TableRow>
+            ))}
+            <TableRow>
+              <TableCell><b>Total</b></TableCell>
+              <TableCell><b>{totalLectures}</b></TableCell>
+              <TableCell><b>{totalPresent}</b></TableCell>
+              <TableCell><b>{((totalPresent / totalLectures) * 100).toFixed(2)}%</b></TableCell>
             </TableRow>
-          ))}
-          <TableRow>
-            <TableCell><b>Total</b></TableCell>
-            <TableCell><b>{totalLectures}</b></TableCell>
-            <TableCell><b>{totalPresent}</b></TableCell>
-            <TableCell><b>{((totalPresent / totalLectures) * 100).toFixed(2)}%</b></TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+          </TableBody>
+        </Table>
       </div>
     );
   };
@@ -305,13 +302,13 @@ const AttendanceDisplay = () => {
 
   const renderFacultyAttendance = () => (
     <div>
-    {attendanceData.map((subjectData, index) => (
-      <div key={index} className="my-8">
-        <h3 className="text-xl font-semibold mb-2 text-gray-800">Subject: {subjectData.name}</h3>
-        <p className="text-md my-1 text-gray-600">Faculty: <span className="font-medium">{subjectData.facultyName}</span></p>
-        <p className="text-md my-1 text-gray-600">Batch: <span className="font-medium">{subjectData.batch}</span></p>
-        <p className="text-md my-10 text-gray-600">Total Lectures: <span className="font-medium">{subjectData.totalLectures}</span></p>
-        <Table aria-label={`Attendance Table for ${subjectData.name}`}>
+      {attendanceData.map((subjectData, index) => (
+        <div key={index} className="my-8">
+          <h3 className="text-xl font-semibold mb-2 text-gray-800">Subject: {subjectData.name}</h3>
+          <p className="text-md my-1 text-gray-600">Faculty: <span className="font-medium">{subjectData.facultyName}</span></p>
+          <p className="text-md my-1 text-gray-600">Batch: <span className="font-medium">{subjectData.batch}</span></p>
+          <p className="text-md my-10 text-gray-600">Total Lectures: <span className="font-medium">{subjectData.totalLectures}</span></p>
+          <Table aria-label={`Attendance Table for ${subjectData.name}`}>
             <TableHeader>
               <TableColumn>Roll Number</TableColumn>
               <TableColumn>Student Name</TableColumn>
@@ -340,41 +337,81 @@ const AttendanceDisplay = () => {
   );
   const renderAdminAttendance = () => {
     let sortedAttendanceData;
-    let subjects;
+    let subjectsByType;
     if (viewType === "cumulative" && Array.isArray(attendanceData)) {
       sortedAttendanceData = [...attendanceData].sort((a, b) => {
-        const rollNumberA = a.student?.rollNumber ? parseInt(a.student.rollNumber, 10) : 0;
-        const rollNumberB = b.student?.rollNumber ? parseInt(b.student.rollNumber, 10) : 0;
-        return rollNumberA - rollNumberB;
-      });
-      subjects = Array.from(new Set(sortedAttendanceData.flatMap(data =>
-        data.subjects?.map(subject => subject.subject) || []
-      )));
-    }
+        const rollA = a.student?.rollNumber || '';
+        const rollB = b.student?.rollNumber || '';
 
+        // Try to extract numeric part from the beginning of the string
+        const numA = parseInt(rollA.match(/^\d+/)?.[0] || '0', 10);
+        const numB = parseInt(rollB.match(/^\d+/)?.[0] || '0', 10);
+
+        if (numA !== numB) {
+          // If numeric parts are different, sort by them
+          return numA - numB;
+        } else {
+          // If numeric parts are same or both are non-numeric, sort alphabetically
+          return rollA.localeCompare(rollB, undefined, { numeric: true, sensitivity: 'base' });
+        }
+      });
+      // Group subjects by type
+      subjectsByType = sortedAttendanceData.reduce((acc, data) => {
+        data.subjects.forEach(subject => {
+          if (!acc[subject.subjectType]) {
+            acc[subject.subjectType] = new Set();
+          }
+          acc[subject.subjectType].add(subject.subject);
+        });
+        return acc;
+      }, {});
+
+      // Sort subject types
+      const subjectTypeOrder = ['theory', 'practical', 'tg'];
+      subjectsByType = Object.fromEntries(
+        subjectTypeOrder
+          .filter(type => subjectsByType[type])
+          .map(type => [type, Array.from(subjectsByType[type])])
+      );
+    }
 
     return (
       <div>
         {viewType === "cumulative" ? (
           <div className="overflow-x-auto">
-            {sortedAttendanceData && subjects ? (
+            {sortedAttendanceData && subjectsByType ? (
               <table className="min-w-full border-collapse block md:table">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border px-4 py-2">Roll No</th>
                     <th className="border px-4 py-2">Student Name</th>
-                    {subjects.map((subject) => (
-                      <th key={subject} className="border px-4 py-2" colSpan="3">
-                        {subject}
-                        <div className="flex justify-between mt-1">
-                          <span>Total</span>
-                          <span>Present</span>
-                          <span>%</span>
-                        </div>
-                      </th>
+                    {Object.entries(subjectsByType).map(([type, subjects]) => (
+                      <React.Fragment key={type}>
+                        <th className="border px-4 py-2" colSpan={subjects.length * 3}>
+                          {type.charAt(0).toUpperCase() + type.slice(1)} Subjects
+                        </th>
+                      </React.Fragment>
                     ))}
                     <th className="border px-4 py-2" colSpan="3">
                       Final Attendance
+                    </th>
+                  </tr>
+                  <tr className="bg-gray-100">
+                    <th className="border px-4 py-2"></th>
+                    <th className="border px-4 py-2"></th>
+                    {Object.entries(subjectsByType).flatMap(([type, subjects]) =>
+                      subjects.map(subject => (
+                        <th key={`${type}-${subject}`} className="border px-4 py-2" colSpan="3">
+                          {subject}
+                          <div className="flex justify-between mt-1">
+                            <span>Total</span>
+                            <span>Present</span>
+                            <span>%</span>
+                          </div>
+                        </th>
+                      ))
+                    )}
+                    <th className="border px-4 py-2" colSpan="3">
                       <div className="flex justify-between mt-1">
                         <span>Total</span>
                         <span>Present</span>
@@ -385,41 +422,43 @@ const AttendanceDisplay = () => {
                 </thead>
                 <tbody>
                   {sortedAttendanceData.map((studentData) => {
-                    let totalLectures = 0;
-                    let totalPresent = 0;
+                    let overallTotalLectures = 0;
+                    let overallTotalPresent = 0;
 
                     return (
                       <tr key={studentData.student._id}>
                         <td className="border px-4 py-2">{studentData.student.rollNumber}</td>
                         <td className="border px-4 py-2">{studentData.student.name}</td>
-                        {subjects.map((subject) => {
-                          const subjectData = studentData.subjects.find(s => s.subject === subject);
-                          if (subjectData) {
-                            totalLectures += subjectData.totalCount;
-                            totalPresent += subjectData.presentCount;
-                            return (
-                              <React.Fragment key={subject}>
-                                <td className="border px-4 py-2 text-center">{subjectData.totalCount}</td>
-                                <td className="border px-4 py-2 text-center">{subjectData.presentCount}</td>
-                                <td className="border px-4 py-2 text-center">
-                                  {((subjectData.presentCount / subjectData.totalCount) * 100).toFixed(2)}%
-                                </td>
-                              </React.Fragment>
-                            );
-                          } else {
-                            return (
-                              <React.Fragment key={subject}>
-                                <td className="border px-4 py-2 text-center">-</td>
-                                <td className="border px-4 py-2 text-center">-</td>
-                                <td className="border px-4 py-2 text-center">-</td>
-                              </React.Fragment>
-                            );
-                          }
-                        })}
-                        <td className="border px-4 py-2 text-center">{totalLectures}</td>
-                        <td className="border px-4 py-2 text-center">{totalPresent}</td>
+                        {Object.entries(subjectsByType).flatMap(([type, subjects]) =>
+                          subjects.map(subject => {
+                            const subjectData = studentData.subjects.find(s => s.subject === subject && s.subjectType === type);
+                            if (subjectData) {
+                              overallTotalLectures += subjectData.totalCount;
+                              overallTotalPresent += subjectData.presentCount;
+                              return (
+                                <React.Fragment key={`${type}-${subject}`}>
+                                  <td className="border px-4 py-2 text-center">{subjectData.totalCount}</td>
+                                  <td className="border px-4 py-2 text-center">{subjectData.presentCount}</td>
+                                  <td className="border px-4 py-2 text-center">
+                                    {((subjectData.presentCount / subjectData.totalCount) * 100).toFixed(2)}%
+                                  </td>
+                                </React.Fragment>
+                              );
+                            } else {
+                              return (
+                                <React.Fragment key={`${type}-${subject}`}>
+                                  <td className="border px-4 py-2 text-center">-</td>
+                                  <td className="border px-4 py-2 text-center">-</td>
+                                  <td className="border px-4 py-2 text-center">-</td>
+                                </React.Fragment>
+                              );
+                            }
+                          })
+                        )}
+                        <td className="border px-4 py-2 text-center">{overallTotalLectures}</td>
+                        <td className="border px-4 py-2 text-center">{overallTotalPresent}</td>
                         <td className="border px-4 py-2 text-center">
-                          {totalLectures > 0 ? ((totalPresent / totalLectures) * 100).toFixed(2) : '0.00'}%
+                          {overallTotalLectures > 0 ? ((overallTotalPresent / overallTotalLectures) * 100).toFixed(2) : '0.00'}%
                         </td>
                       </tr>
                     );
@@ -483,11 +522,11 @@ const AttendanceDisplay = () => {
   }
   return (
     <div className="p-4">
-    <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
-      <div className="mb-4 md:mb-0">
-        <h1 className="text-3xl font-bold mb-2 text-gray-800">Attendance Report</h1>
-        <p className="text-lg text-gray-600">User: <span className="font-semibold">{userProfile.name}</span> ({userProfile.role})</p>
-      </div>
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div className="mb-4 md:mb-0">
+          <h1 className="text-3xl font-bold mb-2 text-gray-800">Attendance Report</h1>
+          <p className="text-lg text-gray-600">User: <span className="font-semibold">{userProfile.name}</span> ({userProfile.role})</p>
+        </div>
 
 
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
