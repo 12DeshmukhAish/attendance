@@ -16,6 +16,7 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [subjectDetails, setSubjectDetails] = useState(null);
   const [batches, setBatches] = useState([]);
+  const [availableSessions, setAvailableSessions] = useState([]);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -28,12 +29,24 @@ export default function App() {
     profile ? profile.subjects.map(sub => ({ _id: sub, name: sub })) : []
     , [profile]);
 
-  useEffect(() => {
-    if (selectedSubject !== "Subject") {
-      fetchSubjectDetails(selectedSubject);
-    }
-  }, [selectedSubject, selectedBatch]);
 
+
+const fetchAvailableSessions = async (subjectId, batchId) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const response = await axios.get(`/api/utils/available-sessions?subjectId=${subjectId}&batchId=${batchId || ''}&date=${today}`);
+    setAvailableSessions(response.data.availableSessions);
+  } catch (error) {
+    console.error('Error fetching available sessions:', error);
+  }
+};
+
+useEffect(() => {
+  if (selectedSubject !== "Subject") {
+    fetchSubjectDetails(selectedSubject);
+    fetchAvailableSessions(selectedSubject, selectedBatch);
+  }
+}, [selectedSubject, selectedBatch]);
   const fetchSubjectDetails = async (subjectId) => {
     try {
       const response = await axios.get(`/api/utils/batches?_id=${subjectId}&batchId=${selectedBatch || ''}`);
@@ -104,6 +117,7 @@ export default function App() {
       setSelectedContentIds([]);
       setSubjectDetails(null)
       setSelectedSession([]);
+      setSelectedSubject("Subject")
     }
   };
 
@@ -201,74 +215,74 @@ export default function App() {
           </DropdownMenu>
         </Dropdown>
         {subjectDetails?.subType !== "theory" &&
-                  < Dropdown >
-          <DropdownTrigger>
-            <Button variant="bordered" className="capitalize">
-              {selectedBatch ? `Batch ${selectedBatch}` : "Select Batch"}
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Batch selection"
-            variant="flat"
-            disallowEmptySelection
-            selectionMode="single"
-            selectedKeys={selectedBatch ? new Set([selectedBatch]) : new Set()}
-            onSelectionChange={(keys) => setSelectedBatch(Array.from(keys)[0])}
-          >
-            {batches && batches.map((batch) => (
-              <DropdownItem key={batch}>{batch}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-}
-      <CheckboxGroup
-        orientation="horizontal"
-        label="Select Sessions"
-        value={selectedSession}
-        onChange={setSelectedSession}
-      >
-        {Array.from({ length: 7 }, (_, i) => i + 1).map(session => (
-          <Checkbox key={session} value={session.toString()}>
-            {session}
-          </Checkbox>
-        ))}
-      </CheckboxGroup>
+          < Dropdown >
+            <DropdownTrigger>
+              <Button variant="bordered" className="capitalize">
+                {selectedBatch ? `Batch ${selectedBatch}` : "Select Batch"}
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="Batch selection"
+              variant="flat"
+              disallowEmptySelection
+              selectionMode="single"
+              selectedKeys={selectedBatch ? new Set([selectedBatch]) : new Set()}
+              onSelectionChange={(keys) => setSelectedBatch(Array.from(keys)[0])}
+            >
+              {batches && batches.map((batch) => (
+                <DropdownItem key={batch}>{batch}</DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+        }
+        <CheckboxGroup
+          orientation="horizontal"
+          label="Select Sessions"
+          value={selectedSession}
+          onChange={setSelectedSession}
+        >
+          {availableSessions.map(session => (
+            <Checkbox key={session} value={session.toString()}>
+              {session}
+            </Checkbox>
+          ))}
+        </CheckboxGroup>
 
-      <Button color="primary" variant="shadow" onClick={handleTakeAttendance}>
-        Take Attendance
-      </Button>
-    </div>
+        <Button color="primary" variant="shadow" onClick={handleTakeAttendance}>
+          Take Attendance
+        </Button>
+      </div>
 
       {
-    selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
-      <div className="flex gap-4 mb-4">
-        <div className="w-1/2">
-          <h2>Course Content</h2>
-          {CourseContentTable}
-        </div>
-        <div className="w-1/2">
-          <h2>Students List</h2>
-          {StudentListTable}
-        </div>
-      </div>
-    )
-  }
+        selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
+          <div className="flex gap-4 mb-4">
+            <div className="w-1/2">
+              <h2>Course Content</h2>
+              {CourseContentTable}
+            </div>
+            <div className="w-1/2">
+              <h2>Students List</h2>
+              {StudentListTable}
+            </div>
+          </div>
+        )
+      }
 
-  {
-    isTableVisible && selectedSubject && subjectDetails && (
-      <Button color="primary" className="max-w-[50%] mx-auto" variant="shadow" onClick={submitAttendance}>
-        Submit Attendance
-      </Button>
-    )
-  }
+      {
+        isTableVisible && selectedSubject && subjectDetails && (
+          <Button color="primary" className="max-w-[50%] mx-auto" variant="shadow" onClick={submitAttendance}>
+            Submit Attendance
+          </Button>
+        )
+      }
 
-  {
-    !students.length && !isTableVisible && (
-      <div className="flex justify-center mt-4">
-        <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
-      </div>
-    )
-  }
+      {
+        !students.length && !isTableVisible && (
+          <div className="flex justify-center mt-4">
+            <Image src="/attendance.svg" alt="Attendance Illustration" width={700} height={300} />
+          </div>
+        )
+      }
     </div >
   );
 }
