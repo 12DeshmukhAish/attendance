@@ -25,7 +25,6 @@ export async function GET(req) {
       return NextResponse.json({ error: "Subject not found" }, { status: 404 });
     }
 
-    let batches = [];
     let students = [];
     
     const classDoc = await Classes.findById(subject.class).lean();
@@ -54,13 +53,20 @@ export async function GET(req) {
       _id: student._id,
       name: student.name,
       rollNumber: student.rollNumber,
-      status: attendanceRecord?.records
+      status: attendanceRecord?.records.find(r => r.student.toString() === student._id.toString())?.status || 'absent'
     }));
-
+    
     return NextResponse.json({
       message: "Data fetched successfully",
       students: studentsWithAttendance,
       attendanceRecord: attendanceRecord || null,
+      subject: {
+        _id: subject._id,
+        name: subject.name,
+        subType: subject.subType,
+        content: subject.content,
+        tgSessions: subject.tgSessions
+      }
     }, { status: 200 });
 
   } catch (error) {
@@ -72,33 +78,79 @@ export async function GET(req) {
 export async function PUT(req) {
   try {
     await connectMongoDB();
-    const { subjectId, session, attendanceData } = await req.json();
-    console.log(attendanceData);
+    const { subject, date, session, batchId, attendanceRecords, contents, pointsDiscussed } = await req.json();
 
-    if (!subjectId || !session || !attendanceData) {
+    if (!subject || !date || !session || !attendanceRecords) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
 
-    const result = await Attendance.findOneAndUpdate(
-      {
-        subject: subjectId,
-        session: parseInt(session)
-      },
-      {
-        $set: {
-          subject: subjectId,
-          session: parseInt(session),
-          records: attendanceData.map(record => ({
-            student: record.studentId,
-            status: record.status
-          }))
-        }
-      },
-      { upsert: true, new: true }
-    );
-    console.log(result);
+    const attendanceDate = new Date(date);
+    const startOfDay = new Date(Date.UTC(attendanceDate.getUTCFullYear(), attendanceDate.getUTCMonth(), attendanceDate.getUTCDate()));
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
 
-    return NextResponse.json({ message: "Attendance updated successfully", result }, { status: 200 });
+    const filter = {
+      subject,
+      date: { $gte: startOfDay, $lt: endOfDay },
+      session: parseInt(session)
+    };
+
+    if (batchId) {
+      filter.batch = batchId;
+    }
+
+    const update = {
+      $set: {
+        records: attendanceRecords.map(record => ({
+          student: record.student,
+          status: record.status
+        }))
+      }
+    };
+
+    const options = { upsert: true, new: true };
+
+    const attendanceResult = await Attendance.findOneAndUpdate(filter, update, options);
+
+    // Update subject content or TG session
+    const subjectDoc = await Subject.findById(subject);
+
+    if (subjectDoc.subType === 'tg' && pointsDiscussed) {
+      const tgSessionIndex = subjectDoc.tgSessions.findIndex(
+        session => session.date.toISOString().split('T')[0] === date
+      );
+
+      if (tgSessionIndex !== -1) {
+        subjectDoc.tgSessions[tgSessionIndex].pointsDiscussed = pointsDiscussed;
+      } else {
+        subjectDoc.tgSessions.push({ date: attendanceDate, pointsDiscussed });
+      }
+    } else if (contents && contents.length > 0) {
+      const indianFormattedDate = attendanceDate.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      subjectDoc.content.forEach(content => {
+        if (contents.includes(content._id.toString())) {
+          content.status = 'covered';
+          content.completedDate = indianFormattedDate;
+        }
+      });
+    }
+
+    await subjectDoc.save();
+
+    return NextResponse.json({ 
+      message: "Attendance and subject data updated successfully", 
+      attendance: attendanceResult,
+      subject: subjectDoc
+    }, { status: 200 });
 
   } catch (error) {
     console.error("Failed to update attendance:", error);

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Checkbox, CheckboxGroup } from "@nextui-org/react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Checkbox, CheckboxGroup, Input } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import axios from 'axios';
 import Image from 'next/image';
@@ -17,7 +17,9 @@ export default function App() {
   const [subjectDetails, setSubjectDetails] = useState(null);
   const [batches, setBatches] = useState([]);
   const [availableSessions, setAvailableSessions] = useState([]);
+  const [pointsDiscussed, setPointsDiscussed] = useState([]);
 
+  const [tgSessions, setTgSessions] = useState([]);
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -28,8 +30,6 @@ export default function App() {
   const subjectOptions = useMemo(() =>
     profile ? profile.subjects.map(sub => ({ _id: sub, name: sub })) : []
     , [profile]);
-
-
 
 const fetchAvailableSessions = async (subjectId, batchId) => {
   try {
@@ -57,6 +57,9 @@ useEffect(() => {
       setSubjectDetails(subject);
       setBatches(batches || []);
       setStudents(students || []);
+      if (subject.subType === 'tg') {
+        setTgSessions(subject.tgSessions || []);
+      }
     } catch (error) {
       console.error('Error fetching subject details:', error);
     }
@@ -98,9 +101,11 @@ useEffect(() => {
       subject: selectedSubject,
       session: selectedSession,
       attendanceRecords,
-      contents: selectedContentIds,
-      batchId: selectedBatch
-    };
+      batchId: selectedBatch,
+      ...(subjectDetails.subType === 'tg' 
+          ? { pointsDiscussed } 
+          : { contents: selectedContentIds })
+  };
 
     try {
       const response = await axios.post('/api/attendance', attendanceData);
@@ -118,12 +123,69 @@ useEffect(() => {
       setSubjectDetails(null)
       setSelectedSession([]);
       setSelectedSubject("Subject")
+      setPointsDiscussed('')
     }
+  };
+  const TGSessionContent = useMemo(() => {
+    if (!subjectDetails || subjectDetails.subType !== 'tg') return null;
+
+    return (
+      <div>
+        <h2>TG Session Details</h2>
+        <div className="flex flex-col gap-2">
+          {pointsDiscussed.map((point, index) => (
+            <div key={index} className="flex gap-2">
+              <Input
+                value={point}
+                variant='bordered'
+                onChange={(e) => {
+                  const newPoints = [...pointsDiscussed];
+                  newPoints[index] = e.target.value;
+                  setPointsDiscussed(newPoints);
+                }}
+                className="flex-grow"
+                placeholder={`Point ${index + 1}`}
+              />
+              <Button variant='bordered' color='primary' onClick={() => {
+                const newPoints = pointsDiscussed.filter((_, i) => i !== index);
+                setPointsDiscussed(newPoints);
+
+              }}>Remove</Button>
+            </div>
+          ))}
+          <Button variant="shadow" className="max-w-1/2 mx-auto" color="primary" onClick={() => setPointsDiscussed([...pointsDiscussed, ''])}>
+            Add Point
+          </Button>
+        </div>
+      </div>
+    );
+  }, [subjectDetails, pointsDiscussed]);
+  const convertToDate = (customDate) => {
+    const { year, month, day } = customDate;
+    return new Date(year, month - 1, day + 1);
+  };
+
+  const TGSessionsHistory = ({ sessions }) => {
+    return (
+      <div className="mt-4">
+        <h2 className="text-xl font-bold mb-2">TG Sessions History</h2>
+        {sessions.map((session, index) => (
+          <div key={index} className="mb-4 p-4 border rounded">
+            <h3 className="font-semibold">Date: {new Date(session.date).toLocaleDateString()}</h3>
+            <ul className="list-disc pl-5">
+              {session.pointsDiscussed.map((point, pointIndex) => (
+                <li key={pointIndex}>{point}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   const CourseContentTable = useMemo(() => {
-    if (!subjectDetails || !subjectDetails.content) return null;
-
+    if (!subjectDetails ) return null;
+    if (!subjectDetails.content) return null;
     return (
       <Table aria-label="Course Content Table" className="max-h-[75vh]">
         <TableHeader>
@@ -166,7 +228,7 @@ useEffect(() => {
         </TableBody>
       </Table>
     );
-  }, [subjectDetails, selectedContentIds]);
+  }, [subjectDetails, selectedContentIds,pointsDiscussed]);
   const StudentListTable = useMemo(() => {
     return (
       <Table
@@ -256,10 +318,11 @@ useEffect(() => {
       {
         selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
           <div className="flex gap-4 mb-4">
-            <div className="w-1/2">
-              <h2>Course Content</h2>
-              {CourseContentTable}
-            </div>
+           <div className="w-1/2">
+            <h2> {subjectDetails.subType === 'tg' ? "Points Discussion" : "Course Content"}</h2>
+            {subjectDetails.subType === 'tg' ? TGSessionContent : CourseContentTable}
+            {subjectDetails.subType === 'tg' && <TGSessionsHistory sessions={tgSessions} />}
+          </div>
             <div className="w-1/2">
               <h2>Students List</h2>
               {StudentListTable}

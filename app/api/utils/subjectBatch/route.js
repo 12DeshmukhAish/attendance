@@ -11,7 +11,15 @@ export async function GET(req) {
     if (!subjectId ) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
-    const subject = await Subject.findById(subjectId).select("name subType batch content");
+    const subject = await Subject.findById(subjectId).select("name subType batch content tgSessions");
+    if (subject.subType !== 'tg') {
+      subject.content = subject.content || [];
+    }
+
+    // Include TG sessions for TG subjects
+    if (subject.subType === 'tg') {
+      subject.tgSessions = subject.tgSessions || [];
+    }
     console.log(subject);
 
     if (!subject) {

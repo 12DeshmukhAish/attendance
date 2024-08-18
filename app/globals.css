@@ -6,6 +6,10 @@
     position: relative;
   }
   
+
+  ::selection{
+    color: #915bf0;
+  }
   .sidebar {
     width: 17rem;
     height: 100%;

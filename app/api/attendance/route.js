@@ -7,7 +7,7 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { subject, session, contents, batchId, attendanceRecords } = data;
+        const { subject, session, contents, batchId, attendanceRecords, pointsDiscussed } = data;
         console.log(data);
 
         if (subject && session && attendanceRecords) {
@@ -33,6 +33,20 @@ export async function POST(req) {
                     subject,
                     { $addToSet: { reports: attendanceRecord._id } }
                 );
+
+                if (pointsDiscussed && pointsDiscussed.length > 0) {
+                    await Subject.findByIdAndUpdate(
+                        subject,
+                        {
+                            $push: {
+                                tgSessions: {
+                                    date: date,
+                                    pointsDiscussed: pointsDiscussed
+                                }
+                            }
+                        }
+                    );
+                }
 
                 // Update content status to covered and set completed date in Indian format
                 if (contents && contents.length > 0) {
@@ -75,12 +89,11 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Record Attendance" }, { status: 500 });
     }
 }
-
 export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { date, subject, session, batchId, attendanceRecords, contents } = data;
+        const { date, subject, session, batchId, attendanceRecords, contents, pointsDiscussed } = data;
 
         if (!date || !Date.parse(date) || !subject || !session || !attendanceRecords) {
             return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
@@ -104,30 +117,35 @@ export async function PUT(req) {
                 filter.batch = batchId;
             }
 
-            let attendanceRecord = await Attendance.findOne(filter);
-
-            if (!attendanceRecord) {
-                attendanceRecord = new Attendance({
-                    date: attendanceDate,
-                    subject,
-                    session: sess,
-                    records: attendanceRecords,
-                    ...(batchId && { batch: batchId })
-                });
-            } else {
-                attendanceRecord.date = attendanceDate;
-                attendanceRecord.records = attendanceRecords;
-            }
-
-            await attendanceRecord.save();
-
-            await Subject.findByIdAndUpdate(
-                subject,
-                { $addToSet: { reports: attendanceRecord._id } }
+            let attendanceRecord = await Attendance.findOneAndUpdate(
+                filter,
+                {
+                    $set: {
+                        date: attendanceDate,
+                        records: attendanceRecords,
+                        ...(batchId && { batch: batchId })
+                    }
+                },
+                { upsert: true, new: true, runValidators: true }
             );
 
-            // Update content status to covered and set completed date in Indian format
-            if (contents && contents.length > 0) {
+            const subjectDoc = await Subject.findById(subject);
+
+            if (subjectDoc.subType === 'tg' && pointsDiscussed && pointsDiscussed.length > 0) {
+                const existingSessionIndex = subjectDoc.tgSessions.findIndex(
+                    s => s.date.toDateString() === attendanceDate.toDateString()
+                );
+
+                if (existingSessionIndex !== -1) {
+                    subjectDoc.tgSessions[existingSessionIndex].pointsDiscussed = pointsDiscussed;
+                } else {
+                    subjectDoc.tgSessions.push({ date: attendanceDate, pointsDiscussed });
+                }
+            }
+
+            subjectDoc.reports.addToSet(attendanceRecord._id);
+
+            if (subjectDoc.subType !== 'tg' && contents && contents.length > 0) {
                 const indianFormattedDate = attendanceDate.toLocaleString('en-IN', {
                     timeZone: 'Asia/Kolkata',
                     day: '2-digit',
@@ -138,19 +156,15 @@ export async function PUT(req) {
                     hour12: true
                 });
 
-                await Subject.updateOne(
-                    { _id: subject },
-                    {
-                        $set: {
-                            "content.$[elem].status": "covered",
-                            "content.$[elem].completedDate": indianFormattedDate
-                        }
-                    },
-                    {
-                        arrayFilters: [{ "elem._id": { $in: contents }, "elem.status": { $ne: "covered" } }]
+                subjectDoc.content.forEach(content => {
+                    if (contents.includes(content._id.toString()) && content.status !== 'covered') {
+                        content.status = 'covered';
+                        content.completedDate = indianFormattedDate;
                     }
-                );
+                });
             }
+
+            await subjectDoc.save();
 
             return attendanceRecord;
         });
@@ -163,7 +177,6 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to Update/Create Attendance" }, { status: 500 });
     }
 }
-
 export async function DELETE(req) {
     try {
         await connectMongoDB();

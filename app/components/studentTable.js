@@ -79,7 +79,7 @@ export default function StudentTable() {
 
   useEffect(() => {
     if (selectedDepartment) {
-    fetchStudents(selectedDepartment);
+    fetchStudents();
       
     }
   }, [selectedDepartment]);

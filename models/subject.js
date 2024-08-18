@@ -18,11 +18,11 @@ const ContentSchema = new mongoose.Schema({
     references: {
         type: String,
     },
-    courseOutcomes:{
+    courseOutcomes: {
         type: String,
     },
-    programOutcomes:{
-        type:String,
+    programOutcomes: {
+        type: String,
     },
     status: {
         type: String,
@@ -33,6 +33,19 @@ const ContentSchema = new mongoose.Schema({
     _id: true,
 });
 
+const TGSessionSchema = new mongoose.Schema({
+    date: {
+        type: Date,
+        required: true
+    },
+    pointsDiscussed: {
+        type: [String],
+        default: undefined
+    },
+}, {
+    _id: true
+});
+
 const SubjectSchema = new mongoose.Schema({
     _id: String,
     name: {
@@ -41,19 +54,19 @@ const SubjectSchema = new mongoose.Schema({
     },
     subType: {
         type: String,
-        enum: ['theory', 'practical','tg'],
+        enum: ['theory', 'practical', 'tg'],
         required: true
     },
     class: {
         type: String,
-        ref: 'Classes'  
+        ref: 'Classes'
     },
     teacher: {
         type: String,
-        ref: 'Faculty'  
+        ref: 'Faculty'
     },
-    batch:{
-        type:[String]
+    batch: {
+        type: [String]
     },
     department: {
         type: String
@@ -66,7 +79,26 @@ const SubjectSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
-    content: [ContentSchema]
+    content: {
+        type: [ContentSchema],
+        default: undefined,
+        validate: {
+            validator: function (v) {
+                return this.subType !== 'tg' || (v === undefined || v.length === 0);
+            },
+            message: props => 'Content should be empty for TG subjects'
+        }
+    },
+    tgSessions: {
+        type: [TGSessionSchema],
+        default: undefined,
+        validate: {
+            validator: function (v) {
+                return this.subType === 'tg' || (v === undefined || v.length === 0);
+            },
+            message: props => 'TG sessions should only be present for TG subjects'
+        }
+    }
 }, {
     timestamps: true,
 });

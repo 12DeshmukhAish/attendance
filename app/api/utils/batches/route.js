@@ -27,7 +27,7 @@ export async function GET(request) {
             if (selectedBatchId) {
               const classDoc = await Classes.findById(subject.class).lean();
               if (classDoc) {
-                const selectedBatch = classDoc.batches.find(batch => batch._id === selectedBatchId);
+                const selectedBatch = classDoc.batches.find(batch => batch._id.toString() === selectedBatchId);
                 if (selectedBatch) {
                   students = await Student.find({
                     _id: { $in: selectedBatch.students },
@@ -41,15 +41,32 @@ export async function GET(request) {
           students = await Student.find({ class: subject.class, subjects: subjectId })
             .select('_id rollNumber name').lean();
         }
+
+        // Include content for non-TG subjects
+        if (subject.subType !== 'tg') {
+          subject.content = subject.content || [];
+        }
+
+        // Include TG sessions for TG subjects
+        if (subject.subType === 'tg') {
+          subject.tgSessions = subject.tgSessions || [];
+        }
       }
     } else {
       subject = await Subject.find().lean();
     }
 
     const teachers = await Faculty.find().select('_id name').lean();
-    return NextResponse.json({ subject, batches, students, teachers }, { status: 200 });
+    
+    return NextResponse.json({ 
+      subject, 
+      batches, 
+      students, 
+      teachers,
+      message: "Data fetched successfully"
+    }, { status: 200 });
   } catch (error) {
     console.error("Error fetching subjects and teachers:", error);
-    return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch data", details: error.message }, { status: 500 });
   }
 }

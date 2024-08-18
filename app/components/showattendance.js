@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useMemo } from "react";
 import axios from "axios";
 import Image from "next/image";
 import {
@@ -37,17 +37,32 @@ const AttendanceDisplay = () => {
     start: today(getLocalTimeZone()).subtract({ weeks: 2 }),
     end: today(getLocalTimeZone()),
   });
-
   const fetchClasses = async () => {
     if ((userProfile?.role === "admin" || userProfile?.role === "superadmin") && selectedDepartment) {
       try {
+        setLoading(true);
         const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}`);
-        setClasses(response.data);
+        setClasses(response.data || []);
       } catch (error) {
         console.error('Error fetching classes:', error);
+        setError("Failed to fetch classes. Please try again.");
+      } finally {
+        setLoading(false);
       }
     }
   };
+
+  useEffect(() => {
+    if ((userProfile?.role === "admin" || userProfile?.role === "superadmin") && selectedDepartment) {
+      fetchClasses();
+    }
+  }, [userProfile, selectedDepartment]);
+
+  const classOptions = useMemo(() => {
+    return Array.isArray(classes) ? classes : [];
+  }, [classes]);
+
+
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem("userProfile");
@@ -140,26 +155,26 @@ const AttendanceDisplay = () => {
     const wb = XLSX.utils.book_new();
     const createSheet = (data, sheetName) => {
       let wsData = [];
-  
+
       if (viewType === "cumulative") {
         // Handle cumulative view
         const subjects = Array.from(new Set(data.flatMap(d => d.subjects?.map(s => s.subject) || [])));
-  
+
         wsData.push(["Roll Number", "Student Name", ...subjects.flatMap(s => [s, "", ""]), "Final Attendance", "", ""]);
         wsData.push(["", "", ...subjects.flatMap(() => ["Total", "Present", "%"]), "Total", "Present", "%"]);
-  
+
         // Sort data by roll number
         data.sort((a, b) => {
           const rollA = parseInt(a.student.rollNumber, 10);
           const rollB = parseInt(b.student.rollNumber, 10);
           return rollA - rollB;
         });
-  
+
         data.forEach((studentData) => {
           let row = [studentData.student.rollNumber, studentData.student.name];
           let totalLectures = 0;
           let totalPresent = 0;
-  
+
           subjects.forEach((subject) => {
             const subjectData = studentData.subjects.find(s => s.subject === subject);
             if (subjectData) {
@@ -170,14 +185,14 @@ const AttendanceDisplay = () => {
               row.push("-", "-", "-");
             }
           });
-  
+
           row.push(totalLectures, totalPresent, ((totalPresent / totalLectures) * 100).toFixed(2));
           wsData.push(row);
         });
       } else {
         // Handle individual view (existing code)
         wsData.push(["Roll Number", "Student Name", "Total Lectures", "Present", "Attendance %"]);
-  
+
         data.students.sort((a, b) => parseInt(a.rollNumber, 10) - parseInt(b.rollNumber, 10))
           .forEach((student) => {
             wsData.push([
@@ -189,13 +204,13 @@ const AttendanceDisplay = () => {
             ]);
           });
       }
-  
+
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
       // Set column widths
       const colWidths = wsData[0].map((_, i) => ({ wch: Math.max(...wsData.map(row => String(row[i]).length)) + 2 }));
       ws['!cols'] = colWidths;
-  
+
       // Apply styles
       const range = XLSX.utils.decode_range(ws['!ref']);
       for (let R = range.s.r; R <= range.e.r; ++R) {
@@ -218,10 +233,10 @@ const AttendanceDisplay = () => {
           }
         }
       }
-  
+
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     };
-  
+
     if (userProfile.role === "student") {
       createSheet({ students: attendanceData, totalLectures: attendanceData.reduce((sum, subject) => sum + subject.totalLectures, 0) }, "Student Report");
     } else if (userProfile.role === "faculty" || (userProfile.role === "admin" || userProfile.role === "superadmin")) {
@@ -548,22 +563,23 @@ const AttendanceDisplay = () => {
               </DropdownMenu>
             </Dropdown>
           )}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin") && (
-            <>
-              <Dropdown>
-                <DropdownTrigger>
-                  <Button variant="bordered">
-                    {selectedClass ? selectedClass : "Select Class"}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu aria-label="Class selection" onAction={(key) => setSelectedClass(key)}>
-                  {classes.map((classItem) => (
-                    <DropdownItem key={classItem._id}>{classItem._id}</DropdownItem>
-                  ))}
-                </DropdownMenu>
-              </Dropdown>
-
-            </>
+          {(userProfile?.role === "admin" || userProfile?.role === "superadmin") && (
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered" disabled={classOptions.length === 0}>
+                  {selectedClass || "Select Class"}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Class selection"
+                onAction={(key) => setSelectedClass(key)}
+                items={classOptions}
+              >
+                {(item) => (
+                  <DropdownItem key={item._id}>{item._id}</DropdownItem>
+                )}
+              </DropdownMenu>
+            </Dropdown>
           )}
           {(userProfile.role === "admin" || userProfile.role === "superadmin" || userProfile?.classes) && (
             <>
@@ -635,7 +651,7 @@ const AttendanceDisplay = () => {
                     </Button>
                   </DropdownTrigger>
                   <DropdownMenu className="max-h-48 overflow-y-auto" aria-label="Subject selection" onAction={(key) => setSelectedSubject(key)}>
-                    {classes.find((c) => c._id === selectedClass)?.subjects.map((subject) => (
+                    {classOptions && classOptions?.find((c) => c._id === selectedClass)?.subjects.map((subject) => (
                       <DropdownItem key={subject}>{subject}</DropdownItem>
                     ))}
                   </DropdownMenu>
