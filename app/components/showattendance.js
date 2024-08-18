@@ -600,7 +600,7 @@ const AttendanceDisplay = () => {
           )}
           {userProfile?.role === "faculty" && viewType === "individual" && (
             <>
-              {userProfile.subjects && (<Dropdown>
+              {userProfile.subjects  && (<Dropdown>
                 <DropdownTrigger>
                   <Button variant="bordered">
                     {selectedSubject ? `Current: ${selectedSubject}` : "Select Current Year Subject"}
@@ -641,9 +641,9 @@ const AttendanceDisplay = () => {
               )}
             </>
           )}
-          {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile?.classes) && (
+          {(userProfile.role === "admin" || userProfile.role === "superadmin" || !userProfile?.classes ) && (
             <>
-              {viewType === "individual" && (
+              {viewType === "individual" &&  userProfile?.role!=="student" && (
                 <Dropdown >
                   <DropdownTrigger>
                     <Button variant="bordered">
@@ -673,14 +673,12 @@ const AttendanceDisplay = () => {
             variant="bordered"
           />
         </div>
-        <div className="w-[10%] mt-4">  <Button variant="ghost" color="primary" size="sm" onClick={generateExcelReport} className="mb-8">
+        <div className="w-[10%] mt-4">  
+          <Button variant="ghost" color="primary" size="sm" onClick={generateExcelReport} className="mb-8">
           Download Report
         </Button>
         </div>
       </div>
-
-
-
       {loading ? (
         <div className="flex justify-center items-center">
           <Spinner size="large" />

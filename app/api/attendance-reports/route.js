@@ -21,45 +21,50 @@ export async function GET(req) {
             if (!student) {
                 return NextResponse.json({ error: "Student not found" }, { status: 404 });
             }
-
+        
             pipeline = [
+                {
+                    $match: {
+                        date: {  $lte: endDate },
+                        'records.student': studentId
+                    }
+                },
                 { $unwind: '$records' },
-                { $match: { 'records.student': studentId, date: { $gte: startDate, $lte: endDate } } },
+                {
+                    $match: {
+                        'records.student': studentId
+                    }
+                },
                 {
                     $group: {
-                        _id: {
-                            subject: '$subject',
-                            batch: '$batch',
-                        },
+                        _id: '$subject',
+                        totalLectures: { $sum: 1 },
                         presentCount: {
                             $sum: {
                                 $cond: [{ $eq: ['$records.status', 'present'] }, 1, 0]
                             }
-                        },
-                        totalCount: { $sum: 1 }
+                        }
                     }
                 },
                 {
                     $lookup: {
                         from: 'subjects',
-                        localField: 'subject',
+                        localField: '_id',
                         foreignField: '_id',
                         as: 'subjectInfo'
                     }
                 },
                 { $unwind: '$subjectInfo' },
-                { $match: { 'subjectInfo.isActive': true } },
                 {
                     $project: {
-                        _id: '$_id.subject',
+                        _id: 1,
                         name: '$subjectInfo.name',
-                        batch: '$_id.batch',
-                        presentCount: 1,
-                        totalLectures: '$totalCount'
+                        totalLectures: 1,
+                        presentCount: 1
                     }
                 }
             ];
-        }  else if (subjectId) {
+        } else if (subjectId) {
             const subject = await Subject.findOne({ _id: subjectId }).lean();
             if (!subject) {
                 return NextResponse.json({ error: "Subject not found" }, { status: 404 });
@@ -69,7 +74,6 @@ export async function GET(req) {
                 {
                     $match: {
                         date: {
-                            $gte: startDate,
                             $lte: endDate
                         },
                         subject: subjectId
@@ -174,7 +178,7 @@ export async function GET(req) {
                 {
                   $match: {
                     'subjectInfo.class': classId,
-                    date: { $gte: startDate, $lte: endDate }
+                    date: {$lte: endDate }
                   }
                 },
                 { $unwind: '$records' },

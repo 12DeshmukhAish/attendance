@@ -15,7 +15,7 @@ export async function GET(req) {
         await connectMongoDB();
         const subjects = await Subject.find(filter).select("_id name class teacher subType batch isActive");
         const teachers = await Faculty.find().select('name _id');
-        const classes = await Classes.find(filter).select('_id batches._id');
+        const classes = await Classes.find({department,isActive:true}).select('_id batches._id');
         console.log(subjects,classes);
         return NextResponse.json({ subjects, teachers ,classes}, { status: 200 });
     } catch (error) {

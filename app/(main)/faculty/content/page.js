@@ -207,7 +207,7 @@ const TeachingPlanPage = () => {
           <p>Subject Department: {subject.department}</p>
           <p>Subject Name: {subject.name}</p>
           <p>Subject Code: {subject._id}</p>
-          <p>Subject Faculty Name: {subject.teacher}</p>
+          <p>Subject Faculty ID: {subject.teacher}</p>
           <p>Subject Class: {subject.class}</p>
           <p>Subject Type: {subject.subType}</p>
         </div>
@@ -249,7 +249,7 @@ const TeachingPlanPage = () => {
                 <TableBody>
                   {tgSessions.map((session, index) => (
                     <TableRow key={index}>
-                      <TableCell>{session.date}</TableCell>
+                      <TableCell>{session.date.split('T')[0]}</TableCell>
                       <TableCell>
                         <ul>
                           {session.pointsDiscussed.map((point, pointIndex) => (
