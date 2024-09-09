@@ -273,6 +273,16 @@ export default function App() {
   }, [subjectDetails, selectedContentIds]);
 
   const StudentListTable = useMemo(() => {
+    const sortedStudents = students.slice().sort((a, b) => {
+      // Extract the numeric part of the roll number
+      const aNumericPart = parseInt(a.rollNumber.replace(/\D/g, ''), 10);
+      const bNumericPart = parseInt(b.rollNumber.replace(/\D/g, ''), 10);
+  
+      // Compare the numeric parts of the roll numbers
+      return aNumericPart - bNumericPart;
+    });
+  
+
     return (
       <Table
         aria-label="Attendance Table"
@@ -286,7 +296,7 @@ export default function App() {
           <TableColumn>Name</TableColumn>
         </TableHeader>
         <TableBody>
-          {students.map((student) => (
+          {sortedStudents.map((student) => (
             <TableRow key={student._id}>
               <TableCell>{student.rollNumber}</TableCell>
               <TableCell>{student.name}</TableCell>
