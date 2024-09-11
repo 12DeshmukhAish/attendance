@@ -71,7 +71,6 @@ const AttendanceDisplay = () => {
       if (profile && profile.classes) {
         console.log(profile);
         setSelectedClass(profile.classes)
-
       }
       setUserProfile(profile);
       if (profile.role === "admin") {

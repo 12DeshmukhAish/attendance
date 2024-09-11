@@ -56,6 +56,7 @@ const Sidebar = () => {
           { name: "Manage Class", href: "/admin/classes", icon: SiGoogleclassroom },
           { name: "Manage Subjects", href: "/admin/subject", icon: TbReportAnalytics },
           { name: "Manage Reports", href: "/admin/showattendance", icon: AiOutlineSchedule },
+          { name: "Daily Absents", href: "/admin/absent-students", icon: AiOutlineSchedule },
         ];
       case "superadmin":
         return [
