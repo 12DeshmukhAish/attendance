@@ -207,7 +207,7 @@ const TeachingPlanPage = () => {
           <p>Subject Department: {subject.department}</p>
           <p>Subject Name: {subject.name}</p>
           <p>Subject Code: {subject._id}</p>
-          <p>Subject Faculty Name: {subject.teacher.split('.').join(" ")}</p>
+          {/* <p>Subject Faculty Name: {subject.teacher.split('.').join(" ")}</p> */}
           <p>Subject Class: {subject.class}</p>
           <p>Subject Type: {subject.subType}</p>
         </div>

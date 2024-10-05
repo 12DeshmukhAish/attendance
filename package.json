@@ -13,6 +13,7 @@
     "attendance": "file:",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
+    "expo-server-sdk": "^3.11.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.2.12",
     "jsonwebtoken": "^9.0.2",
@@ -22,11 +23,13 @@
     "next": "14.2.4",
     "next-auth": "^4.24.7",
     "next-pwa": "^5.6.0",
+    "nodemailer": "^6.9.15",
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^5.2.1",
     "sonner": "^1.5.0",
     "tailwindcss-animate": "^1.0.7",
+    "twilio": "^5.3.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
