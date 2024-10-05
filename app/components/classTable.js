@@ -19,8 +19,11 @@ import {
   Switch,
   useDisclosure,
   Modal,
-  ModalBody,ModalContent,ModalFooter,ModalHeader
-
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  Spinner
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -29,9 +32,9 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import ClassModal from "./classModal";
 import * as XLSX from "xlsx";
-import { FaFileDownload, FaFileUpload } from "react-icons/fa";
+import { FaFileDownload } from "react-icons/fa";
 import Image from "next/image";
-import { Spinner } from "@nextui-org/react";
+
 const departmentOptions = [
   { key: 'CSE', label: 'CSE' },
   { key: 'ENTC', label: 'ENTC' },
@@ -44,8 +47,7 @@ const departmentOptions = [
 const columns = [
   { uid: "_id", name: "Class ID", sortable: true },
   { uid: "teacher", name: "Class Coordinator" },
-  { uid: "students", name: "Students" },
-  { uid: "passOutYear", name: "Pass Out Year" },
+  { uid: "students", name: "Students" }, 
   { uid: "year", name: "Admission Year" },
   { uid: "department", name: "Department" },
   { uid: "isActive", name: "Status" },
@@ -56,7 +58,7 @@ const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "year", "departme
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
-  const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
+  const [visibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortDescriptor, setSortDescriptor] = useState({
     column: "className",
@@ -68,11 +70,9 @@ export default function ClassTable() {
   const [selectedClass, setSelectedClass] = useState(null);
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
 
   const [classToToggle, setClassToToggle] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -87,6 +87,7 @@ export default function ClassTable() {
       }
     }
   }, []);
+
   useEffect(() => {
     if (selectedDepartment) {
       fetchData();
@@ -103,18 +104,22 @@ export default function ClassTable() {
         axios.get('/api/fetchfaculty')
       ]);
 
-      if (classesResponse.status === 200) {
+      if (classesResponse.status === 200 && Array.isArray(classesResponse.data)) {
         setClasses(classesResponse.data);
-        console.log(classes);
-        
       } else {
         setClasses([]);
+        toast.error('Invalid class data received');
       }
 
-      setTeachers(teachersResponse.data);
+      if (Array.isArray(teachersResponse.data)) {
+        setTeachers(teachersResponse.data);
+      } else {
+        setTeachers([]);
+        toast.error('Invalid teacher data received');
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Error fetching data');
+      toast.error('Error fetching data. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -128,6 +133,7 @@ export default function ClassTable() {
     setClassToToggle({ id: classId, currentStatus });
     onOpen();
   }, [onOpen]);
+
   const toggleClassStatus = useCallback(async () => {
     if (!classToToggle) return;
 
@@ -146,48 +152,44 @@ export default function ClassTable() {
       }
     } catch (error) {
       console.error("Error toggling class status:", error);
-      toast.error('Error updating class status');
+      toast.error('Error updating class status. Please try again.');
     } finally {
       setIsLoading(false);
       onClose();
     }
   }, [classToToggle, onClose]);
 
-  const downloadExcel = () => {
+  const downloadExcel = useCallback(() => {
     const worksheet = XLSX.utils.json_to_sheet(classes);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Classes");
     XLSX.writeFile(workbook, "classes_data.xlsx");
-  };
+  }, [classes]);
 
   const deleteClass = useCallback(async (_id) => {
     try {
       setIsLoading(true);
       await axios.delete(`/api/classes?_id=${_id}`);
-      fetchData();
+      setClasses(prevClasses => prevClasses.filter(cls => cls._id !== _id));
       toast.success('Class deleted successfully');
     } catch (error) {
       console.error("Error deleting class:", error);
-      toast.error('Error deleting class');
+      toast.error('Error deleting class. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [fetchData]);
-
-  const pages = classes ? Math.ceil(classes?.length / rowsPerPage) : 0;
+  }, []);
+  
+  const pages = Math.ceil((classes?.length || 0) / rowsPerPage);
 
   const hasSearchFilter = Boolean(filterValue);
 
   const headerColumns = useMemo(() => {
-    if (visibleColumns === "all") return columns;
-    return columns.filter((column) => visibleColumns.has(column.uid));
+    return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
   }, [visibleColumns]);
 
   const filteredItems = useMemo(() => {
-    if (!Array.isArray(classes)) {
-      return [];
-    }
-    let filteredClasses = [...classes];
+    let filteredClasses = classes || [];
 
     if (hasSearchFilter) {
       filteredClasses = filteredClasses.filter((cls) => {
@@ -199,7 +201,7 @@ export default function ClassTable() {
     }
 
     return filteredClasses;
-  }, [classes, filterValue, teachers]);
+  }, [classes, filterValue, hasSearchFilter]);
 
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
@@ -245,15 +247,9 @@ export default function ClassTable() {
           </div>
         );
       case "teacher":
-        return (
-          <span>{cellValue && cellValue.name ? cellValue.name : 'N/A'}</span>
-        );
+        return <span>{cellValue && cellValue.name ? cellValue.name : 'N/A'}</span>;
       case "students":
-        return (
-          <span>
-            {cellValue ? cellValue.length : 0}
-          </span>
-        );
+        return <span>{cellValue ? cellValue.length : 0}</span>;
       case "isActive":
         return (
           <Switch
@@ -264,9 +260,9 @@ export default function ClassTable() {
       default:
         return <span>{cellValue}</span>;
     }
-  }, [teachers, students, openConfirmModal]);
+  }, [deleteClass, openConfirmModal]);
 
-  const renderHeader = (column) => {
+  const renderHeader = useCallback((column) => {
     const columnName = capitalize(column.name);
     return (
       <div className="flex justify-between items-center">
@@ -286,16 +282,16 @@ export default function ClassTable() {
         )}
       </div>
     );
-  };
+  }, []);
 
   return (
     <>
       <div className="flex justify-between my-4 gap-3 items-end">
-        {profile?.role != "admin" && (
+        {profile?.role !== "admin" && (
           <Select
             placeholder="Select department"
             name="department"
-            className=" w-[40%] "
+            className="w-[40%]"
             selectedKeys={[selectedDepartment]}
             onSelectionChange={(value) => handleSelectChange(value.currentKey)}
             variant="bordered"
@@ -323,16 +319,18 @@ export default function ClassTable() {
           onChange={(e) => setFilterValue(e.target.value)}
         />
         <div className="gap-4 items-center flex">
-          <Button color="primary"
-            startContent="Add New"
+          <Button
+            color="primary"
+            startContent={<PlusIcon />}
             size="sm"
             auto
             onClick={() => {
               setModalMode("add");
               setSelectedClass(null);
               setModalOpen(true);
-            }}>
-            <PlusIcon /> Add Class
+            }}
+          >
+            Add Class
           </Button>
           <Button
             color="primary"
@@ -345,7 +343,11 @@ export default function ClassTable() {
           </Button>
         </div>
       </div>
-      {sortedItems && sortedItems.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Spinner label="Loading..." />
+        </div>
+      ) : sortedItems && sortedItems.length > 0 ? (
         <Table
           aria-label="Class Table"
           sortDescriptor={sortDescriptor}
@@ -358,10 +360,7 @@ export default function ClassTable() {
               </TableColumn>
             )}
           </TableHeader>
-          <TableBody
-            isLoading={isLoading}
-            loadingContent={<Spinner label="Loading..." />}
-            items={sortedItems}>
+          <TableBody items={sortedItems}>
             {(item) => (
               <TableRow key={item._id}>
                 {(columnKey) => (
@@ -372,9 +371,9 @@ export default function ClassTable() {
           </TableBody>
         </Table>
       ) : (
-        <div className="flex flex-col items-center justify-center ">
-          <div className=" my-auto mt-32">
-            <Image src="/class.svg" alt="No subjects found" width={800} height={800} />
+        <div className="flex flex-col items-center justify-center">
+          <div className="my-auto mt-32">
+            <Image src="/class.svg" alt="No classes found" width={800} height={800} />
           </div>
           <p className="mt-2 text-gray-500">No classes found</p>
         </div>
@@ -392,9 +391,7 @@ export default function ClassTable() {
         classData={selectedClass}
         onSubmit={fetchData}
         teachers={teachers}
-        students={students}
       />
-
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalContent>
           <ModalHeader>Confirm Status Change</ModalHeader>

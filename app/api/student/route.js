@@ -7,7 +7,7 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, passOutYear, department, phoneNo,email,password, year } = data;
+        const { _id, rollNumber, name, department, phoneNo,email,password, year } = data;
         console.log(data);
         if(!department){
             console.log("department is not found",department);
@@ -17,7 +17,6 @@ export async function POST(req) {
             _id,
             rollNumber,
             name,
-            passOutYear,
             department,
             email,
             phoneNo,
@@ -38,15 +37,14 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, passOutYear, department, phoneNo,email,password, year } = data;
+        const { _id, rollNumber, name, department, phoneNo,email,password, year } = data;
         if(!department){
             console.log("department is not found",department);
             return NextResponse.json({error:"department is missing"})
           }
         const existingStudent = await Student.findByIdAndUpdate(_id, {
             rollNumber,
-            name,
-            passOutYear,
+            name, 
             department,
             year,
             email,
@@ -70,7 +68,6 @@ export async function GET(req) {
         const _id = searchParams.get("_id");
         const rollNumber = searchParams.get("rollNumber");
         const name = searchParams.get("name");
-        const passOutYear = searchParams.get("passOutYear");
         const department = searchParams.get("department");
         const phoneNo = searchParams.get("phoneNo");
         const email = searchParams.get("email");
@@ -87,9 +84,7 @@ export async function GET(req) {
         if (name) {
             filter.name = { $regex: name, $options: "i" }; // case-insensitive regex search
         }
-        if (passOutYear) {
-            filter.passOutYear = passOutYear;
-        }
+         
         if (department) {
             filter.department = department;
         }

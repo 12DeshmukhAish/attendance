@@ -15,10 +15,7 @@ const StudentSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    passOutYear: {
-        type: Number,
-        required: true
-    },
+     
     year: {
         type: String,
         required: true

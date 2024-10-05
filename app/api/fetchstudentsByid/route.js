@@ -6,12 +6,10 @@ export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
-        const passOutYear = searchParams.get("passOutYear");
         const year = searchParams.get("year");
         const department = searchParams.get("department");
 
         let filter = {};
-        // if (passOutYear) filter.passOutYear = passOutYear;
         if (year) filter.year = year;
         if (department && department !== "FE") filter.department = department;
 

@@ -21,9 +21,7 @@ const classSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    passOutYear: {
-        type: String,
-    },
+     
     year: {
         type: String,
     },

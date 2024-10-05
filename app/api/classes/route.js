@@ -8,13 +8,12 @@ export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, passOutYear, classCoordinator, department, year, students, batches } = data;
+        const { _id, classCoordinator, department, year, students, batches } = data;
 
         const newClass = new Classes({
             _id,
             students,
             teacher: classCoordinator,
-            passOutYear,
             department,
             year,
             batches
@@ -56,7 +55,7 @@ export async function PUT(req) {
         const _id = searchParams.get("_id");
 
         const data = await req.json();
-        const { classCoordinator, passOutYear, department, year, students, batches } = data;
+        const { classCoordinator, department, year, students, batches } = data;
         const existingClass = await Classes.findById(_id);
 
         if (!existingClass) {
@@ -67,7 +66,6 @@ export async function PUT(req) {
         const previousClassCoordinator = existingClass.teacher;
 
         existingClass.teacher = classCoordinator;
-        existingClass.passOutYear = passOutYear;
         existingClass.department = department;
         existingClass.year = year;
         existingClass.students = students;
@@ -114,12 +112,10 @@ export async function GET(req) {
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
         const department = searchParams.get("department");
-        const passOutYear = searchParams.get("passOutYear");
 
         let filter = {};
         if (_id) filter._id = _id;
         if (department) filter.department = department;
-        if (passOutYear) filter.passOutYear = passOutYear;
 
         console.log("Filter criteria:", filter);
 

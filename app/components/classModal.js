@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+"use client"
+
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Modal,
   Button,
@@ -9,7 +11,8 @@ import {
   ModalBody,
   ModalContent,
   ModalHeader,
-  ModalFooter
+  ModalFooter,
+  Spinner
 } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -20,7 +23,6 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     _id: "",
     className: "",
     classCoordinator: "",
-    passOutYear: "",
     year: "",
     department: ""
   });
@@ -29,41 +31,37 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   const [selectAll, setSelectAll] = useState(false);
   const [profile, setProfile] = useState(null);
   const [batches, setBatches] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
+      try {
+        const parsedProfile = JSON.parse(storedProfile);
+        setProfile(parsedProfile);
+        if (parsedProfile.role !== "superadmin" && departmentOptions.length > 0) {
+          setFormData(prev => ({ ...prev, department: parsedProfile.department }));
+        }
+      } catch (error) {
+        console.error("Error parsing user profile:", error);
+        toast.error("Error loading user profile. Please try refreshing the page.");
+      }
     }
   }, []);
 
   useEffect(() => {
-    if (profile?.role !== "superadmin" && departmentOptions.length > 0) {
-      setFormData((prev) => ({
-        ...prev,
-        department: profile?.department,
-      }));
-    }
-  }, [profile]);
-
-  useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && classData) {
-        console.log(classData);
-        
         setFormData({
-          _id: classData._id,
-          className: classData.className,
-          classCoordinator: classData.teacher,
-          passOutYear: classData.passOutYear,
-          department: classData.department,
-          year: classData.year
+          _id: classData._id || "",
+          className: classData.className || "",
+          classCoordinator: classData.teacher?._id || "",
+          department: classData.department || "",
+          year: classData.year || ""
         });
         setBatches(classData.batches || []);
         if (classData.students) {
-          setSelectedStudents(new Set(classData?.students));
-          console.log(selectedStudents);
-          
+          setSelectedStudents(new Set(classData.students.map(student => student._id)));
         }
       } else {
         resetForm();
@@ -71,89 +69,120 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     }
   }, [isOpen, mode, classData]);
 
-  const fetchStudents = async (passOutYear, year, department) => {
-    if (passOutYear && year && department) {
-      try {
-        const response = await axios.get(`/api/fetchstudentsByid?passOutYear=${passOutYear}&year=${year}&department=${department}`);
+  const fetchStudents = useCallback(async (year, department) => {
+    if (!year || !department) return;
+
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`/api/fetchstudentsByid`, {
+        params: { year, department },
+        timeout: 5000 // 5 seconds timeout
+      });
+      if (Array.isArray(response.data)) {
         setAllStudents(response.data);
         setSelectAll(response.data.length === selectedStudents.size);
-      } catch (error) {
-        console.error("Error fetching students:", error);
+      } else {
+        throw new Error("Invalid student data received");
       }
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      toast.error("Failed to fetch students. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    const updatedFormData = { ...formData, [name]: value };
-    setFormData(updatedFormData);
-
-    if (name === 'year') {
-      const passOutYear = (parseInt(value) + 4).toString();
-      updatedFormData.passOutYear = passOutYear;
-      setFormData(updatedFormData);
-    }
-  };
+  }, [selectedStudents]);
 
   useEffect(() => {
-    const { passOutYear, year, department } = formData;
-    if (passOutYear && year && department) {
-      fetchStudents(passOutYear, year, department);
+    const { year, department } = formData;
+    if (year && department) {
+      fetchStudents(year, department);
     }
-  }, [formData.passOutYear, formData.year, formData.department]);
+  }, [formData.year, formData.department, fetchStudents]);
 
-  const handleSelectAll = () => {
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
     if (selectAll) {
       setSelectedStudents(new Set());
     } else {
       setSelectedStudents(new Set(allStudents.map(student => student._id)));
     }
     setSelectAll(!selectAll);
-  };
+  }, [selectAll, allStudents]);
 
-  const handleSelectChange = (key, value) => {
-    setFormData({ ...formData, [key]: value });
-  };
+  const handleSelectChange = useCallback((key, value) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+  }, []);
 
-  const handleSelectionChange = (keys) => {
+  const handleSelectionChange = useCallback((keys) => {
     setSelectedStudents(new Set(keys));
-  };
+  }, []);
 
-  const handleBatchChange = (index, key, value) => {
-    const updatedBatches = [...batches];
-    updatedBatches[index][key] = value;
-    setBatches(updatedBatches);
-  };
+  const handleBatchChange = useCallback((index, key, value) => {
+    setBatches(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [key]: value };
+      return updated;
+    });
+  }, []);
 
-  const addBatch = () => {
-    setBatches([...batches, { _id: "", type: "", students: [] }]);
-  };
+  const addBatch = useCallback(() => {
+    setBatches(prev => [...prev, { _id: "", type: "", students: [] }]);
+  }, []);
 
-  const removeBatch = (index) => {
-    const updatedBatches = batches.filter((_, i) => i !== index);
-    setBatches(updatedBatches);
-  };
+  const removeBatch = useCallback((index) => {
+    setBatches(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const validateForm = useCallback(() => {
+    if (!formData._id || !formData.className || !formData.classCoordinator || !formData.year || !formData.department) {
+      toast.error("Please fill in all required fields.");
+      return false;
+    }
+    if (selectedStudents.size === 0) {
+      toast.error("Please select at least one student.");
+      return false;
+    }
+    if (batches.some(batch => !batch._id || !batch.type)) {
+      toast.error("Please fill in all batch details.");
+      return false;
+    }
+    return true;
+  }, [formData, selectedStudents, batches]);
 
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
     try {
-      let response;
       const sanitizedFormData = {
         ...formData,
         students: Array.from(selectedStudents),
-        batches
+        batches: batches.map(batch => ({
+          ...batch,
+          students: Array.from(new Set(batch.students.filter(studentId => selectedStudents.has(studentId))))
+        }))
       };
-      if (mode === "add") {
-        response = await axios.post("/api/classes", sanitizedFormData);
-        toast.success("Class added successfully");
-      } else if (mode === "edit") {
-        response = await axios.put(`/api/classes?_id=${formData._id}`, sanitizedFormData);
-        toast.success("Class updated successfully");
+      const url = mode === "add" ? "/api/classes" : `/api/classes?_id=${formData._id}`;
+      const method = mode === "add" ? "post" : "put";
+      
+      const response = await axios[method](url, sanitizedFormData, { timeout: 10000 });
+      
+      if (response.status === 201 || response.status === 200) {
+        toast.success(`Class ${mode === "add" ? "added" : "updated"} successfully`);
+        onSubmit();
+        onClose(); // Close the modal after successful submission
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`);
       }
-      onSubmit();
-      onClose();
     } catch (error) {
       console.error("Error:", error);
-      toast.error(`Error occurred while ${mode === "add" ? "adding" : "updating"} class`);
+      toast.error(`Error occurred while ${mode === "add" ? "adding" : "updating"} class. Please try again.`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -162,7 +191,6 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       _id: "",
       className: "",
       classCoordinator: "",
-      passOutYear: "",
       year: "",
       department: profile?.role !== "superadmin" ? profile?.department : ""
     });
@@ -171,11 +199,19 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     setSelectAll(false);
     setBatches([]);
   };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
-    <ModalContent className="max-h-[90vh] overflow-y-auto">
-      <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>
-      <ModalBody>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={() => {
+        resetForm();
+        onClose();
+      }} 
+      size="3xl"
+    >
+      <ModalContent className="max-h-[90vh] overflow-y-auto">
+        <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>
+        <ModalBody>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Input
               label="Class ID"
@@ -220,14 +256,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
               variant="bordered"
               size="sm"
             />
-            <Input
-              label="Pass-out Year"
-              name="passOutYear"
-              value={formData.passOutYear}
-              onChange={handleChange}
-              variant="bordered"
-              size="sm"
-            />
+            
             {profile?.role === "superadmin" ? (
               <Select
                 label="Department"
@@ -292,7 +321,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
                   variant="bordered"
                   size="sm"
                 />
-                 <Select
+                <Select
                   label="Batch Type"
                   placeholder="Select Batch Type"
                   selectedKeys={[batch.type]}
@@ -336,12 +365,19 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
                 </Button>
               </div>
             ))}
-            <Button onClick={addBatch} size="sm" >Add Batch</Button>
+            <Button onClick={addBatch} size="sm">Add Batch</Button>
           </div>
-          </ModalBody>
+        </ModalBody>
         <ModalFooter>
-          <Button size="md" onClick={onClose}>Cancel</Button>
-          <Button color="primary" size="md" onClick={handleSubmit}>{mode === "add" ? "Add Class" : "Save Changes"}</Button>
+          <Button size="md" onClick={() => {
+            resetForm();
+            onClose();
+          }}>
+            Cancel
+          </Button>
+          <Button color="primary" size="md" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? <Spinner size="sm" /> : (mode === "add" ? "Add Class" : "Save Changes")}
+          </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
