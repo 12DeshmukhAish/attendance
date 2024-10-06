@@ -3,10 +3,15 @@ import { connectMongoDB } from "@/lib/connectDb";
 import Classes from "@/models/className";
 import Student from "@/models/student";
 import Faculty from "@/models/faculty";
+import mongoose from "mongoose";
 
 export async function POST(req) {
+    let session;
     try {
         await connectMongoDB();
+        session = await mongoose.startSession();
+        session.startTransaction();
+
         const data = await req.json();
         const { _id, classCoordinator, department, year, students, batches } = data;
 
@@ -18,47 +23,55 @@ export async function POST(req) {
             year,
             batches
         });
-        await newClass.save();
+        await newClass.save({ session });
 
-        // Update the students to reference the new class
         await Student.updateMany(
             { _id: { $in: students } },
-            { $set: { class: newClass._id } }
+            { $set: { class: newClass._id } },
+            { session }
         );
 
         await Faculty.findByIdAndUpdate(
             classCoordinator,
-            { $push: { coordinatedClasses: newClass._id } },
-            { new: true }
+            { 
+                $push: { coordinatedClasses: newClass._id },
+                $set: { classes: newClass._id }
+            },
+            { new: true, session }
         );
 
-
-        // Update the faculty to reference the new class
-        await Faculty.updateOne(
-            { _id: classCoordinator },
-            { $set: { classes: newClass._id } }
-        );
-
-
+        await session.commitTransaction();
         console.log("Class Registered Successfully", newClass);
         return NextResponse.json({ message: "Class Registered Successfully", class: newClass }, { status: 201 });
     } catch (error) {
         console.error("Error creating class:", error);
+        if (session) {
+            await session.abortTransaction();
+        }
         return NextResponse.json({ error: "Failed to Register" }, { status: 500 });
+    } finally {
+        if (session) {
+            session.endSession();
+        }
     }
 }
 
 export async function PUT(req) {
+    let session;
     try {
         await connectMongoDB();
+        session = await mongoose.startSession();
+        session.startTransaction();
+
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
 
         const data = await req.json();
         const { classCoordinator, department, year, students, batches } = data;
-        const existingClass = await Classes.findById(_id);
+        const existingClass = await Classes.findById(_id).session(session);
 
         if (!existingClass) {
+            await session.abortTransaction();
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
 
@@ -71,38 +84,47 @@ export async function PUT(req) {
         existingClass.students = students;
         existingClass.batches = batches;
 
-        // Update students to reference the new class
         await Student.updateMany(
             { _id: { $in: previousStudentIds } },
-            { $unset: { class: "" } }
+            { $unset: { class: "" } },
+            { session }
         );
 
         await Student.updateMany(
             { _id: { $in: students } },
-            { $set: { class: existingClass._id } }
+            { $set: { class: existingClass._id } },
+            { session }
         );
 
-        // Update the previous faculty to remove the class reference
         if (previousClassCoordinator && previousClassCoordinator !== classCoordinator) {
             await Faculty.updateOne(
                 { _id: previousClassCoordinator },
-                { $unset: { classes: "" } }
+                { $unset: { classes: "" } },
+                { session }
             );
         }
 
-        // Update the new faculty to reference the class
         await Faculty.updateOne(
             { _id: classCoordinator },
-            { $set: { classes: existingClass._id } }
+            { $set: { classes: existingClass._id } },
+            { session }
         );
 
-        await existingClass.save();
+        await existingClass.save({ session });
 
+        await session.commitTransaction();
         console.log("Class Updated Successfully", existingClass);
         return NextResponse.json({ message: "Class Updated Successfully", class: existingClass }, { status: 200 });
     } catch (error) {
         console.error("Error updating class:", error);
+        if (session) {
+            await session.abortTransaction();
+        }
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
+    } finally {
+        if (session) {
+            session.endSession();
+        }
     }
 }
 
@@ -136,25 +158,49 @@ export async function GET(req) {
 }
 
 export async function DELETE(req) {
-
+    let session;
     try {
         await connectMongoDB();
+        session = await mongoose.startSession();
+        session.startTransaction();
+
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
 
-        const deletedClass = await Classes.findByIdAndDelete(_id);
+        const deletedClass = await Classes.findByIdAndDelete(_id).session(session);
 
         if (!deletedClass) {
+            await session.abortTransaction();
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
+
         await Student.updateMany(
             { _id: { $in: deletedClass.students } },
-            { $unset: { class: "" } }
+            { $unset: { class: "" } },
+            { session }
         );
+
+        await Faculty.updateOne(
+            { _id: deletedClass.teacher },
+            { 
+                $pull: { coordinatedClasses: deletedClass._id },
+                $unset: { classes: "" }
+            },
+            { session }
+        );
+
+        await session.commitTransaction();
         console.log("Class Deleted Successfully", deletedClass);
         return NextResponse.json({ message: "Class Deleted Successfully" }, { status: 200 });
     } catch (error) {
         console.error("Error deleting class:", error);
+        if (session) {
+            await session.abortTransaction();
+        }
         return NextResponse.json({ error: "Failed to Delete" }, { status: 500 });
+    } finally {
+        if (session) {
+            session.endSession();
+        }
     }
 }

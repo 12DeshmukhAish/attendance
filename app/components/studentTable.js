@@ -63,7 +63,8 @@ export default function StudentTable() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
-
+  const [allStudents, setAllStudents] = useState({});
+  const [totalStudents, setTotalStudents] = useState(0);
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -79,16 +80,29 @@ export default function StudentTable() {
 
   useEffect(() => {
     if (selectedDepartment) {
-    fetchStudents();
-      
+      fetchStudents();
     }
-  }, [selectedDepartment]);
+  }, [selectedDepartment, page, rowsPerPage, filterValue]);
 
   const fetchStudents = async () => {
+    if (allStudents[page]) {
+      setStudents(allStudents[page]);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/student${selectedDepartment ? `?department=${selectedDepartment}` : ''}`);
-      setStudents(response.data);
+      const response = await axios.get(`/api/student`, {
+        params: {
+          department: selectedDepartment,
+          filterValue,
+          page,
+          limit: rowsPerPage
+        }
+      });
+      setAllStudents(prev => ({...prev, [page]: response.data.students}));
+      setStudents(response.data.students);
+      setTotalStudents(response.data.totalStudents);
     } catch (error) {
       console.error('Error fetching students:', error);
       toast.error('Error fetching students');
@@ -123,14 +137,33 @@ export default function StudentTable() {
       toast.error('Error uploading students');
     }
   };
+  const downloadExcel = async () => {
+    // Create a new array with the desired data structure
+    const response = await axios.get(`/api/student/download?department=${selectedDepartment}`);
+    const dataToExport = response.data.map(student => {
+      const {
+        createdAt,
+        updatedAt,
+        subjects,
+        year,
+        __v,
+        ...rest
+      } = student;
 
-  const downloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(students);
+      return {
+        ...rest,
+        "Admission Year": year
+      };
+    });
+
+    // Create a worksheet from the filtered data
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+
+    // Generate and download the Excel file
     XLSX.writeFile(workbook, "student_data.xlsx");
   };
-
   const deleteStudent = async (_id) => {
     try {
       await axios.delete(`/api/student?_id=${_id}`);
@@ -147,28 +180,26 @@ export default function StudentTable() {
     return columns.filter((column) => visibleColumns.has(column.uid));
   }, [visibleColumns]);
 
-  const filteredItems = useMemo(() => {
-    let filteredStudents = [...students];
-
+ 
+  useEffect(() => {
     if (filterValue) {
-      filteredStudents = filteredStudents.filter((student) => {
-        return (
-          (student.name && student.name.toLowerCase().includes(filterValue.toLowerCase())) ||
-          (student.rollNumber && student.rollNumber.toLowerCase().includes(filterValue.toLowerCase()))
-        );
-      });
+      setAllStudents({});
+      setPage(1);
+      fetchStudents();
     }
-
-    return filteredStudents;
+  }, [filterValue]);
+  const filteredItems = useMemo(() => {
+    return students.filter((student) =>
+      student.name.toLowerCase().includes(filterValue.toLowerCase()) ||
+      student.rollNumber.toLowerCase().includes(filterValue.toLowerCase())
+    );
   }, [students, filterValue]);
 
-  const pages = Math.ceil(filteredItems.length / rowsPerPage);
+  const pages = Math.ceil(totalStudents / rowsPerPage);
 
   const items = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredItems.slice(start, end);
-  }, [page, filteredItems, rowsPerPage]);
+    return filteredItems;
+  }, [filteredItems]);
 
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
@@ -180,7 +211,6 @@ export default function StudentTable() {
       return first < second ? -1 : first > second ? 1 : 0;
     });
   }, [items, sortDescriptor]);
-
   const renderCell = useCallback((student, columnKey) => {
     const cellValue = student[columnKey];
     switch (columnKey) {
@@ -217,11 +247,12 @@ export default function StudentTable() {
   const onRowsPerPageChange = useCallback((e) => {
     setRowsPerPage(Number(e.target.value));
     setPage(1);
+    setAllStudents({});
   }, []);
-
   const onSearchChange = useCallback((value) => {
     setFilterValue(value);
     setPage(1);
+    setAllStudents({});
   }, []);
 
   const handleModalClose = () => {
@@ -428,6 +459,7 @@ export default function StudentTable() {
           page={page}
           onChange={(newPage) => setPage(newPage)}
         />
+        <span>Total Students: {totalStudents}</span>
       </div>
       <StudentModal
         isOpen={modalOpen}

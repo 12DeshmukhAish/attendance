@@ -129,6 +129,36 @@ export default function FacultyTable() {
     }
   };
 
+  
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        uploadFaculty(jsonData);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const uploadFaculty = async (facultyData) => {
+    try {
+      await axios.post('/api/faculty/upload', { faculty: facultyData });
+      fetchFaculty();
+      toast.success('Faculty uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading faculty:', error);
+      toast.error('Error uploading faculty');
+    }
+  };
+
+  
+
   const pages = Math.ceil(faculty.length / rowsPerPage);
 
   const hasSearchFilter = Boolean(filterValue);
@@ -286,6 +316,22 @@ export default function FacultyTable() {
             >
               Add New
             </Button>
+            <Button
+          color="primary"
+          variant="ghost"
+          size="sm"
+          onClick={() => document.getElementById('upload-input').click()}
+          endContent={<FaFileUpload />}
+        >
+          Upload File
+        </Button>
+        <input
+          id="upload-input"
+          type="file"
+          accept=".xlsx, .xls"
+          onChange={handleFileUpload}
+          style={{ display: 'none' }}
+        />
             <Button
               color="primary"
               size="sm"
