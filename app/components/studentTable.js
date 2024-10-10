@@ -65,6 +65,8 @@ export default function StudentTable() {
   const [profile, setProfile] = useState(null);
   const [allStudents, setAllStudents] = useState({});
   const [totalStudents, setTotalStudents] = useState(0);
+
+  
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -118,9 +120,27 @@ export default function StudentTable() {
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
+        
+        // Check if there are multiple sheets
+        if (workbook.SheetNames.length > 1) {
+          toast.error("Please ensure the file contains only one sheet.");
+          return;
+        }
+
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        // Validate column headers
+        const requiredHeaders = ["name", "rollNumber", "email", "phoneNo", "department", "year"];
+        const headers = Object.keys(jsonData[0]);
+        const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
+
+        if (missingHeaders.length > 0) {
+          toast.error(`Missing required columns: ${missingHeaders.join(", ")}`);
+          return;
+        }
+
         uploadStudents(jsonData);
       };
       reader.readAsArrayBuffer(file);
@@ -129,40 +149,58 @@ export default function StudentTable() {
 
   const uploadStudents = async (studentsData) => {
     try {
-      await axios.post('/api/upload', { students: studentsData });
+      setIsLoading(true);
+      const response = await axios.post('/api/upload', { students: studentsData });
+      
+      if (response.data.errors && response.data.errors.length > 0) {
+        const errorMessage = response.data.errors.map(error => `Row ${error.row}: ${error.message}`).join("\n");
+        toast.error(`Some students could not be uploaded:\n${errorMessage}`);
+      } else {
+        toast.success('Students uploaded successfully');
+      }
+
       fetchStudents();
-      toast.success('Students uploaded successfully');
     } catch (error) {
       console.error('Error uploading students:', error);
-      toast.error('Error uploading students');
+      toast.error('Error uploading students: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setIsLoading(false);
     }
   };
+
   const downloadExcel = async () => {
-    // Create a new array with the desired data structure
-    const response = await axios.get(`/api/student/download?department=${selectedDepartment}`);
-    const dataToExport = response.data.map(student => {
-      const {
-        createdAt,
-        updatedAt,
-        subjects,
-        year,
-        __v,
-        ...rest
-      } = student;
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`/api/student/download?department=${selectedDepartment}`);
+      
+      // Group students by admission year
+      const studentsByYear = response.data.reduce((acc, student) => {
+        const year = student.year || 'Unknown';
+        if (!acc[year]) acc[year] = [];
+        acc[year].push(student);
+        return acc;
+      }, {});
 
-      return {
-        ...rest,
-        "Admission Year": year
-      };
-    });
+      const workbook = XLSX.utils.book_new();
 
-    // Create a worksheet from the filtered data
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+      Object.entries(studentsByYear).forEach(([year, students]) => {
+        const dataToExport = students.map(({ createdAt, updatedAt, subjects, __v, ...rest }) => ({
+          ...rest,
+          "Admission Year": year
+        }));
 
-    // Generate and download the Excel file
-    XLSX.writeFile(workbook, "student_data.xlsx");
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        XLSX.utils.book_append_sheet(workbook, worksheet, `Year ${year}`);
+      });
+
+      XLSX.writeFile(workbook, "student_data.xlsx");
+      toast.success('Student data downloaded successfully');
+    } catch (error) {
+      console.error("Error downloading student data:", error);
+      toast.error('Error downloading student data: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setIsLoading(false);
+    }
   };
   const deleteStudent = async (_id) => {
     try {
