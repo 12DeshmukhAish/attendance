@@ -60,6 +60,9 @@ export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
   const [visibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+  const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [sortDescriptor, setSortDescriptor] = useState({
     column: "className",
     direction: "ascending",
@@ -93,15 +96,15 @@ export default function ClassTable() {
       fetchData();
     }
   }, [selectedDepartment]);
-
   const fetchData = useCallback(async () => {
     if (!selectedDepartment) return;
 
-    setIsLoading(true);
+    setIsLoadingClasses(true);
+    setIsLoadingTeachers(true);
     try {
       const [classesResponse, teachersResponse] = await Promise.all([
-        axios.get(`/api/classes?department=${selectedDepartment}`),
-        axios.get('/api/fetchfaculty')
+        axios.get(`/api/classes?department=${selectedDepartment}`, { timeout: 10000 }),
+        axios.get('/api/fetchfaculty', { timeout: 10000 })
       ]);
 
       if (classesResponse.status === 200 && Array.isArray(classesResponse.data)) {
@@ -121,7 +124,8 @@ export default function ClassTable() {
       console.error('Error fetching data:', error);
       toast.error('Error fetching data. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsLoadingClasses(false);
+      setIsLoadingTeachers(false);
     }
   }, [selectedDepartment]);
 
@@ -133,13 +137,12 @@ export default function ClassTable() {
     setClassToToggle({ id: classId, currentStatus });
     onOpen();
   }, [onOpen]);
-
-  const toggleClassStatus = useCallback(async () => {
+ const toggleClassStatus = useCallback(async () => {
     if (!classToToggle) return;
 
     try {
       setIsLoading(true);
-      const response = await axios.post('/api/endofacademic', { classId: classToToggle.id });
+      const response = await axios.post('/api/endofacademic', { classId: classToToggle.id }, { timeout: 10000 });
       if (response.status === 200) {
         setClasses(prevClasses =>
           prevClasses.map(cls =>
@@ -159,27 +162,26 @@ export default function ClassTable() {
     }
   }, [classToToggle, onClose]);
 
-  const downloadExcel = useCallback(() => {
-    const worksheet = XLSX.utils.json_to_sheet(classes);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Classes");
-    XLSX.writeFile(workbook, "classes_data.xlsx");
-  }, [classes]);
-
   const deleteClass = useCallback(async (_id) => {
     try {
-      setIsLoading(true);
-      await axios.delete(`/api/classes?_id=${_id}`);
+      setIsDeleting(true);
+      await axios.delete(`/api/classes?_id=${_id}`, { timeout: 10000 });
       setClasses(prevClasses => prevClasses.filter(cls => cls._id !== _id));
       toast.success('Class deleted successfully');
     } catch (error) {
       console.error("Error deleting class:", error);
       toast.error('Error deleting class. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   }, []);
-  
+  const downloadExcel = useCallback(() => {
+    const worksheet = XLSX.utils.json_to_sheet(classes);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Classes");
+    XLSX.writeFile(workbook, "classes_data.xlsx");
+  }, [classes]);
+ 
   const pages = Math.ceil((classes?.length || 0) / rowsPerPage);
 
   const hasSearchFilter = Boolean(filterValue);
@@ -343,7 +345,7 @@ export default function ClassTable() {
           </Button>
         </div>
       </div>
-      {isLoading ? (
+      {isLoadingClasses || isLoadingTeachers ? (
         <div className="flex justify-center items-center h-64">
           <Spinner label="Loading..." />
         </div>
@@ -399,11 +401,11 @@ export default function ClassTable() {
             Are you sure you want to {classToToggle?.currentStatus ? 'deactivate' : 'activate'} this class?
           </ModalBody>
           <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+            <Button variant="light" onPress={onClose} isDisabled={isLoading}>
               Cancel
             </Button>
-            <Button color="primary" onPress={toggleClassStatus}>
-              Confirm
+            <Button color="primary" onPress={toggleClassStatus} isDisabled={isLoading}>
+              {isLoading ? <Spinner size="sm" /> : "Confirm"}
             </Button>
           </ModalFooter>
         </ModalContent>

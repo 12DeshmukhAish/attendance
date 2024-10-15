@@ -48,7 +48,7 @@ export async function POST(req) {
                     );
                 }
 
-                // Update content status to covered and set completed date in Indian format
+                // Update content status to covered and set completed date for the specific batch
                 if (contents && contents.length > 0) {
                     const indianFormattedDate = date.toLocaleString('en-IN', {
                         timeZone: 'Asia/Kolkata',
@@ -64,12 +64,15 @@ export async function POST(req) {
                         { _id: subject },
                         {
                             $set: {
-                                "content.$[elem].status": "covered",
-                                "content.$[elem].completedDate": indianFormattedDate
+                                "content.$[elem].batchStatus.$[batch].status": "covered",
+                                "content.$[elem].batchStatus.$[batch].completedDate": indianFormattedDate
                             }
                         },
                         {
-                            arrayFilters: [{ "elem._id": { $in: contents }, "elem.status": { $ne: "covered" } }]
+                            arrayFilters: [
+                                { "elem._id": { $in: contents } },
+                                { "batch.batchId": batchId, "batch.status": { $ne: "covered" } }
+                            ]
                         }
                     );
                 }
@@ -89,6 +92,7 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Record Attendance" }, { status: 500 });
     }
 }
+
 export async function PUT(req) {
     try {
         await connectMongoDB();
@@ -157,9 +161,18 @@ export async function PUT(req) {
                 });
 
                 subjectDoc.content.forEach(content => {
-                    if (contents.includes(content._id.toString()) && content.status !== 'covered') {
-                        content.status = 'covered';
-                        content.completedDate = indianFormattedDate;
+                    if (contents.includes(content._id.toString())) {
+                        const batchStatus = content.batchStatus.find(bs => bs.batchId === batchId);
+                        if (batchStatus && batchStatus.status !== 'covered') {
+                            batchStatus.status = 'covered';
+                            batchStatus.completedDate = indianFormattedDate;
+                        } else if (!batchStatus) {
+                            content.batchStatus.push({
+                                batchId: batchId,
+                                status: 'covered',
+                                completedDate: indianFormattedDate
+                            });
+                        }
                     }
                 });
             }
@@ -177,6 +190,8 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to Update/Create Attendance" }, { status: 500 });
     }
 }
+
+// DELETE function remains unchanged
 export async function DELETE(req) {
     try {
         await connectMongoDB();

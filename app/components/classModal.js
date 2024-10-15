@@ -31,6 +31,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   const [profile, setProfile] = useState(null);
   const [batches, setBatches] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingStudents, setIsFetchingStudents] = useState(false);
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -47,7 +49,6 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       }
     }
   }, []);
-
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && classData) {
@@ -62,6 +63,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
         if (classData.students) {
           setSelectedStudents(new Set(classData.students.map(student => student._id)));
         }
+        // Fetch students for the class being edited
+        fetchStudents(classData.year, classData.department);
       } else {
         resetForm();
       }
@@ -71,11 +74,11 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   const fetchStudents = useCallback(async (year, department) => {
     if (!year || !department) return;
 
-    setIsLoading(true);
+    setIsFetchingStudents(true);
     try {
       const response = await axios.get(`/api/fetchstudentsByid`, {
         params: { year, department },
-        timeout: 5000 // 5 seconds timeout
+        timeout: 10000 // Increased timeout to 10 seconds
       });
       if (Array.isArray(response.data)) {
         setAllStudents(response.data);
@@ -87,10 +90,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       console.error("Error fetching students:", error);
       toast.error("Failed to fetch students. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsFetchingStudents(false);
     }
   }, [selectedStudents]);
-
   useEffect(() => {
     const { year, department } = formData;
     if (year && department) {
@@ -137,7 +139,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   }, []);
 
   const validateForm = useCallback(() => {
-    if (!formData._id || !formData.className || !formData.classCoordinator || !formData.year || !formData.department) {
+    if (!formData._id || !formData.classCoordinator || !formData.year || !formData.department) {
       toast.error("Please fill in all required fields.");
       return false;
     }
@@ -155,7 +157,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       const sanitizedFormData = {
         ...formData,
@@ -168,12 +170,12 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       const url = mode === "add" ? "/api/classes" : `/api/classes?_id=${formData._id}`;
       const method = mode === "add" ? "post" : "put";
       
-      const response = await axios[method](url, sanitizedFormData, { timeout: 10000 });
+      const response = await axios[method](url, sanitizedFormData, { timeout: 15000 });
       
       if (response.status === 201 || response.status === 200) {
         toast.success(`Class ${mode === "add" ? "added" : "updated"} successfully`);
         onSubmit();
-        onClose(); // Close the modal after successful submission
+        onClose();
       } else {
         throw new Error(`Unexpected response status: ${response.status}`);
       }
@@ -181,14 +183,14 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
       console.error("Error:", error);
       toast.error(`Error occurred while ${mode === "add" ? "adding" : "updating"} class. Please try again.`);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+
   const resetForm = () => {
     setFormData({
-      _id: "",
-      className: "",
+      _id: "", 
       classCoordinator: "",
       year: "",
       department: profile?.role !== "superadmin" ? profile?.department : ""
@@ -219,15 +221,6 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
               onChange={handleChange}
               required
               disabled={mode !== "add"}
-              variant="bordered"
-              size="sm"
-            />
-            <Input
-              label="Class Name"
-              name="className"
-              value={formData.className}
-              onChange={handleChange}
-              required
               variant="bordered"
               size="sm"
             />
@@ -287,6 +280,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
             <Checkbox
               isSelected={selectAll}
               onChange={handleSelectAll}
+              isDisabled={isFetchingStudents}
             >
               Select All Students
             </Checkbox>
@@ -299,12 +293,19 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
               variant="bordered"
               size="sm"
               className="mt-2"
+              isDisabled={isFetchingStudents}
             >
-              {allStudents.map((student) => (
-                <SelectItem key={student._id} textValue={student.name}>
-                  {student.rollNumber} {student.name}
+              {isFetchingStudents ? (
+                <SelectItem key="loading" textValue="Loading students...">
+                  Loading students...
                 </SelectItem>
-              ))}
+              ) : (
+                allStudents.map((student) => (
+                  <SelectItem key={student._id} textValue={student.name}>
+                    {student.rollNumber} {student.name}
+                  </SelectItem>
+                ))
+              )}
             </Select>
           </div>
           <div className="mt-4">
@@ -369,13 +370,15 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
         </ModalBody>
         <ModalFooter>
           <Button size="md" onClick={() => {
-            resetForm();
-            onClose();
-          }}>
+            if (!isSubmitting) {
+              resetForm();
+              onClose();
+            }
+          }} isDisabled={isSubmitting}>
             Cancel
           </Button>
-          <Button color="primary" size="md" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? <Spinner size="sm" /> : (mode === "add" ? "Add Class" : "Save Changes")}
+          <Button color="primary" size="md" onClick={handleSubmit} isDisabled={isSubmitting || isFetchingStudents}>
+            {isSubmitting ? <Spinner size="sm" /> : (mode === "add" ? "Add Class" : "Save Changes")}
           </Button>
         </ModalFooter>
       </ModalContent>

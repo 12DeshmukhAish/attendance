@@ -2,6 +2,21 @@ import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import Classes from './className';
 
+const BatchContentSchema = new mongoose.Schema({
+    batchId: {
+        type: String,
+        required: true
+    },
+    completedDate: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ['covered', 'not_covered'],
+        default: 'not_covered'
+    }
+}, { _id: false });
+
 const ContentSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -10,9 +25,6 @@ const ContentSchema = new mongoose.Schema({
         type: String,
     },
     proposedDate: {
-        type: String,
-    },
-    completedDate: {
         type: String,
     },
     references: {
@@ -24,11 +36,10 @@ const ContentSchema = new mongoose.Schema({
     programOutcomes: {
         type: String,
     },
-    status: {
-        type: String,
-        enum: ['covered', 'not_covered'],
-        default: 'not_covered'
-    },
+    batchStatus: {
+        type: [BatchContentSchema],
+        default: undefined
+    }
 }, {
     _id: true,
 });
