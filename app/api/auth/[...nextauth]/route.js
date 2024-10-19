@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectMongoDB } from "@/lib/connectDb";
 import Faculty from '@/models/faculty';
-import Student from '@/models/student'; // Assuming you have a Student model
+import Student from '@/models/student';
 
 export const authOptions = {
   providers: [
@@ -63,10 +63,21 @@ export const authOptions = {
         token.role = user.role;
         token.id = user.id;
         token.department = user.department;
+        token.lastActivity = Date.now();
+      } else {
+        // Check if session has expired (1 hour = 3600000 milliseconds)
+        const hourInMs = 3600000;
+        if (Date.now() - token.lastActivity > hourInMs) {
+          return null; // Session expired
+        }
+        token.lastActivity = Date.now(); // Update last activity
       }
       return token;
     },
     async session({ session, token }) {
+      if (!token) {
+        return null; // Return null if token is expired
+      }
       session.user.accessToken = token.accessToken;
       session.user.role = token.role;
       session.user.id = token.id;
@@ -76,7 +87,11 @@ export const authOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/", // Customize the sign-in page route as needed
+    signIn: "/",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 3600, // Session max age in seconds (1 hour)
   },
 };
 
