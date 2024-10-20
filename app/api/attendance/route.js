@@ -29,27 +29,27 @@ export async function POST(req) {
                     { upsert: true, new: true, runValidators: true }
                 );
 
-                await Subject.findByIdAndUpdate(
-                    subject,
-                    { $addToSet: { reports: attendanceRecord._id } }
-                );
+                const subjectDoc = await Subject.findById(subject);
 
-                if (pointsDiscussed && pointsDiscussed.length > 0) {
-                    await Subject.findByIdAndUpdate(
-                        subject,
-                        {
-                            $push: {
-                                tgSessions: {
-                                    date: date,
-                                    pointsDiscussed: pointsDiscussed
+                // Handle TG (Teacher Guardian) type subject
+                if (subjectDoc.subType === 'tg') {
+                    if (pointsDiscussed && pointsDiscussed.length > 0) {
+                        await Subject.findByIdAndUpdate(
+                            subject,
+                            {
+                                $push: {
+                                    tgSessions: {
+                                        date: date,
+                                        pointsDiscussed: pointsDiscussed
+                                    }
                                 }
                             }
-                        }
-                    );
+                        );
+                    }
                 }
 
-                // Update content status to covered and set completed date for the specific batch
-                if (contents && contents.length > 0) {
+                // Handle practical subjects (course content is batch-specific)
+                if (subjectDoc.subType === 'practical' && contents && contents.length > 0) {
                     const indianFormattedDate = date.toLocaleString('en-IN', {
                         timeZone: 'Asia/Kolkata',
                         day: '2-digit',
@@ -76,6 +76,39 @@ export async function POST(req) {
                         }
                     );
                 }
+
+                // Handle theory subjects (course content is common for all)
+                if (subjectDoc.subType === 'theory' && contents && contents.length > 0) {
+                    const indianFormattedDate = date.toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+
+                    await Subject.updateOne(
+                        { _id: subject },
+                        {
+                            $set: {
+                                "content.$[elem].status": "covered",
+                                "content.$[elem].completedDate": indianFormattedDate
+                            }
+                        },
+                        {
+                            arrayFilters: [
+                                { "elem._id": { $in: contents }, "elem.status": { $ne: "covered" } }
+                            ]
+                        }
+                    );
+                }
+
+                await Subject.findByIdAndUpdate(
+                    subject,
+                    { $addToSet: { reports: attendanceRecord._id } }
+                );
 
                 return attendanceRecord;
             });
@@ -135,6 +168,7 @@ export async function PUT(req) {
 
             const subjectDoc = await Subject.findById(subject);
 
+            // Handle TG (Teacher Guardian) subjects
             if (subjectDoc.subType === 'tg' && pointsDiscussed && pointsDiscussed.length > 0) {
                 const existingSessionIndex = subjectDoc.tgSessions.findIndex(
                     s => s.date.toDateString() === attendanceDate.toDateString()
@@ -147,9 +181,8 @@ export async function PUT(req) {
                 }
             }
 
-            subjectDoc.reports.addToSet(attendanceRecord._id);
-
-            if (subjectDoc.subType !== 'tg' && contents && contents.length > 0) {
+            // Handle practical subjects (batch-specific course content)
+            if (subjectDoc.subType === 'practical' && contents && contents.length > 0) {
                 const indianFormattedDate = attendanceDate.toLocaleString('en-IN', {
                     timeZone: 'Asia/Kolkata',
                     day: '2-digit',
@@ -177,6 +210,26 @@ export async function PUT(req) {
                 });
             }
 
+            // Handle theory subjects (common course content)
+            if (subjectDoc.subType === 'theory' && contents && contents.length > 0) {
+                const indianFormattedDate = attendanceDate.toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                subjectDoc.content.forEach(content => {
+                    if (contents.includes(content._id.toString()) && content.status !== 'covered') {
+                        content.status = 'covered';
+                        content.completedDate = indianFormattedDate;
+                    }
+                });
+            }
+
             await subjectDoc.save();
 
             return attendanceRecord;
@@ -190,24 +243,3 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to Update/Create Attendance" }, { status: 500 });
     }
 }
-
-// DELETE function remains unchanged
-export async function DELETE(req) {
-    try {
-        await connectMongoDB();
-        const { searchParams } = new URL(req.url);
-        const _id = searchParams.get("_id");
-        const deletedAttendance = await Attendance.findByIdAndDelete(_id);
-
-        if (!deletedAttendance) {
-            return NextResponse.json({ error: "Attendance record not found" }, { status: 404 });
-        }
-
-        console.log("Attendance Record Deleted Successfully", deletedAttendance);
-        return NextResponse.json({ message: "Attendance Record Deleted Successfully" }, { status: 200 });
-    } catch (error) {
-        console.error("Error deleting attendance record:", error);
-        return NextResponse.json({ error: "Failed to Delete Attendance Record" }, { status: 500 });
-    }
-}
-

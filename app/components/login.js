@@ -102,7 +102,7 @@ export default function LoginComponent() {
     <div className="flex h-screen">
       <div className="flex flex-col w-2/3 justify-center items-center bg-violet-500 rounded-r-[20%]">
         <h3 className='text-4xl  text-white'>Hey,Let&#39;s Begin </h3>
-        <Image src={"/login.png"} width={600} height={600}></Image>
+        <Image src={"/login.png"} width={600} height={600} ></Image>
          </div>
       <div className="flex w-1/2 justify-center items-center">
         <form onSubmit={handleSubmit} className="w-full max-w-md">

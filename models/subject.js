@@ -2,18 +2,18 @@ import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import Classes from './className';
 
-const BatchContentSchema = new mongoose.Schema({
+const BatchStatusSchema = new mongoose.Schema({
     batchId: {
         type: String,
         required: true
-    },
-    completedDate: {
-        type: String
     },
     status: {
         type: String,
         enum: ['covered', 'not_covered'],
         default: 'not_covered'
+    },
+    completedDate: {
+        type: String
     }
 }, { _id: false });
 
@@ -27,6 +27,9 @@ const ContentSchema = new mongoose.Schema({
     proposedDate: {
         type: String,
     },
+    completedDate: {
+        type: String,
+    },
     references: {
         type: String,
     },
@@ -36,9 +39,21 @@ const ContentSchema = new mongoose.Schema({
     programOutcomes: {
         type: String,
     },
+    status: {
+        type: String,
+        enum: ['covered', 'not_covered'],
+        default: 'not_covered'
+    },
     batchStatus: {
-        type: [BatchContentSchema],
-        default: undefined
+        type: [BatchStatusSchema],
+        default: undefined,
+        validate: {
+            validator: function(v) {
+                const subject = this.parent().parent();
+                return subject.subType !== 'practical' || Array.isArray(v);
+            },
+            message: 'Batch status is required for practical subjects'
+        }
     }
 }, {
     _id: true,
@@ -46,7 +61,7 @@ const ContentSchema = new mongoose.Schema({
 
 const TGSessionSchema = new mongoose.Schema({
     date: {
-        type: Date,
+        type: String,
         required: true
     },
     pointsDiscussed: {
@@ -94,20 +109,20 @@ const SubjectSchema = new mongoose.Schema({
         type: [ContentSchema],
         default: undefined,
         validate: {
-            validator: function (v) {
+            validator: function(v) {
                 return this.subType !== 'tg' || (v === undefined || v.length === 0);
             },
-            message: props => 'Content should be empty for TG subjects'
+            message: 'Content should be empty for TG subjects'
         }
     },
     tgSessions: {
         type: [TGSessionSchema],
         default: undefined,
         validate: {
-            validator: function (v) {
+            validator: function(v) {
                 return this.subType === 'tg' || (v === undefined || v.length === 0);
             },
-            message: props => 'TG sessions should only be present for TG subjects'
+            message: 'TG sessions should only be present for TG subjects'
         }
     }
 }, {
