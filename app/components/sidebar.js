@@ -72,7 +72,7 @@ const Sidebar = () => {
           { name: "Take Attendance", href: "/faculty/takeattendance", icon: RiCalendarScheduleLine },
           { name: "Update Attendance", href: "/faculty/attendance", icon: AiOutlineSchedule },
           { name: "Manage Reports", href: "/faculty/showattendance", icon: AiOutlineSchedule },
-          { name: "Add Teaching Plan", href: "/faculty/content", icon: AiOutlineSchedule },
+          { name: "Manage Teaching Plan", href: "/faculty/content", icon: AiOutlineSchedule },
         ];
       case "student":
         return [

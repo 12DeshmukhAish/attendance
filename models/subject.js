@@ -49,6 +49,7 @@ const ContentSchema = new mongoose.Schema({
         default: undefined,
         validate: {
             validator: function(v) {
+                if (!this || !this.parent || !this.parent().parent) return true;
                 const subject = this.parent().parent();
                 return subject.subType !== 'practical' || Array.isArray(v);
             },
@@ -110,6 +111,7 @@ const SubjectSchema = new mongoose.Schema({
         default: undefined,
         validate: {
             validator: function(v) {
+                if (!this || typeof this.subType === 'undefined') return true;
                 return this.subType !== 'tg' || (v === undefined || v.length === 0);
             },
             message: 'Content should be empty for TG subjects'
@@ -120,6 +122,7 @@ const SubjectSchema = new mongoose.Schema({
         default: undefined,
         validate: {
             validator: function(v) {
+                if (!this || typeof this.subType === 'undefined') return true;
                 return this.subType === 'tg' || (v === undefined || v.length === 0);
             },
             message: 'TG sessions should only be present for TG subjects'

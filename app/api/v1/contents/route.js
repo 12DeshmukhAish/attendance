@@ -3,6 +3,7 @@ import { connectMongoDB } from "@/lib/connectDb";
 import Subject from "@/models/subject";
 import { parse, format } from 'date-fns';
 
+
 export async function PUT(req) {
     try {
         await connectMongoDB();
@@ -28,56 +29,69 @@ export async function PUT(req) {
         // Initialize update data
         let updateData = {};
 
-        // Handle 'content' field updates based on subject subtype
-        if (data.content) {
-            const { content } = data;
-
-            // Handle tgSessions if present
-            if (content.tgSessions) {
-                updateData.tgSessions = content.tgSessions.map(session => ({
-                    ...session,
-                    date: session.date ? formatDate(session.date) : undefined,
-                    pointsDiscussed: Array.isArray(session.pointsDiscussed) ?
-                        session.pointsDiscussed :
-                        (typeof session.pointsDiscussed === 'string' ? session.pointsDiscussed.split(',').map(point => point.trim()) : [])
+        // Special handling for TG subjects
+        if (subject.subType === 'tg') {
+            if (data.tgSessions) {
+                // Handle direct tgSessions update
+                updateData.tgSessions = data.tgSessions.map(session => ({
+                    date: formatDate(session.date),
+                    pointsDiscussed: Array.isArray(session.pointsDiscussed) 
+                        ? session.pointsDiscussed 
+                        : session.pointsDiscussed.split(',').map(point => point.trim()),
+                    _id: session._id // Preserve _id if it exists
+                }));
+            } else if (data.content?.tgSessions) {
+                // Handle tgSessions nested in content
+                updateData.tgSessions = data.content.tgSessions.map(session => ({
+                    date: formatDate(session.date),
+                    pointsDiscussed: Array.isArray(session.pointsDiscussed) 
+                        ? session.pointsDiscussed 
+                        : session.pointsDiscussed.split(',').map(point => point.trim()),
+                    _id: session._id // Preserve _id if it exists
                 }));
             }
-
-            // Handle general content updates
-            if (Array.isArray(content)) {
-                updateData.content = content.map(item => {
-                    const formattedItem = {
+            
+            // Clear content for TG subjects
+            updateData.content = [];
+        } else {
+            // Handle content updates for non-TG subjects
+            if (data.content) {
+                if (Array.isArray(data.content)) {
+                    updateData.content = data.content.map(item => ({
                         ...item,
-                        proposedDate: item.proposedDate ? formatDate(item.proposedDate) : undefined,
-                        completedDate: subject.subType === 'theory' || subject.subType === 'tg' ?
-                            (item.completedDate ? formatDate(item.completedDate) : undefined) :
-                            undefined
+                        proposedDate: formatDate(item.proposedDate),
+                        completedDate: subject.subType === 'theory' 
+                            ? formatDate(item.completedDate) 
+                            : undefined,
+                        batchStatus: subject.subType === 'practical' && Array.isArray(item.batchStatus)
+                            ? item.batchStatus.map(batch => ({
+                                ...batch,
+                                completedDate: formatDate(batch.completedDate)
+                            }))
+                            : undefined
+                    }));
+                } else {
+                    updateData.content = {
+                        ...data.content,
+                        proposedDate: formatDate(data.content.proposedDate),
+                        completedDate: subject.subType === 'theory' 
+                            ? formatDate(data.content.completedDate) 
+                            : undefined
                     };
-
-                    // For practical subjects, handle batchStatus as an array of objects
-                    if (subject.subType === 'practical' && Array.isArray(item.batchStatus)) {
-                        formattedItem.batchStatus = item.batchStatus.map(batch => ({
-                            ...batch,
-                            completedDate: batch.completedDate ? formatDate(batch.completedDate) : undefined
-                        }));
-                    }
-
-                    return formattedItem;
-                });
-            } else {
-                // Handle case where content is not an array (for theory or TG subjects)
-                updateData.content = {
-                    ...content,
-                    proposedDate: content.proposedDate ? formatDate(content.proposedDate) : undefined,
-                    completedDate: subject.subType === 'theory' || subject.subType === 'tg' ?
-                        (content.completedDate ? formatDate(content.completedDate) : undefined) :
-                        undefined
-                };
+                }
             }
         }
 
-        // Update the subject with new data
-        const updatedSubject = await Subject.findByIdAndUpdate(_id, updateData, { new: true });
+        // Perform the update with proper options
+        const updatedSubject = await Subject.findByIdAndUpdate(
+            _id,
+            { $set: updateData },
+            { 
+                new: true,
+                runValidators: true,
+                context: 'query' // Important for running validators in update
+            }
+        );
 
         // Return success response
         return NextResponse.json({
@@ -87,16 +101,34 @@ export async function PUT(req) {
 
     } catch (error) {
         console.error("Error updating subject:", error);
-        return NextResponse.json({ error: "Failed to update subject", details: error.message }, { status: 500 });
+        return NextResponse.json({ 
+            error: "Failed to update subject", 
+            details: error.message 
+        }, { status: 500 });
     }
 }
 
 // Helper function to format date
 function formatDate(dateString) {
     if (!dateString) return undefined;
+    
     try {
-        const parsedDate = parse(dateString, 'dd-MM-yyyy', new Date());
-        return format(parsedDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+        // Handle various date formats
+        let parsedDate;
+        if (typeof dateString === 'string') {
+            if (dateString.includes('T')) {
+                // If it's already in ISO format
+                parsedDate = new Date(dateString);
+            } else {
+                // If it's in dd-MM-yyyy format
+                parsedDate = parse(dateString, 'dd-MM-yyyy', new Date());
+            }
+        } else {
+            parsedDate = new Date(dateString);
+        }
+
+        // Return ISO string format
+        return parsedDate.toISOString();
     } catch (error) {
         console.error("Error parsing date:", error);
         return dateString; // Return original string if parsing fails
