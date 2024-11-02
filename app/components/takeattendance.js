@@ -678,6 +678,7 @@ const CourseContent = React.memo(({
 
 CourseContent.displayName = 'CourseContent';
 
+
 export default function AttendanceSystem() {
   const [selectedSubject, setSelectedSubject] = useState("Subject");
   const [isTableVisible, setIsTableVisible] = useState(false);
@@ -693,6 +694,7 @@ export default function AttendanceSystem() {
   const [pointInputs, setPointInputs] = useState([{ id: Date.now(), value: '' }]);
   const [tgSessions, setTgSessions] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
+
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -714,12 +716,12 @@ export default function AttendanceSystem() {
     setSelectedSubject("Subject");
     setPointInputs([{ id: Date.now(), value: '' }]);
     setSelectedDate("");
+    setAvailableSessions([]);
   }, []);
 
-  const fetchAvailableSessions = useCallback(async (subjectId, batchId) => {
+  const fetchAvailableSessions = useCallback(async (subjectId, batchId, date) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await axios.get(`/api/utils/available-sessions?subjectId=${subjectId}&batchId=${batchId || ''}&date=${today}`);
+      const response = await axios.get(`/api/utils/available-sessions?subjectId=${subjectId}&batchId=${batchId || ''}&date=${date}`);
       setAvailableSessions(response.data.availableSessions);
     } catch (error) {
       console.error('Error fetching available sessions:', error);
@@ -743,11 +745,11 @@ export default function AttendanceSystem() {
   }, []);
 
   useEffect(() => {
-    if (selectedSubject !== "Subject") {
+    if (selectedSubject !== "Subject" && selectedDate) {
       fetchSubjectDetails(selectedSubject, selectedBatch);
-      fetchAvailableSessions(selectedSubject, selectedBatch);
+      fetchAvailableSessions(selectedSubject, selectedBatch, selectedDate);
     }
-  }, [selectedSubject, selectedBatch, fetchSubjectDetails, fetchAvailableSessions]);
+  }, [selectedSubject, selectedBatch, selectedDate, fetchSubjectDetails, fetchAvailableSessions]);
 
   const handleTakeAttendance = useCallback(() => {
     setIsTableVisible(true);
@@ -792,7 +794,7 @@ export default function AttendanceSystem() {
       return;
     }
 
-    const presentStudentIds = Array.from(selectedKeys);
+    const presentStudentIds = Array.from(selectedKeys).filter(key => key !== "all");
 
     const attendanceData = {
       subject: selectedSubject,
@@ -802,6 +804,7 @@ export default function AttendanceSystem() {
         status: presentStudentIds.includes(student._id) ? 'present' : 'absent'
       })),
       batchId: selectedBatch,
+      date: selectedDate,
       ...(subjectDetails.subType === 'tg' 
         ? { 
             pointsDiscussed: pointInputs
@@ -822,7 +825,8 @@ export default function AttendanceSystem() {
       console.error('Failed to submit attendance:', error);
       alert("Failed to submit attendance");
     }
-}, [selectedSubject, selectedSession, subjectDetails, validateTGSession, students, selectedKeys, selectedBatch, selectedDate, pointInputs, selectedContentIds, fetchSubjectDetails, resetForm]);
+  }, [selectedSubject, selectedSession, subjectDetails, validateTGSession, students, selectedKeys, selectedBatch, selectedDate, pointInputs, selectedContentIds, fetchSubjectDetails, resetForm]);
+
   const StudentListTable = useMemo(() => {
     const sortedStudents = [...students].sort((a, b) => {
       const aNum = parseInt(a.rollNumber.replace(/\D/g, ''), 10);
@@ -840,7 +844,13 @@ export default function AttendanceSystem() {
             aria-label="Attendance Table"
             selectionMode="multiple"
             selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
+            onSelectionChange={(keys) => {
+              if (keys === "all") {
+                setSelectedKeys(new Set(students.map(student => student._id)));
+              } else {
+                setSelectedKeys(keys);
+              }
+            }}
           >
             <TableHeader>
               <TableColumn>Roll Number</TableColumn>
@@ -879,6 +889,8 @@ export default function AttendanceSystem() {
                   const selected = Array.from(keys)[0];
                   setSelectedSubject(selected);
                   setSelectedBatch(null);
+                  setSelectedDate("");
+                  setAvailableSessions([]);
                 }}
               >
                 {subjectOptions.map((item) => (
@@ -898,7 +910,11 @@ export default function AttendanceSystem() {
                   aria-label="Batch selection"
                   selectionMode="single"
                   selectedKeys={selectedBatch ? new Set([selectedBatch]) : new Set()}
-                  onSelectionChange={(keys) => setSelectedBatch(Array.from(keys)[0])}
+                  onSelectionChange={(keys) => {
+                    setSelectedBatch(Array.from(keys)[0]);
+                    setSelectedDate("");
+                    setAvailableSessions([]);
+                  }}
                 >
                   {batches.map((batch) => (
                     <DropdownItem key={batch}>{batch}</DropdownItem>
@@ -906,6 +922,21 @@ export default function AttendanceSystem() {
                 </DropdownMenu>
               </Dropdown>
             )}
+
+            <div className="flex items-center gap-2">
+             
+              <Input
+                type="date"
+                label="Session Date"
+                value={selectedDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setSelectedSession([]);
+                }}
+                variant="bordered"
+                className="max-w-xs"
+              />
+            </div>
 
             <CheckboxGroup
               orientation="horizontal"

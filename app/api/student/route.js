@@ -65,11 +65,22 @@ export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
+        const id = searchParams.get("_id");
         const department = searchParams.get("department");
         const page = parseInt(searchParams.get("page")) || 1;
         const limit = parseInt(searchParams.get("limit")) || 15;
         const filterValue = searchParams.get("filterValue");
 
+        // If ID is provided, fetch only that student
+        if (id) {
+            const student = await Student.findById(id);
+            if (!student) {
+                return NextResponse.json({ error: "Student not found" }, { status: 404 });
+            }
+            return NextResponse.json( student , { status: 200 });
+        }
+
+        // Existing functionality for department and filter-based queries
         let filter = {};
 
         if (department) {

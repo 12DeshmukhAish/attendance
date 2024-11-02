@@ -1,23 +1,8 @@
 "use client";
-
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import Image from "next/image";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Button,
-  Spinner,
-  DateRangePicker,
-} from "@nextui-org/react";
+import {Table,TableHeader,TableColumn,TableBody,TableRow,  TableCell, Dropdown,DropdownTrigger, DropdownMenu, DropdownItem, Button,  Spinner,DateRangePicker,} from "@nextui-org/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { departmentOptions } from "../utils/department";
 import * as XLSX from "xlsx";
@@ -81,10 +66,8 @@ const AttendanceDisplay = () => {
   const fetchAttendance = async () => {
     setLoading(true);
     setError(null);
-
     try {
       let url = "/api/attendance-reports?";
-
       if (userProfile.role === "student") {
         url += `studentId=${userProfile._id}`;
       } else if (userProfile.role === "faculty") {
@@ -105,7 +88,6 @@ const AttendanceDisplay = () => {
       }
 
       url += `&startDate=${dateRange.start.toString()}&endDate=${dateRange.end.toString()}`;
-
       const response = await axios.get(url);
       setAttendanceData(response.data);
     } catch (err) {
@@ -192,13 +174,11 @@ const AttendanceDisplay = () => {
               row.push("-", "-", "-");
             }
           });
-  
           row.push(totalLectures, totalPresent, ((totalPresent / totalLectures) * 100).toFixed(2));
           wsData.push(row);
         });
       } else {
         wsData.push(["Roll Number", "Student Name", "Total Lectures", "Present", "Attendance %"]);
-  
         data.students.sort(sortByRollNumber).forEach((student) => {
           wsData.push([
             student.rollNumber,
@@ -279,7 +259,6 @@ const AttendanceDisplay = () => {
   const renderStudentAttendance = () => {
     const totalLectures = attendanceData?.reduce((sum, subject) => sum + subject.totalLectures, 0);
     const totalPresent = attendanceData?.reduce((sum, subject) => sum + subject.presentCount, 0);
-
     return (
       <div>
         <h2 className="text-2xl font-bold mb-4 text-gray-800">Student Attendance Summary</h2>

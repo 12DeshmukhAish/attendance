@@ -117,6 +117,7 @@ const SubjectSchema = new mongoose.Schema({
             message: 'Content should be empty for TG subjects'
         }
     },
+
     tgSessions: {
         type: [TGSessionSchema],
         default: undefined,
@@ -127,6 +128,16 @@ const SubjectSchema = new mongoose.Schema({
             },
             message: 'TG sessions should only be present for TG subjects'
         }
+    },
+    
+    sem: {
+        type: String,
+        enum: ['sem1', 'sem2'],
+        required: true
+    },
+    academicYear: {
+        type: String,
+        required: true
     }
 }, {
     timestamps: true,

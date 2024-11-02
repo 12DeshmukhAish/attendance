@@ -50,11 +50,10 @@ const columns = [
   { uid: "students", name: "Students" }, 
   { uid: "year", name: "Admission Year" },
   { uid: "department", name: "Department" },
-  { uid: "isActive", name: "Status" },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "year", "department", "actions", "isActive"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "year", "department", "actions"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -252,13 +251,6 @@ export default function ClassTable() {
         return <span>{cellValue && cellValue.name ? cellValue.name : 'N/A'}</span>;
       case "students":
         return <span>{cellValue ? cellValue.length : 0}</span>;
-      case "isActive":
-        return (
-          <Switch
-            isSelected={cellValue}
-            onChange={() => openConfirmModal(cls._id, cellValue)}
-          />
-        );
       default:
         return <span>{cellValue}</span>;
     }

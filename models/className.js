@@ -21,15 +21,25 @@ const classSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-     
     year: {
         type: String,
     },
     department: {
         type: String,
     },
+
     subjects: {
-        type: [String],
+        type: {
+            sem1: [{
+                type: String,
+                ref: 'Subject' // Assuming you have a Subject model
+            }],
+            sem2: [{
+                type: String,
+                ref: 'Subject' // Assuming you have a Subject model
+            }]
+        },
+        required: true // Ensure subjects are required
     },
     students: [{
         type: String,

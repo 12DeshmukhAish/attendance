@@ -1,4 +1,3 @@
-// pages/api/utils/available-sessions.js
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Attendance from "@/models/attendance";
@@ -14,10 +13,10 @@ export async function GET(request) {
   try {
     await connectMongoDB();
 
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Ensure the date is in the correct format (YYYY-MM-DD)
+    const [year, month, day] = date.split('-').map(Number);
+    const startOfDay = new Date(Date.UTC(year, month - 1, day));
+    const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
     const subject = await Subject.findById(subjectId);
     if (!subject) {
@@ -29,32 +28,26 @@ export async function GET(request) {
       return NextResponse.json({ error: "Class not found" }, { status: 404 });
     }
 
-    let theoryAttendanceQuery = {
+    let attendanceQuery = {
       date: { $gte: startOfDay, $lte: endOfDay },
-      subject: { $in: classData.subjects },
-      batch: { $exists: false }  // Theory sessions don't have a batch
+      subject: subjectId
     };
 
-    let practicalAttendanceQuery = {
-      date: { $gte: startOfDay, $lte: endOfDay },
-      subject: { $in: classData.subjects },
-      batch: { $exists: true }
-    };
-
-    if (batchId) {
-      practicalAttendanceQuery.batch = batchId;
+    if (subject.subType === 'practical' && batchId) {
+      attendanceQuery.batch = batchId;
     }
 
-    const theoryAttendance = await Attendance.find(theoryAttendanceQuery).select('session');
-    const practicalAttendance = await Attendance.find(practicalAttendanceQuery).select('session');
+    const takenAttendance = await Attendance.find(attendanceQuery).select('session');
 
-    const takenSessions = [
-      ...theoryAttendance.map(a => a.session),
-      ...practicalAttendance.map(a => a.session)
-    ];
-
+    const takenSessions = takenAttendance.map(a => a.session);
     const allSessions = [1, 2, 3, 4, 5, 6, 7];
     const availableSessions = allSessions.filter(session => !takenSessions.includes(session));
+
+    console.log('Date:', startOfDay);
+    console.log('Subject:', subjectId);
+    console.log('Batch:', batchId);
+    console.log('Taken Sessions:', takenSessions);
+    console.log('Available Sessions:', availableSessions);
 
     return NextResponse.json({ availableSessions }, { status: 200 });
   } catch (error) {

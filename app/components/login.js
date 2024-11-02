@@ -33,10 +33,15 @@ export default function LoginComponent() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (status === 'authenticated' && session?.user?.role) {
+        console.log(session);
+        
         const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
         const { id } = session.user;
+        console.log(id);
+        
         const storedProfile = sessionStorage.getItem('userProfile');
-
+        console.log(storedProfile);
+        
         if (storedProfile) {
           setUserProfile(JSON.parse(storedProfile));
         } else {

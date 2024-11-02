@@ -1,229 +1,122 @@
+//attendance-report.js
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Attendance from "@/models/attendance";
-import Student from "@/models/student";
 import Subject from "@/models/subject";
-import Classes from "@/models/className";
+import Student from "@/models/student";
+
 export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
-        const studentId = searchParams.get("studentId");
+        const department = searchParams.get("department");
         const classId = searchParams.get("classId");
+        const semester = searchParams.get("semester");
+        const academicYear = searchParams.get("academicYear");
+        const viewType = searchParams.get("viewType"); // 'cumulative' or 'individual'
         const subjectId = searchParams.get("subjectId");
-        const startDate = new Date(searchParams.get("startDate"));
-        const endDate = new Date(searchParams.get("endDate"));
 
-        let pipeline = [];
+        if (!classId || !semester || !academicYear) {
+            return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+        }
 
-        if (studentId) {
-            const student = await Student.findOne({ _id: studentId }).lean();
-            if (!student) {
-                return NextResponse.json({ error: "Student not found" }, { status: 404 });
-            }
-        
-            pipeline = [
-                {
-                    $match: {
-                        date: {  $lte: endDate },
-                        'records.student': studentId
-                    }
-                },
+        let matchStage = {
+            class: classId,
+            semester,
+            academicYear,
+        };
+
+        if (department) {
+            matchStage.department = department;
+        }
+
+        if (viewType === 'individual' && subjectId) {
+            matchStage.subject = subjectId;
+        }
+
+        const pipeline = viewType === 'cumulative' ? 
+            [
+                { $match: matchStage },
                 { $unwind: '$records' },
                 {
-                    $match: {
-                        'records.student': studentId
-                    }
-                },
-                {
                     $group: {
-                        _id: '$subject',
+                        _id: {
+                            student: '$records.student',
+                            subject: '$subject'
+                        },
                         totalLectures: { $sum: 1 },
                         presentCount: {
-                            $sum: {
-                                $cond: [{ $eq: ['$records.status', 'present'] }, 1, 0]
-                            }
+                            $sum: { $cond: [{ $eq: ['$records.status', 'present'] }, 1, 0] }
                         }
                     }
                 },
                 {
                     $lookup: {
+                        from: 'students',
+                        localField: '_id.student',
+                        foreignField: '_id',
+                        as: 'studentInfo'
+                    }
+                },
+                { $unwind: '$studentInfo' },
+                {
+                    $lookup: {
                         from: 'subjects',
-                        localField: '_id',
+                        localField: '_id.subject',
                         foreignField: '_id',
                         as: 'subjectInfo'
                     }
                 },
                 { $unwind: '$subjectInfo' },
                 {
-                    $project: {
-                        _id: 1,
-                        name: '$subjectInfo.name',
-                        totalLectures: 1,
-                        presentCount: 1
-                    }
-                }
-            ];
-        } else if (subjectId) {
-            const subject = await Subject.findOne({ _id: subjectId }).lean();
-            if (!subject) {
-                return NextResponse.json({ error: "Subject not found" }, { status: 404 });
-            }
-        
-            pipeline = [
-                {
-                    $match: {
-                        date: {
-                            $lte: endDate
-                        },
-                        subject: subjectId
-                    }
-                },
-                {
-                    $unwind: "$records"
-                },
-                {
                     $group: {
-                        _id: {
-                            subject: "$subject",
-                            student: "$records.student",
-                            batch: "$batch"
+                        _id: '$studentInfo._id',
+                        student: {
+                            $first: {
+                                name: '$studentInfo.name',
+                                rollNumber: '$studentInfo.rollNumber'
+                            }
                         },
-                        totalLectures: { $sum: 1 },
-                        presentCount: {
-                            $sum: {
-                                $cond: [
-                                    { $eq: ["$records.status", "present"] },
-                                    1,
-                                    0
-                                ]
+                        subjects: {
+                            $push: {
+                                name: '$subjectInfo.name',
+                                type: '$subjectInfo.subType',
+                                totalLectures: '$totalLectures',
+                                presentCount: '$presentCount',
+                                percentage: {
+                                    $multiply: [
+                                        { $divide: ['$presentCount', '$totalLectures'] },
+                                        100
+                                    ]
+                                }
                             }
                         }
                     }
                 },
                 {
-                    $lookup: {
-                        from: "students",
-                        localField: "_id.student",
-                        foreignField: "_id",
-                        as: "studentInfo"
+                    $sort: {
+                        'student.rollNumber': 1
                     }
-                },
-                {
-                    $unwind: "$studentInfo"
-                },
-                {
-                    $lookup: {
-                        from: "subjects",
-                        localField: "_id.subject",
-                        foreignField: "_id",
-                        as: "subjectInfo"
-                    }
-                },
-                {
-                    $unwind: "$subjectInfo"
-                },
-                {
-                    $lookup: {
-                        from: "faculties",
-                        localField: "subjectInfo.teacher",
-                        foreignField: "_id",
-                        as: "facultyInfo"
-                    }
-                },
-                {
-                    $unwind: "$facultyInfo"
-                },
+                }
+            ] :
+            [
+                { $match: matchStage },
+                { $unwind: '$records' },
                 {
                     $group: {
                         _id: {
-                            subject: "$_id.subject",
-                            batch: "$_id.batch"
+                            student: '$records.student'
                         },
-                        name: { $first: "$subjectInfo.name" },
-                        totalLectures: { $first: "$totalLectures" },
-                        students: {
-                            $push: {
-                                name: "$studentInfo.name",
-                                rollNumber: "$studentInfo.rollNumber",
-                                presentCount: "$presentCount"
-                            }
-                        },
-                        facultyName: { $first: "$facultyInfo.name" }
+                        totalLectures: { $sum: 1 },
+                        presentCount: {
+                            $sum: { $cond: [{ $eq: ['$records.status', 'present'] }, 1, 0] }
+                        }
                     }
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        subject: "$_id.subject",
-                        batch: "$_id.batch",
-                        name: 1,
-                        facultyName: 1,
-                        totalLectures: 1,
-                        students: 1
-                    }
-                }
-            ];
-        }  else if (classId) {
-            pipeline = [
-                {
-                  $lookup: {
-                    from: 'subjects',
-                    localField: 'subject',
-                    foreignField: '_id',
-                    as: 'subjectInfo'
-                  }
-                },
-                { $unwind: '$subjectInfo' },
-                {
-                  $match: {
-                    'subjectInfo.class': classId,
-                    date: {$lte: endDate }
-                  }
-                },
-                { $unwind: '$records' },
-                {
-                  $match: {
-                    'records.status': { $in: ['present', 'absent'] }
-                  }
-                },
-                {
-                  $group: {
-                    _id: {
-                      student: '$records.student',
-                      subject: '$subject',
-                      subjectName: '$subjectInfo.name',
-                      subjectType: '$subjectInfo.subType'  // Include subject type
-                    },
-                    totalCount: { $sum: 1 },
-                    presentCount: {
-                      $sum: {
-                        $cond: [
-                          { $eq: ['$records.status', 'present'] },
-                          1,
-                          0
-                        ]
-                      }
-                    }
-                  }
-                },
-                {
-                  $group: {
-                    _id: '$_id.student',
-                    subjects: {
-                      $push: {
-                        subject: '$_id.subjectName',
-                        subjectType: '$_id.subjectType',  // Include subject type
-                        totalCount: '$totalCount',
-                        presentCount: '$presentCount'
-                      }
-                    }
-                  }
                 },
                 {
                     $lookup: {
                         from: 'students',
-                        localField: '_id',
+                        localField: '_id.student',
                         foreignField: '_id',
                         as: 'studentInfo'
                     }
@@ -233,28 +126,52 @@ export async function GET(req) {
                     $project: {
                         _id: 0,
                         student: {
-                            _id: '$_id',
+                            _id: '$studentInfo._id',
                             name: '$studentInfo.name',
                             rollNumber: '$studentInfo.rollNumber'
                         },
-                        subjects: 1
+                        totalLectures: 1,
+                        presentCount: 1,
+                        percentage: {
+                            $multiply: [
+                                { $divide: ['$presentCount', '$totalLectures'] },
+                                100
+                            ]
+                        }
+                    }
+                },
+                {
+                    $sort: {
+                        'student.rollNumber': 1
                     }
                 }
             ];
-        } else {
-            return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
-        }
 
-        const result = await Attendance.aggregate(pipeline).exec();
+        const result = await Attendance.aggregate(pipeline);
 
         if (!result || result.length === 0) {
-            return NextResponse.json({ error: "No data found" }, { status: 404 });
+            return NextResponse.json({ error: "No attendance data found" }, { status: 404 });
         }
 
-        console.log(result);
-        return NextResponse.json(result, { status: 200 });
-    } catch (error) {~
-        console.error("Error fetching attendance report:", error);
-        return NextResponse.json({ error: "Failed to Fetch Attendance Report" }, { status: 500 });
+        let response = {
+            classInfo: {
+                class: classId,
+                semester,
+                academicYear,
+                department
+            },
+            viewType,
+            attendance: result
+        };
+
+        if (viewType === 'individual') {
+            const subject = await Subject.findById(subjectId).select('name subType');
+            response.subjectInfo = subject;
+        }
+
+        return NextResponse.json(response, { status: 200 });
+    } catch (error) {
+        console.error("Error fetching admin attendance:", error);
+        return NextResponse.json({ error: "Failed to fetch attendance" }, { status: 500 });
     }
 }
