@@ -3,7 +3,7 @@ import React from 'react'
 
 export default function SubjectInfo({ subject }) {
   return (
-    <div className="mt-4 p-4 bg-gray-100 rounded-md">
+    <div className="my-4 p-4 bg-gray-100 rounded-md">
       <h2 className="text-lg font-bold mb-2">Subject Information</h2>
       <p>Department: {subject.department}</p>
       <p>Name: {subject.name}</p>

@@ -1,5 +1,6 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+
+import React, { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { Button, Select, SelectItem, Spinner } from '@nextui-org/react'
@@ -16,6 +17,7 @@ export default function TeachingPlanPage() {
   const [content, setContent] = useState([])
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     fetchSubjects()
@@ -46,7 +48,6 @@ export default function TeachingPlanPage() {
       const subjectData = response.data.subject
       setSubject(subjectData)
       
-      // Set the appropriate content based on subject type
       if (subjectData.subType === 'tg') {
         setContent(subjectData.tgSessions || [])
       } else {
@@ -69,8 +70,6 @@ export default function TeachingPlanPage() {
   }
 
   const handleSubmit = async (updatedContent) => {
-    console.log(updatedContent);
-    
     if (!subjectId || !subject) {
       toast.error('Please select a subject')
       return
@@ -91,7 +90,7 @@ export default function TeachingPlanPage() {
         }
       } else {
         payload = {
-          content: Array.isArray(updatedContent) ? updatedContent : [updatedContent]
+          content: updatedContent
         }
       }
 
@@ -103,9 +102,8 @@ export default function TeachingPlanPage() {
           setContent(updatedContent)
           setSubject(prev => ({ ...prev, tgSessions: updatedContent }))
         } else {
-          const normalizedContent = Array.isArray(updatedContent) ? updatedContent : [updatedContent]
-          setContent(normalizedContent)
-          setSubject(prev => ({ ...prev, content: normalizedContent }))
+          setContent(updatedContent)
+          setSubject(prev => ({ ...prev, content: updatedContent }))
         }
         setIsEditing(false)
       }
@@ -122,15 +120,47 @@ export default function TeachingPlanPage() {
       toast.error('Please select a subject first')
       return
     }
-    await handleExcelUpload(event, subject, setContent, setIsEditing)
+    setIsLoading(true)
+    try {
+      const file = event.target.files[0]
+      if (!file) {
+        toast.error('No file selected')
+        return
+      }
+      const updatedContent = await handleExcelUpload(file, subject)
+      setContent(updatedContent)
+      setIsEditing(true)
+      toast.success('File uploaded successfully')
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      toast.error('Failed to upload file')
+    } finally {
+      setIsLoading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
   }
 
-  const handleFileDownload = () => {
+  const handleFileDownload = async () => {
     if (!subject) {
       toast.error('Please select a subject first')
       return
     }
-    handleExcelDownload(content, subject)
+    if (!content || content.length === 0) {
+      toast.error('No content to download')
+      return
+    }
+    setIsLoading(true)
+    try {
+      await handleExcelDownload(content, subject)
+      toast.success('File downloaded successfully')
+    } catch (error) {
+      console.error('Error downloading file:', error)
+      toast.error('Failed to download file')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const renderContent = () => {
@@ -213,11 +243,11 @@ export default function TeachingPlanPage() {
               accept=".xlsx, .xls"
               onChange={handleFileUpload}
               className="hidden"
-              id="uploadExcel"
+              ref={fileInputRef}
             />
             <Button
               color="secondary"
-              onClick={() => document.getElementById('uploadExcel').click()}
+              onClick={() => fileInputRef.current.click()}
             >
               Upload Content (Excel)
             </Button>

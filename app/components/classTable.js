@@ -34,15 +34,7 @@ import ClassModal from "./classModal";
 import * as XLSX from "xlsx";
 import { FaFileDownload } from "react-icons/fa";
 import Image from "next/image";
-
-const departmentOptions = [
-  { key: 'CSE', label: 'CSE' },
-  { key: 'ENTC', label: 'ENTC' },
-  { key: 'Civil', label: 'Civil' },
-  { key: 'Electrical', label: 'Electrical' },
-  { key: 'Mechanical', label: 'Mechanical' },
-  { key: 'FE', label: 'First Year' },
-];
+import { departmentOptions } from "../utils/department";
 
 const columns = [
   { uid: "_id", name: "Class ID", sortable: true },

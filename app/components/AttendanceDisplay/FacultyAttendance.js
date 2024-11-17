@@ -37,6 +37,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [viewType, setViewType] = useState('summary');
+  const [userProfile, setUserProfile] = useState(null);
   const [dateRange, setDateRange] = useState({
     start: parseDate(new Date().toISOString().split('T')[0]),
     end: parseDate(new Date().toISOString().split('T')[0])
@@ -44,6 +45,22 @@ export default function FacultyAttendance({ facultyId = '' }) {
   const [classesWithSubjects, setClassesWithSubjects] = useState([]);
   const [isFilterDirty, setIsFilterDirty] = useState(false);
 
+
+  useEffect(() => {
+    const loadUserProfile = () => {
+      const storedProfile = sessionStorage.getItem('userProfile');
+      if (storedProfile) {
+        const profile = JSON.parse(storedProfile);
+        setUserProfile(profile);
+        
+        // Set defaults from profile
+        setSelectedSemester(profile.defaultSemester || 'sem1');
+        setAcademicYear(profile.defaultAcademicYear || getCurrentAcademicYear());
+      }
+    };
+
+    loadUserProfile();
+  }, []);
   useEffect(() => {
     setDateRange({
       start: parseDate(new Date().toISOString().split('T')[0]),
@@ -426,10 +443,14 @@ export default function FacultyAttendance({ facultyId = '' }) {
               <Chip variant="flat">
                 Semester {selectedSemester?.toUpperCase()}
               </Chip>
+              {userProfile && userProfile.department && (
+                <Chip variant="flat">
+                  {userProfile.department}
+                </Chip>
+              )}
             </div>
           )}
         </div>
-
         <div className="mb-4 flex flex-wrap gap-4">
           {renderDropdown(
             "Academic Year",

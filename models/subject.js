@@ -12,6 +12,9 @@ const BatchStatusSchema = new mongoose.Schema({
         enum: ['covered', 'not_covered'],
         default: 'not_covered'
     },
+    proposedDate: {
+        type: String
+    },
     completedDate: {
         type: String
     }
@@ -20,38 +23,28 @@ const BatchStatusSchema = new mongoose.Schema({
 const ContentSchema = new mongoose.Schema({
     title: {
         type: String,
+        required: true
     },
     description: {
         type: String,
-    },
-    proposedDate: {
-        type: String,
-    },
-    completedDate: {
-        type: String,
+        required: true
     },
     references: {
-        type: String,
+        type: String
     },
     courseOutcomes: {
-        type: String,
+        type: String
     },
     programOutcomes: {
-        type: String,
-    },
-    status: {
-        type: String,
-        enum: ['covered', 'not_covered'],
-        default: 'not_covered'
+        type: String
     },
     batchStatus: {
         type: [BatchStatusSchema],
         default: undefined,
         validate: {
             validator: function(v) {
-                if (!this || !this.parent || !this.parent().parent) return true;
-                const subject = this.parent().parent();
-                return subject.subType !== 'practical' || Array.isArray(v);
+                const subject = this.parent();
+                return !subject || subject.subType !== 'practical' || (Array.isArray(v) && v.length > 0);
             },
             message: 'Batch status is required for practical subjects'
         }
@@ -72,7 +65,6 @@ const TGSessionSchema = new mongoose.Schema({
 }, {
     _id: true
 });
-
 const SubjectSchema = new mongoose.Schema({
     _id: String,
     name: {
@@ -111,25 +103,21 @@ const SubjectSchema = new mongoose.Schema({
         default: undefined,
         validate: {
             validator: function(v) {
-                if (!this || typeof this.subType === 'undefined') return true;
                 return this.subType !== 'tg' || (v === undefined || v.length === 0);
             },
             message: 'Content should be empty for TG subjects'
         }
     },
-
     tgSessions: {
         type: [TGSessionSchema],
         default: undefined,
         validate: {
             validator: function(v) {
-                if (!this || typeof this.subType === 'undefined') return true;
                 return this.subType === 'tg' || (v === undefined || v.length === 0);
             },
             message: 'TG sessions should only be present for TG subjects'
         }
     },
-    
     sem: {
         type: String,
         enum: ['sem1', 'sem2'],

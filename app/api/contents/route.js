@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Subject from "@/models/subject";
 import { parse, format, utcToZonedTime } from 'date-fns-tz';
-
+// Update the PUT API handler
 export async function PUT(req) {
     try {
         await connectMongoDB();
@@ -23,6 +23,11 @@ export async function PUT(req) {
                 ...item,
                 proposedDate: item.proposedDate ? formatDate(item.proposedDate) : undefined,
                 completedDate: item.completedDate ? formatDate(item.completedDate) : undefined,
+                batchStatus: item.batchStatus?.map(batch => ({
+                    ...batch,
+                    proposedDate: batch.proposedDate ? formatDate(batch.proposedDate) : undefined,
+                    completedDate: batch.completedDate ? formatDate(batch.completedDate) : undefined
+                }))
             }));
         }
         
@@ -44,21 +49,5 @@ export async function PUT(req) {
     } catch (error) {
         console.error("Error updating subject:", error);
         return NextResponse.json({ error: "Failed to update subject", details: error.message }, { status: 500 });
-    }
-}
-
-function formatDate(dateString) {
-    try {
-        // Parse the input date string (assuming dd-mm-yyyy format)
-        const parsedDate = parse(dateString, 'dd-MM-yyyy', new Date());
-        
-        // Convert to Indian time zone (Asia/Kolkata)
-        const indianDate = utcToZonedTime(parsedDate, 'Asia/Kolkata');
-        
-        // Format the date to ISO string
-        return format(indianDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx", { timeZone: 'Asia/Kolkata' });
-    } catch (error) {
-        console.error("Error parsing date:", error);
-        return dateString; // Return original string if parsing fails
     }
 }

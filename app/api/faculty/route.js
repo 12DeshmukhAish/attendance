@@ -35,30 +35,61 @@ export async function POST(req) {
     }
 }
 
+
 export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, facultyId, name, department, email, password, isAdmin } = data;
-        if(!department){
-            console.log("department is not found",department);
-            return NextResponse.json({error:"department is missing"})
-          }
-        console.log(data);        
-        const existingFaculty = await Faculty.findByIdAndUpdate(_id, {
+        const { 
+            _id, 
+            facultyId, 
+            name, 
+            department, 
+            email, 
+            password, 
+            isAdmin,
+            defaultAcademicYear,
+            defaultSemester 
+        } = data;
+
+        if (!department) {
+            console.log("department is not found", department);
+            return NextResponse.json({ error: "department is missing" });
+        }
+
+        const updateData = {
             facultyId,
             name,
             department,
             email,
             password,
             isAdmin,
-        }, { new: true });
+        };
+
+        // Only include default settings if they are provided
+        if (defaultAcademicYear) {
+            updateData.defaultAcademicYear = defaultAcademicYear;
+        }
+        if (defaultSemester) {
+            updateData.defaultSemester = defaultSemester;
+        }
+
+        const existingFaculty = await Faculty.findByIdAndUpdate(
+            _id,
+            updateData,
+            { new: true }
+        );
 
         if (!existingFaculty) {
             return NextResponse.json({ error: "Faculty not found" }, { status: 404 });
         }
+
         console.log("Faculty Updated Successfully", existingFaculty);
-        return NextResponse.json({ message: "Faculty Updated Successfully", faculty: existingFaculty }, { status: 200 });
+        return NextResponse.json({ 
+            message: "Faculty Updated Successfully", 
+            faculty: existingFaculty 
+        }, { status: 200 });
+
     } catch (error) {
         console.error("Error updating faculty:", error);
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
