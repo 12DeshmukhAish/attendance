@@ -70,6 +70,7 @@ export async function GET(req) {
     }, {});
 
     const response = Object.values(groupedSubjects);
+    console.log(response);
     
     return NextResponse.json(response, { status: 200 });
   } catch (error) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Classes from "@/models/className";
-
+import Subject from "@/models/subject";
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -38,7 +38,7 @@ export async function GET(req) {
                 path: semester === "sem1" ? "subjects.sem1" : 
                       semester === "sem2" ? "subjects.sem2" : 
                       "subjects.sem1 subjects.sem2",
-                select: "name code credits description" // Add or modify fields you want from the Subject model
+                select: "name subType" // Add or modify fields you want from the Subject model
             });
 
         if (classes.length === 0) {
