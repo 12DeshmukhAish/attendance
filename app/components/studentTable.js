@@ -466,7 +466,7 @@ export default function StudentTable() {
         </TableHeader>
         <TableBody
           isLoading={isLoading}
-          loadingContent={<Spinner label="Loading..." />}
+          loadingContent={<Spinner label="Please wait... fetching Student Data" />}
           emptyContent={
             <div className="flex flex-col items-center justify-center">
               <Image

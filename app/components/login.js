@@ -9,6 +9,7 @@ import { RiShieldUserFill } from "react-icons/ri";
 import { toast } from 'sonner';
 import axios from 'axios';
 import Image from 'next/image';
+import Loader from './loader';
 
 export default function LoginComponent() {
   const [isVisible, setIsVisible] = useState(false);
@@ -79,7 +80,7 @@ export default function LoginComponent() {
       setIsLoading(false);
 
       if (result.ok) {
-        toast.success('Login Successful');
+        toast.success('Login Successful !');
       } else {
         if (result.error === 'Invalid username') {
           setUserIdError('Invalid username');
@@ -102,6 +103,13 @@ export default function LoginComponent() {
     setUserIdError('');
     setPasswordError('');
   };
+  if (status === 'loading') {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75">
+        <Loader size="large" color="primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen">
@@ -157,8 +165,19 @@ export default function LoginComponent() {
               <Button color="default" onClick={handleCancel} className="w-36">
                 Cancel
               </Button>
-              <Button color="primary" type="submit" className="w-36" disabled={isLoading}>
-                {isLoading ? 'Loading...' : 'Login'}
+              <Button 
+                color="primary" 
+                type="submit" 
+                className="w-36" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader size="small" color="white" />
+                  </div>
+                ) : (
+                  'Login'
+                )}
               </Button>
             </div>
             <div className="mt-2">

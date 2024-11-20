@@ -331,7 +331,7 @@ export default function ClassTable() {
       </div>
       {isLoadingClasses || isLoadingTeachers ? (
         <div className="flex justify-center items-center h-64">
-          <Spinner label="Loading..." />
+          <Spinner label="Please wait... fetching Class Data" />
         </div>
       ) : sortedItems && sortedItems.length > 0 ? (
         <Table

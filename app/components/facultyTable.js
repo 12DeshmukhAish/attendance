@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 import { toast } from 'sonner';
+
 import {
   Table,
   Tooltip,
@@ -457,7 +458,7 @@ export default function FacultyTable() {
         </TableHeader>
         <TableBody
           isLoading={isLoading}
-          loadingContent={<Spinner label="Loading..." />}
+          loadingContent={<Spinner label="Please wait for moment fetching faculty data" />}
           emptyContent={
             <div className="flex justify-center items-center w-full h-full">
               <Image src="/faculty.svg" alt="No Content" width={600} height={600} />

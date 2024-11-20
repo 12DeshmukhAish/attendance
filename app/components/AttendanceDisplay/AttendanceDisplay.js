@@ -19,9 +19,14 @@ export default function AttendanceDisplay() {
   }, [])
 
   if (loading) {
-    return <Spinner size="large" />
+    return (
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <Spinner size="large" />
+        <p>Loading, please wait...</p>
+      </div>
+    );
   }
-
+  
   // if (!userProfile) {
   //   return <div>Please log in to view attendance.</div>
   // }

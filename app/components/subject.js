@@ -478,7 +478,7 @@ export default function SubjectTable({ user }) {
           <TableHeader columns={headerColumns}>
             {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
           </TableHeader>
-          <TableBody isLoading={isLoading} loadingContent={<Spinner label="Loading..." />} items={sortedItems}>
+          <TableBody isLoading={isLoading} loadingContent={<Spinner label="Please Wait ... fetching Subjects Data" />} items={sortedItems}>
             {(item) => (
               <TableRow key={item._id}>
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

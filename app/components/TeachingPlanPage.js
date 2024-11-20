@@ -214,10 +214,12 @@ export default function TeachingPlanPage() {
       </div>
 
       {isLoading && (
-        <div className="flex justify-center my-4">
-          <Spinner />
-        </div>
-      )}
+  <div className="flex flex-col items-center my-4">
+    <Spinner />
+    <p className="mt-2 text-gray-500">Loading, please wait...</p>
+  </div>
+)}
+
 
       {subject && <SubjectInfo subject={subject} />}
 
