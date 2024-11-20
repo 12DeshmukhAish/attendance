@@ -458,7 +458,7 @@ export default function FacultyTable() {
         </TableHeader>
         <TableBody
           isLoading={isLoading}
-          loadingContent={<Spinner label="Please wait for moment fetching faculty data" />}
+          loadingContent={<Spinner label="Please wait...fetching Faculty Data" />}
           emptyContent={
             <div className="flex justify-center items-center w-full h-full">
               <Image src="/faculty.svg" alt="No Content" width={600} height={600} />
