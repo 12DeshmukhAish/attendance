@@ -18,7 +18,7 @@
     "file-saver": "^2.0.5",
     "framer-motion": "^11.2.12",
     "jsonwebtoken": "^9.0.2",
-    "jws": "^4.0.0",
+    "jws": "^4.0.1",
     "lucide-react": "^0.424.0",
     "micromatch": "^4.0.8",
     "mongoose": "^8.4.4",
